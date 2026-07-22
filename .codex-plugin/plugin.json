@@ -1,0 +1,38 @@
+{
+  "name": "bruce",
+  "version": "0.1.0+codex.20260722073637",
+  "description": "A risk-driven software delivery workflow with lightweight standard tasks and Goal-backed full delivery.",
+  "author": {
+    "name": "teleJa"
+  },
+  "homepage": "https://github.com/teleJa/bruce",
+  "repository": "https://github.com/teleJa/bruce",
+  "keywords": [
+    "codex",
+    "workflow",
+    "software-delivery",
+    "verification"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Bruce",
+    "shortDescription": "Run a risk-driven software delivery workflow",
+    "longDescription": "Bruce keeps standard changes lightweight in the current Codex task and routes full delivery through its bundled native Goal gate, with verifiable Given/When/Then scenarios, code and document review, layered real-use validation, bounded repair loops, and one human-auditable execute_record.md.",
+    "developerName": "teleJa",
+    "category": "Developer Tools",
+    "brandColor": "#4F46E5",
+    "composerIcon": "./assets/bruce-dog-icon.png",
+    "logo": "./assets/bruce-dog-logo.png",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/teleJa/bruce",
+    "defaultPrompt": [
+      "Use Bruce to implement this change with proportional planning and verification."
+    ],
+    "screenshots": []
+  }
+}

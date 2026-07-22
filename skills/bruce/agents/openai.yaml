@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bruce"
+  short_description: "Run risk-driven software delivery in Codex"
+  default_prompt: "Use $bruce to implement and verify this software change."

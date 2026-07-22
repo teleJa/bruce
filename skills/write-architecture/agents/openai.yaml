@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Architecture"
+  short_description: "Design repository-grounded architecture and contracts"
+  default_prompt: "Use $write-architecture to design the architecture and contracts for this change."

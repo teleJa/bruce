@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Tests"
+  short_description: "Design executable acceptance and regression tests"
+  default_prompt: "Use $write-tests to create a test plan for this change."

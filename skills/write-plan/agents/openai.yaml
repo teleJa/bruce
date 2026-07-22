@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Plan"
+  short_description: "Create minimal executable implementation plans"
+  default_prompt: "Use $write-plan to create a minimal executable plan for this change."

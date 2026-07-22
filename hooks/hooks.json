@@ -1,0 +1,17 @@
+{
+  "description": "Low-noise Bruce D0 review reminder for planning and design documents.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^(?:Write|Edit|MultiEdit|apply_patch|replace_content|replace_symbol_body|insert_after_symbol|insert_before_symbol)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -X utf8 \"$PLUGIN_ROOT/hooks/post_tool_review_reminder.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

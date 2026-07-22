@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write DB Design"
+  short_description: "Design schema changes from repository conventions"
+  default_prompt: "Use $write-db-design to design the schema and migration impact for this change."

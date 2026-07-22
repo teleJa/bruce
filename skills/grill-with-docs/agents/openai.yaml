@@ -1,0 +1,4 @@
+interface:
+  display_name: "Grill With Docs"
+  short_description: "Resolve connected domain decisions with repository evidence"
+  default_prompt: "Use $grill-with-docs to resolve these connected domain decisions against the code and docs."

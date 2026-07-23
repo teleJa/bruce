@@ -74,6 +74,18 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertNotIn("never use foreign", combined.lower())
         self.assertNotIn("references;", combined.lower())
 
+    def test_api_contract_artifact_is_mandatory_and_has_a_default_location(self) -> None:
+        body = read("skills/write-architecture/SKILL.md")
+        normalized = " ".join(body.split())
+        self.assertIn("must generate or update `api-contracts.md`", normalized)
+        self.assertIn("repository's documented convention", normalized)
+        self.assertIn("existing change directory", normalized)
+        self.assertIn(
+            "`docs/change/<YYYYMMDD-HHmmss>-<short-slug>/api-contracts.md`",
+            normalized,
+        )
+        self.assertIn("blocking contract gap", normalized)
+
     def test_capabilities_do_not_require_cascade(self) -> None:
         for name in SUPPORTING_SKILLS:
             body = read(f"skills/{name}/SKILL.md")

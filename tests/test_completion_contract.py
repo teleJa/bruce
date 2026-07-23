@@ -47,6 +47,13 @@ class CompletionContractTest(unittest.TestCase):
         self.assertIn("treat `Issues Found` as", self.skill)
         self.assertIn("D1 `不通过` as a completion issue", self.skill)
 
+    def test_public_contract_requires_current_api_contract_artifact(self) -> None:
+        normalized = " ".join(self.skill.split())
+        self.assertIn("public or cross-component API, event, or file-contract change", normalized)
+        self.assertIn("`api-contracts.md`", normalized)
+        self.assertIn("missing, stale, or does not cover the actual contract diff", normalized)
+        self.assertIn("return `issues`", normalized)
+
     def test_review_mode_is_proportional_to_risk(self) -> None:
         self.assertIn("main-agent-second-pass", self.skill)
         self.assertIn("ordinary guarded work", self.skill)

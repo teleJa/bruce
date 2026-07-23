@@ -27,6 +27,14 @@ class WorkflowRoutingContractTest(unittest.TestCase):
         self.assertIn("Select only necessary capabilities", skill)
         self.assertFalse((ROOT / "skills/bruce/references/workflow-contract.md").exists())
 
+    def test_public_contract_change_requires_persisted_api_contract(self) -> None:
+        skill = read("skills/bruce/SKILL.md")
+        normalized = " ".join(skill.split())
+        self.assertIn("public or cross-component API, event, or file-contract change", normalized)
+        self.assertIn("must invoke `write-architecture`", normalized)
+        self.assertIn("before behavior implementation begins", normalized)
+        self.assertIn("`api-contracts.md`", normalized)
+
     def test_risk_policy_avoids_duplicate_guarded_confirmation(self) -> None:
         policy = read("skills/bruce/references/risk-policy.md")
         self.assertIn("already authorizes the exact change", policy)

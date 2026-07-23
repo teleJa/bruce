@@ -15,6 +15,8 @@ Review current evidence rather than agent confidence or historical artifacts.
 - Current C0 code self-review and Given/When/Then acceptance-to-evidence mapping when code or runtime
   behavior changed.
 - Current D0 document self-review and required D1 gate results when documentation changed.
+- The resolved `api-contracts.md` path and current contract-to-diff mapping for every public or
+  cross-component contract change.
 - L0-L4 failures, open decisions, residual risks, and requested delivery actions.
 
 ## Procedure
@@ -34,15 +36,20 @@ Review current evidence rather than agent confidence or historical artifacts.
    unresolved L2/L3/L4 conditions.
 6. Confirm requested delivery actions were authorized and completed, or clearly remain outside the
    completed boundary.
-7. When documentation changed, require a current D0 `pass`. Also require a current D1 `通过`, or an
+7. Inspect the actual change set for any public or cross-component API, event, or file-contract
+   change. Require `api-contracts.md` at the location resolved by `write-architecture`, and verify it
+   covers the provider, consumers, changed shape or semantics, compatibility, authentication,
+   errors, and verification. If the artifact is missing, stale, or does not cover the actual contract diff,
+   return `issues`; an OpenAPI, Proto, schema, or README alone does not satisfy this change artifact.
+8. When documentation changed, require a current D0 `pass`. Also require a current D1 `通过`, or an
    explicitly authorized and recorded `有条件通过`, for important or downstream-governing documents.
    When `plan-review` substituted for D1, accept `Clean` as `通过` and treat `Issues Found` as
    `不通过`. Treat a missing required review, D0 `issues`, or D1 `不通过` as a completion issue.
-8. Return one verdict:
+9. Return one verdict:
    - `pass`: scope and every acceptance item have sufficient current evidence;
    - `issues`: repairable scope or evidence gaps remain;
    - `blocked`: authority, external state, or an unresolved L2/L3/L4 prevents completion.
-9. Select the review mode proportionally:
+10. Select the review mode proportionally:
    - ordinary guarded work: perform a separated pass and label it `main-agent-second-pass`;
    - broad guarded work spanning multiple components/contracts, combining migration and rollout, or
      carrying a broad security/data blast radius: prefer a fresh Codex-native subagent;
@@ -52,9 +59,10 @@ Review current evidence rather than agent confidence or historical artifacts.
 
 ## Output
 
-Return review mode, verdict, scenario-level acceptance-to-evidence mapping, C0 result, scope findings,
-verification and repair-loop results, unresolved risks, and the smallest next action. Keep the result
-in the current task by default; persist a review artifact only when the user explicitly requests one.
+Return review mode, verdict, scenario-level acceptance-to-evidence mapping, C0 result, API contract
+artifact path and coverage result, scope findings, verification and repair-loop results, unresolved
+risks, and the smallest next action. Keep the result in the current task by default; persist a review
+artifact only when the user explicitly requests one.
 
 ## Does not own
 

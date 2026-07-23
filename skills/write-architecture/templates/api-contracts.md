@@ -2,8 +2,10 @@
 
 ## <stable-contract-anchor>
 
+- Change: `<added/changed/deprecated/removed>`
 - Provider: `<component or external system>`
-- Consumer: `<component or actor>`
+- Consumers: `<components or actors>`
+- Authoritative source: `<OpenAPI/Proto/schema/code path, or none>`
 - Compatibility: `<additive/versioned/breaking and migration rule>`
 - Authentication/authorization: `<requirements>`
 

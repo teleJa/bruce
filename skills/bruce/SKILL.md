@@ -61,8 +61,10 @@ supporting skill only for a present need:
 
 - multiple dependent domain decisions, durable domain documentation, or an explicit grilling
   request: `grill-with-docs`; ask one blocking question directly for an isolated ambiguity;
-- architecture or public-contract design: `write-architecture`, and `write-db-design` when schema
-  design is actually needed;
+- architecture design: `write-architecture`, and `write-db-design` when schema design is actually
+  needed; every public or cross-component API, event, or file-contract change must invoke
+  `write-architecture` and generate or update `api-contracts.md` before behavior implementation
+  begins;
 - persistent multi-step or handoff plan: `write-plan`;
 - complex acceptance matrix: `write-tests`;
 - important requirement, architecture, public-contract, implementation-plan, or test-design
@@ -89,6 +91,12 @@ For behavior changes, use the development feedback in `verification-loop.md`: be
 test or reproducible scenario when feasible, reproduce bugs before fixing them, and establish a
 characterization baseline before refactoring. Record why when test-first work is genuinely
 impractical; do not turn documentation or mechanical changes into ceremonial TDD.
+
+Do not begin implementing a public or cross-component API, event, or file-contract change until the
+required `api-contracts.md` exists at the location resolved by `write-architecture` and covers the
+provider, consumers, changed shape or semantics, compatibility, authentication, errors, and
+verification. An existing OpenAPI, Proto, schema, or README can remain an authoritative source, but
+it does not replace this change-scoped contract artifact.
 
 Use native subagents directly for incidental delegation in `standard`. A `standard` task enters Goal
 only when the user explicitly requests Goal mode, continuous/cross-turn execution, or an auditable
@@ -171,6 +179,9 @@ Report completion only when all conditions hold:
 4. No unresolved L2/L3/L4 or dependent unfinished task remains.
 5. Required D0/D1 document review and completion review have passing current results.
 6. Authorized delivery actions are complete, or omitted delivery actions are explicitly reported.
+7. Every public or cross-component API, event, or file-contract change has a current
+   `api-contracts.md` whose contents cover the actual diff and whose path follows the
+   `write-architecture` placement rule.
 
 Summarize changed files, C0 and document-review verdicts, acceptance-to-evidence results, repair
 loops, residual risks, and any delivery action intentionally not performed.

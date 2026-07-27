@@ -1,0 +1,4 @@
+interface:
+  display_name: "Artifact Review Gate"
+  short_description: "Block incomplete or unauditable design artifacts"
+  default_prompt: "Use $artifact-review-gate to audit design-artifact completeness before implementation."

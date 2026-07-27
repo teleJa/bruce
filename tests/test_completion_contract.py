@@ -8,7 +8,7 @@ from tests._support import read
 class CompletionContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.skill = read("skills/verify-completion/SKILL.md")
+        cls.skill = read("skills/completion-gate/SKILL.md")
 
     def test_completion_gate_returns_one_verdict(self) -> None:
         self.assertIn("Bruce's only completion decision", self.skill)

@@ -15,7 +15,7 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 Bruce has two decisions and one optional execution mode:
 
 - `design-gate` is the only implementation-entry decision for persisted downstream design.
-- `verify-completion` is the only completion decision.
+- `completion-gate` is the only completion decision.
 - `goal-execution` adds persistence and an audit record; it never decides design readiness or
   completion.
 
@@ -80,7 +80,7 @@ supporting skill only for a present need:
 - readiness of persisted downstream design: `design-gate`;
 - explicit Goal intent or a task-contract need for continuous/cross-turn persistence or an audit
   record: `goal-execution`;
-- final completion decision for every implementation task: `verify-completion`.
+- final completion decision for every implementation task: `completion-gate`.
 
 A resolved profile does not itself invoke Goal, Design Gate, or test design. Run `design-gate` only
 when a requirement, architecture, API contract, table design, implementation plan, or test design
@@ -122,7 +122,7 @@ record. Use [handoff.md](templates/handoff.md) only when the user explicitly req
 
 ## 6. Decide completion and report
 
-After implementation and targeted verification, invoke `verify-completion`. It performs all required
+After implementation and targeted verification, invoke `completion-gate`. It performs all required
 author checks, evidence checks, scope checks, design-to-diff checks, and any risk-triggered independent
 review internally. No caller repeats those checks or combines their internal labels.
 

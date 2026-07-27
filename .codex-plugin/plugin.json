@@ -1,7 +1,7 @@
 {
   "name": "bruce",
-  "version": "0.1.0+codex.20260723151735",
-  "description": "A risk-driven software delivery workflow with lightweight standard tasks and Goal-backed full delivery.",
+  "version": "0.1.0+codex.20260727153747",
+  "description": "A proportional software delivery workflow with evidence-backed decisions and optional native Goal persistence.",
   "author": {
     "name": "teleJa"
   },
@@ -18,7 +18,7 @@
   "interface": {
     "displayName": "Bruce",
     "shortDescription": "Run a risk-driven software delivery workflow",
-    "longDescription": "Bruce keeps standard changes lightweight in the current Codex task and routes full delivery through its bundled native Goal gate, with verifiable Given/When/Then scenarios, code and document review, layered real-use validation, bounded repair loops, and one human-auditable execute_record.md.",
+    "longDescription": "Bruce keeps software delivery proportional in the current Codex task, with evidence-driven standard/full profiles, one conditional Design Gate, one Completion Gate, verifiable Given/When/Then scenarios, layered real-use validation, bounded repair loops, and optional native Goal persistence with one human-auditable execute_record.md.",
     "developerName": "teleJa",
     "category": "Developer Tools",
     "brandColor": "#4F46E5",

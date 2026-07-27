@@ -44,6 +44,7 @@ LEGACY_FILES = (
     "templates/completion-review.md",
     "skills/spawn-execute/REDESIGN.md",
     "skills/spawn-execute/templates/progress.md",
+    "skills/verify-completion/SKILL.md",
     "skills/write-db-design/DESIGN.md",
 )
 

@@ -15,6 +15,7 @@ LEGACY_PATHS = (
     "skills/bruce/scripts/checklist_gate.py",
     "skills/bruce/templates/checklist.json",
     "skills/spawn-execute/templates/progress.md",
+    "skills/verify-completion/SKILL.md",
 )
 
 

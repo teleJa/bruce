@@ -12,7 +12,7 @@ class WorkflowRoutingContractTest(unittest.TestCase):
         self.assertIn("Completion Gate", skill)
         self.assertIn("optional Goal execution mode", skill)
         self.assertIn("two decisions and one optional execution mode", skill)
-        for name in ("`design-gate`", "`verify-completion`", "`goal-execution`"):
+        for name in ("`design-gate`", "`completion-gate`", "`goal-execution`"):
             self.assertIn(name, skill)
 
     def test_profile_and_risk_remain_independent(self) -> None:
@@ -27,7 +27,7 @@ class WorkflowRoutingContractTest(unittest.TestCase):
             "skills/bruce/SKILL.md",
             "skills/bruce/references/verification-loop.md",
             "skills/design-gate/SKILL.md",
-            "skills/verify-completion/SKILL.md",
+            "skills/completion-gate/SKILL.md",
             "skills/goal-execution/SKILL.md",
             "skills/spawn-execute/SKILL.md",
         )

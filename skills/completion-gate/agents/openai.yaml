@@ -1,4 +1,4 @@
 interface:
   display_name: "Completion Gate"
   short_description: "Make one evidence-backed completion decision"
-  default_prompt: "Use $verify-completion to decide completion from the final diff and current evidence."
+  default_prompt: "Use $completion-gate to decide completion from the final diff and current evidence."

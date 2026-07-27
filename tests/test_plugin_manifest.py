@@ -30,7 +30,8 @@ class PluginManifestTest(unittest.TestCase):
         self.assertTrue((ROOT / "skills/bruce/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/design-gate/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/goal-execution/SKILL.md").is_file())
-        self.assertTrue((ROOT / "skills/verify-completion/SKILL.md").is_file())
+        self.assertTrue((ROOT / "skills/completion-gate/SKILL.md").is_file())
+        self.assertFalse((ROOT / "skills/verify-completion/SKILL.md").exists())
         hooks = read_json("hooks/hooks.json")
         command = hooks["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
         self.assertIn("$PLUGIN_ROOT/hooks/post_tool_review_reminder.py", command)

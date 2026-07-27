@@ -50,7 +50,7 @@ Maintain the nearest executable plan with native planning tools. Use `spawn-exec
 boundary-clear delegated work under the active Goal. Ordinary implementation and verification remain
 owned by Bruce and the selected capabilities.
 
-Continue until `verify-completion` returns one of its terminal results:
+Continue until `completion-gate` returns one of its terminal results:
 
 - `Completion: pass`: record the result, then mark the native Goal complete.
 - `Completion: issues`: keep the Goal active and return the findings for repair.
@@ -59,7 +59,7 @@ Continue until `verify-completion` returns one of its terminal results:
 
 Do not independently inspect artifacts, author checks, review labels, or acceptance mappings to
 override the Completion result. If implementation changes invalidate Design readiness,
-`verify-completion` returns an issue and Bruce reruns `design-gate` before affected work continues.
+`completion-gate` returns an issue and Bruce reruns `design-gate` before affected work continues.
 
 ## Output
 

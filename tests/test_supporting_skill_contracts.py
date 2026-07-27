@@ -15,7 +15,7 @@ SUPPORTING_SKILLS = (
     "write-tests",
     "plan-review",
     "spawn-execute",
-    "verify-completion",
+    "completion-gate",
 )
 
 LEGACY_MARKERS = (
@@ -27,6 +27,7 @@ LEGACY_MARKERS = (
     "oh-my-claudecode",
     "sonnet",
     "haiku",
+    "verify-completion",
 )
 
 

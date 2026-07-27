@@ -1,5 +1,5 @@
 ---
-name: verify-completion
+name: completion-gate
 description: Use after implementation as Bruce's only completion decision. Check final scope, author quality, acceptance evidence, design alignment, failures, and delivery boundaries, adding an independent reviewer only when risk or the user requires it, then return one Completion verdict.
 ---
 

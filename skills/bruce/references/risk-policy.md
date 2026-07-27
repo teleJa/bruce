@@ -19,7 +19,7 @@ decision even if the technical operation is reversible.
 
 ## Completion assurance
 
-Every implementation task uses `verify-completion`. Risk changes its review mode, not the number of
+Every implementation task uses `completion-gate`. Risk changes its review mode, not the number of
 completion verdicts:
 
 - low and ordinary guarded work use the main-agent review mode;
@@ -29,7 +29,7 @@ completion verdicts:
 - critical work and explicitly requested independent review always use independent mode.
 
 Independent mode uses a fresh Codex-native subagent with no inherited author conversation. If clean
-context is unavailable, `verify-completion` returns `Completion: blocked`. Independent review is an
+context is unavailable, `completion-gate` returns `Completion: blocked`. Independent review is an
 internal mode, not a separate result that callers combine with completion.
 
 Host permission prompts are outside this policy. Obey Codex and do not use a business-risk label to

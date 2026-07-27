@@ -1,7 +1,7 @@
 # Verification and feedback loop
 
 Use this policy while implementing and gathering evidence. `design-gate` makes the only design
-readiness decision; `verify-completion` performs the final author-quality, evidence, and review checks
+readiness decision; `completion-gate` performs the final author-quality, evidence, and review checks
 and returns the only completion decision.
 
 ## Verifiable acceptance scenarios
@@ -48,12 +48,12 @@ coverage as relevant. For documents, check facts, terminology, contracts, cross-
 acceptance coverage, placeholders, and links.
 
 These checks are development feedback, not separately named gates and not completion evidence by
-themselves. `verify-completion` repeats the necessary checks against the final state once, because
+themselves. `completion-gate` repeats the necessary checks against the final state once, because
 later edits can invalidate earlier observations.
 
 ## Independent review
 
-Independence is a review mode inside `design-gate` or `verify-completion`, never a third verdict.
+Independence is a review mode inside `design-gate` or `completion-gate`, never a third verdict.
 When required, use a fresh native subagent with no inherited author conversation. Supply objective,
 acceptance, the final review target diff or immutable snapshot, raw evidence, and only necessary
 constraints. Exclude author rationale, confidence, and proposed conclusion.
@@ -73,4 +73,4 @@ after each action; do not replace a failure with a smaller passing check.
 For each acceptance id, retain its scenario, required verification layer, current evidence, and
 result. Natural-language claims, stale runs, mocked-only evidence for a real integration requirement,
 or unit evidence for a user-visible flow keep that acceptance incomplete. Pass this evidence once to
-`verify-completion`; callers do not create parallel verdicts from it.
+`completion-gate`; callers do not create parallel verdicts from it.

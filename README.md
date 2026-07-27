@@ -35,7 +35,7 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Every task that persists downstream-governing design runs `design-gate`. It decides artifact
   completeness and document readiness together, persists one `design-review.md`, and returns only
   `Design: pass|blocked`.
-- Every implementation task ends with `verify-completion`. It performs final author-quality, scope,
+- Every implementation task ends with `completion-gate`. It performs final author-quality, scope,
   evidence, design-alignment, and risk-triggered independent checks internally and returns only
   `Completion: pass|issues|blocked`.
 - Independent review is a mode inside one of those gates, not another verdict that callers combine.
@@ -45,7 +45,7 @@ The canonical entry is [`skills/bruce/SKILL.md`](skills/bruce/SKILL.md). Other d
 `agents/openai.yaml` UI metadata. Bruce has no CLI, MCP server, app, sandbox implementation, or
 custom scheduler.
 
-`design-gate` is the only implementation-entry decision. `verify-completion` is the only completion
+`design-gate` is the only implementation-entry decision. `completion-gate` is the only completion
 decision. `goal-execution` is an optional persistence mode: it records those results and synchronizes
 native Goal state without re-evaluating either one. `spawn-execute` is only a bounded delegation
 helper under an active Goal.

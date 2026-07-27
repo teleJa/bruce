@@ -23,6 +23,29 @@ class WorkflowProfileContractTest(unittest.TestCase):
         self.assertIn("goal-execution-gate", self.workflow)
         self.assertNotIn("full requires approval", self.workflow.lower())
 
+    def test_full_test_design_route_is_deterministic_and_auditable(self) -> None:
+        normalized = " ".join(self.workflow.split())
+        for trigger in (
+            "two or more component or contract boundaries",
+            "state, repeat use, retry, concurrency, partial failure, recovery, permission, or rollback",
+            "real integration, deployment, or runtime-environment evidence",
+            "more than one verification layer",
+            "multiple implementation tasks map to shared behavior scenarios",
+        ):
+            with self.subTest(trigger=trigger):
+                self.assertIn(trigger, normalized)
+        self.assertIn("invoke `write-tests` before behavior implementation", normalized)
+        self.assertIn("`write-tests: skipped — <repository-backed reason>`", normalized)
+        self.assertIn("record the decision in the same-directory `artifact-review.md`", normalized)
+        self.assertNotIn("record `write-tests: skipped", read("skills/goal-execution-gate/SKILL.md"))
+
+    def test_full_design_must_pass_same_directory_artifact_gate(self) -> None:
+        normalized = " ".join(self.workflow.split())
+        self.assertIn("invoke `artifact-review-gate` before entering Goal execution", normalized)
+        self.assertIn("same change directory", normalized)
+        self.assertIn("Do not begin behavior implementation", self.workflow)
+        self.assertIn("`Artifact gate: pass`", normalized)
+
     def test_guarded_authority_and_review_are_separate(self) -> None:
         self.assertIn("already authorizes the exact change", self.risk)
         self.assertIn("always run completion review", self.risk)

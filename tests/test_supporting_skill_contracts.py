@@ -7,6 +7,7 @@ from tests._support import ROOT, frontmatter, markdown_links, read
 
 
 SUPPORTING_SKILLS = (
+    "artifact-review-gate",
     "grill-with-docs",
     "write-architecture",
     "write-db-design",
@@ -85,6 +86,40 @@ class SupportingSkillContractTest(unittest.TestCase):
             normalized,
         )
         self.assertIn("blocking contract gap", normalized)
+
+    def test_artifact_review_gate_is_persisted_and_blocks_incomplete_design(self) -> None:
+        body = read("skills/artifact-review-gate/SKILL.md")
+        template = read("skills/artifact-review-gate/templates/artifact-review.md")
+        normalized = " ".join(body.split())
+        for candidate in (
+            "requirement or clarification",
+            "`architecture.md`",
+            "`api-contracts.md`",
+            "`table-design.md`",
+            "`plan.md`",
+            "`test-plan.md`",
+        ):
+            with self.subTest(candidate=candidate):
+                self.assertIn(candidate, normalized)
+        self.assertIn("`artifact-review.md`", normalized)
+        self.assertIn("the same change directory", normalized)
+        self.assertIn("repository-backed evidence", normalized)
+        self.assertIn("do not begin behavior implementation", normalized.lower())
+        self.assertIn("Artifact gate: pass|blocked", body)
+        self.assertIn("Applicability", template)
+        self.assertIn(r"required\|skipped", template)
+        self.assertIn(r"generated\|skipped", template)
+
+    def test_artifact_gate_rejects_missing_required_or_unjustified_skips(self) -> None:
+        normalized = " ".join(read("skills/artifact-review-gate/SKILL.md").split())
+        for gap in (
+            "candidate is omitted",
+            "required artifact is missing",
+            "skipped candidate lacks repository-backed evidence",
+            "required D0 or D1 result is missing or failing",
+        ):
+            with self.subTest(gap=gap):
+                self.assertIn(gap, normalized)
 
     def test_capabilities_do_not_require_cascade(self) -> None:
         for name in SUPPORTING_SKILLS:

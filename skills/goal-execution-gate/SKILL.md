@@ -20,10 +20,13 @@ Before creating a Goal, use `get_goal` and prepare:
 - verifiable acceptance criteria and evidence paths;
 - repository and user constraints;
 - the Bruce execution profile and independent business-risk level.
+- the passed `artifact-review.md` path and verdict from Bruce.
 
 Continue a matching active Goal. Do not silently replace a conflicting unfinished Goal. Create a
 new Goal only for a confirmed entry and include objective, acceptance, scope, and constraints in its
 objective. Pass a token budget only when the user explicitly specified one.
+Do not create or resume execution state for a design-bearing task until the referenced artifact gate
+is current and passed.
 
 ## Audit record
 
@@ -32,6 +35,7 @@ After Goal creation or resumption, create or reuse
 record the native objective. Include:
 
 - objective, acceptance, scope, and constraints;
+- the passed `artifact-review.md` path and verdict as the design-stage prerequisite;
 - material decisions and their evidence;
 - executed verification and current outcomes;
 - blocking facts and exact unlock condition;
@@ -39,6 +43,8 @@ record the native objective. Include:
 
 Update the record at creation, material decisions, verification, blocking confirmation, and final
 closure. Do not mirror every Goal transition or infer native status from the file.
+The record may link to the design gate, but it does not copy candidate-artifact or skip decisions
+and never substitutes for the same-directory `artifact-review.md`.
 
 ## Execute and close
 
@@ -52,7 +58,7 @@ completed subtask is not a terminal result.
 
 Call `update_goal(status="complete")` only after the objective is delivered, every acceptance item
 has current evidence, required C0/D0/D1 and risk-proportional reviews pass, the audit record contains
-the final evidence, and no required work remains.
+the final execution evidence and artifact-gate reference, and no required work remains.
 
 Call `update_goal(status="blocked")` only after the same blocking condition recurs for at least three
 consecutive Goal turns, safe in-scope alternatives are exhausted, and the audit record states the

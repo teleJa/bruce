@@ -17,7 +17,8 @@ Derive persistence design from behavior and current repository facts.
 ## Procedure
 
 1. Confirm that the task needs schema or persistence design. If it does not, return `not needed`
-   with the evidence; do not create an exemption file.
+   with repository-backed evidence to Bruce for the same-directory `artifact-review.md`; do not
+   create a separate exemption file or write the decision to `execute_record.md`.
 2. Inspect repository conventions before choosing identifiers, foreign keys, types, timestamps,
    migration style, naming, or index patterns. Never import conventions from another project.
 3. For each important scenario, record pre-state, action, post-state, data consequences, read path,

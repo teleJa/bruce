@@ -9,7 +9,7 @@ Run one risk-driven workflow through the current Codex task, adding native Goal 
 the routes defined below:
 
 ```text
-inspect -> task contract -> implement -> verify -> summary
+inspect -> task contract -> design when needed -> artifact gate when required -> implement -> verify -> summary
 ```
 
 Keep Bruce as workflow guidance. Let Codex own commands, files, tools, permissions, task context,
@@ -42,7 +42,8 @@ Treat execution profile and risk as independent dimensions:
   does not create a Goal by default.
 - `full`: a large, multi-deliverable change, multiple components, or a cross-component contract
   change that benefits from complete, persistent, auditable execution. Record component and contract
-  dependencies and enter `goal-execution-gate` before implementation.
+  dependencies, complete design selection and artifact review, then enter `goal-execution-gate`
+  before implementation.
 
 A single-component schema change can be `standard + guarded`; a multi-component local documentation
 change can be `full + low`. Correct the profile when repository facts disprove the initial route.
@@ -66,14 +67,46 @@ supporting skill only for a present need:
   `write-architecture` and generate or update `api-contracts.md` before behavior implementation
   begins;
 - persistent multi-step or handoff plan: `write-plan`;
-- complex acceptance matrix: `write-tests`;
+- complex acceptance matrix: `write-tests`; apply the full test-design decision below before
+  behavior implementation;
 - important requirement, architecture, public-contract, implementation-plan, or test-design
   readiness; multi-document consistency; or an explicit document review: `doc-review-gate`;
 - meaningful plan risk: `plan-review`;
+- design-artifact completeness before implementation: `artifact-review-gate`;
 - a `full` profile by default, or a `standard` task with an explicit request for Goal, continuous/cross-turn
   execution, or an audit record: `goal-execution-gate`; once its native Goal and
   `execute_record.md` exist, use `spawn-execute` only for boundary-clear delegation;
 - guarded/critical or user-requested completion review: `verify-completion`.
+
+### Full test-design decision
+
+For a `full` task, invoke `write-tests` before behavior implementation when any of these conditions
+is present:
+
+- acceptance crosses two or more component or contract boundaries;
+- scenarios require state, repeat use, retry, concurrency, partial failure, recovery, permission, or rollback;
+- acceptance requires real integration, deployment, or runtime-environment evidence, or more than one verification layer;
+- multiple implementation tasks map to shared behavior scenarios or a known regression source.
+
+When triggered, persist `test-plan.md` through `write-tests`; an inline acceptance table in the task
+contract or Goal audit record is not a substitute. When a `full` task meets none of these conditions,
+do not invoke `write-tests` solely because of the profile, but record
+`write-tests: skipped — <repository-backed reason>` in the task contract and record the decision in
+the same-directory `artifact-review.md`. Do not leave the durable decision implicit or place it in
+`execute_record.md`.
+
+### Design artifact gate
+
+For every `full` task, invoke `artifact-review-gate` before entering Goal execution. Also invoke it
+for a `standard` task when a requirement, architecture, API contract, table design, implementation
+plan, or test design is persisted as a downstream source of truth.
+
+The gate must write `artifact-review.md` in the same change directory as the design documents and
+enumerate requirement/clarification, architecture, API contracts, table design, implementation
+plan, and test design as `required/generated/skipped` decisions with repository-backed evidence.
+Do not begin behavior implementation until the current file exists and reports
+`Artifact gate: pass`. A task contract, chat response, D1 summary, or Goal audit record is not a
+substitute. If scope changes a decision, rerun the gate and update the same file.
 
 Do not turn a supporting skill's Markdown output into global workflow state. Do not call the rest of
 the skill chain merely because one capability was selected.
@@ -81,9 +114,10 @@ the skill chain merely because one capability was selected.
 ## 4. Implement with Codex
 
 Use the tools available in the current Codex surface. For `standard`, prefer the main agent and a
-lightweight plan when useful. By default, every `full` task enters `goal-execution-gate` before implementation;
-the gate creates or resumes native Goal state and the audit record, after which Bruce executes the
-recorded dependencies sequentially or delegates only boundary-clear, low-coupling tasks.
+lightweight plan when useful. By default, every `full` task enters `goal-execution-gate` only after
+the design artifact gate passes; the Goal gate creates or resumes native Goal state and the audit
+record, after which Bruce executes the recorded dependencies sequentially or delegates only
+boundary-clear, low-coupling tasks.
 Honor an explicit user instruction to skip Goal for a `full` task, but report that persistent
 recovery and the audit record are unavailable; do not silently downgrade the profile.
 
@@ -182,12 +216,20 @@ Report completion only when all conditions hold:
 7. Every public or cross-component API, event, or file-contract change has a current
    `api-contracts.md` whose contents cover the actual diff and whose path follows the
    `write-architecture` placement rule.
+8. Every required design-bearing task has a current same-directory `artifact-review.md` with
+   `Artifact gate: pass`; its candidate decisions still match the actual diff.
+9. Every `full` task has a test-design decision in `artifact-review.md`; when a trigger is present,
+   the current `test-plan.md` covers the actual acceptance, otherwise the repository-backed skip
+   reason is recorded there.
 
 Summarize changed files, C0 and document-review verdicts, acceptance-to-evidence results, repair
-loops, residual risks, and any delivery action intentionally not performed.
-Keep D0/D1 results in the current task by default; keep C0 and completion-review results there as
-well. During Goal-backed execution, include them in the audit evidence packet so
-`goal-execution-gate` records them in the existing `execute_record.md`.
+loops, the artifact gate path and decision, residual risks, and any delivery action intentionally
+not performed.
+Keep implementation/completion D0/D1 results in the current task by default; keep C0 and
+completion-review results there as well. Design-phase candidate decisions and their D0/D1 readiness
+belong in `artifact-review.md`, never `execute_record.md`. During Goal-backed execution, include only
+execution-stage review evidence in the audit packet so `goal-execution-gate` records it in the
+existing `execute_record.md`.
 For a Goal-backed route, return the evidence to the gate; only the gate applies native Goal complete
 or blocked status after its terminal checks.
 

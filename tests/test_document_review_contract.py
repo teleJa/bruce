@@ -6,6 +6,7 @@ from tests._support import read
 
 
 DOCUMENT_WRITERS = (
+    "artifact-review-gate",
     "grill-with-docs",
     "write-architecture",
     "write-db-design",
@@ -56,8 +57,13 @@ class DocumentReviewContractTest(unittest.TestCase):
                 self.assertRegex(body, r"(?i)diff")
                 self.assertRegex(body, r"(?i)placeholders")
 
-    def test_review_result_stays_in_task_unless_goal_audit_exists(self) -> None:
-        self.assertIn("Keep D0/D1 results in the current task by default", self.workflow)
+    def test_review_results_use_stage_appropriate_audit_locations(self) -> None:
+        self.assertIn(
+            "Keep implementation/completion D0/D1 results in the current task by default",
+            self.workflow,
+        )
+        self.assertIn("Design-phase candidate decisions", self.workflow)
+        self.assertIn("belong in `artifact-review.md`, never `execute_record.md`", self.workflow)
         self.assertIn("existing `execute_record.md`", self.workflow)
 
 

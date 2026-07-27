@@ -8,7 +8,11 @@ from tests._support import ROOT, read
 class WorkflowRoutingContractTest(unittest.TestCase):
     def test_main_workflow_has_one_default_path(self) -> None:
         skill = read("skills/bruce/SKILL.md")
-        self.assertIn("inspect -> task contract -> implement -> verify -> summary", skill)
+        self.assertIn(
+            "inspect -> task contract -> design when needed -> artifact gate when required -> "
+            "implement -> verify -> summary",
+            skill,
+        )
         self.assertNotIn("express", skill.lower())
         for reference in ("risk-policy.md", "failure-recovery.md"):
             self.assertIn(reference, skill)

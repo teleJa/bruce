@@ -29,6 +29,13 @@ class ExecutionContractTest(unittest.TestCase):
         self.assertIn("execute_record.md", gate)
         self.assertNotIn("progress.json", gate)
 
+    def test_goal_consumes_artifact_gate_without_owning_design_decisions(self) -> None:
+        gate = " ".join(read("skills/goal-execution-gate/SKILL.md").split())
+        self.assertIn("passed `artifact-review.md` path and verdict", gate)
+        self.assertIn("does not copy candidate-artifact or skip decisions", gate)
+        self.assertNotIn("`write-tests: skipped", gate)
+        self.assertNotIn("test-design decision", gate)
+
     def test_delegation_brief_has_scope_and_acceptance(self) -> None:
         for field in ("objective", "allowed/excluded files", "dependencies", "acceptance", "verification"):
             self.assertIn(field, self.skill.lower())

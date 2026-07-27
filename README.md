@@ -9,12 +9,13 @@ to run D0 self-review after changing planning or design documents.
 ## Workflow
 
 ```text
-inspect -> task contract -> implement -> verify -> summary
+inspect -> task contract -> design when needed -> artifact gate when required -> implement -> verify -> summary
 ```
 
 - `standard` is the current-task delivery profile and does not create a Goal by default.
 - `full` is the complete delivery profile for large, multi-deliverable, multi-component, or
-  cross-component contract work and enters `goal-execution-gate` before implementation.
+  cross-component contract work. It passes a same-directory design artifact gate before entering
+  `goal-execution-gate` and implementation.
 - `low`, `guarded`, and `critical` describe business/change risk only.
 - L0-L4 classify transient, repairable, replan, business-authority, and unknown/incident failures.
 - Planning, architecture, test design, review, and delegation skills run only when the task needs
@@ -34,22 +35,30 @@ inspect -> task contract -> implement -> verify -> summary
   L2, L3, and L4 retain their retry, replan, decision, and incident-freeze semantics.
 - Every documentation change receives a separate D0 self-review with an explicit verdict. Important
   or downstream-governing documents receive a conditional D1 P0/P1 readiness gate.
+- Every full task, and every standard task that persists a downstream design source of truth,
+  receives an `artifact-review.md` beside its design documents. The gate enumerates requirement,
+  architecture, API contract, table design, plan, and test-design candidates; missing required
+  artifacts or skipped candidates without repository evidence block implementation.
 
 The canonical entry is [`skills/bruce/SKILL.md`](skills/bruce/SKILL.md). Other directories under
 `skills/` are independently discoverable supporting capabilities. Every skill includes generated
 `agents/openai.yaml` UI metadata. Bruce has no CLI, MCP server, app, sandbox implementation, or
 custom scheduler.
 
-The bundled `goal-execution-gate` owns native Goal creation, continuation, terminal status, and the
-single audit record. It uses `spawn-execute` only for bounded work under the active Goal. Ordinary
-standard-task subagent delegation uses Codex directly and creates no Goal.
+The bundled `artifact-review-gate` owns design-artifact completeness and its same-directory audit
+file. The bundled `goal-execution-gate` begins afterward and owns native Goal creation, continuation,
+terminal status, and the single execution audit record. It may link to `artifact-review.md`, but it
+does not copy design skip decisions into `execute_record.md`. It uses `spawn-execute` only for
+bounded work under the active Goal. Ordinary standard-task subagent delegation uses Codex directly
+and creates no Goal.
 
 The D1 document gate currently uses the separately discoverable `doc-review-gate`. Plan-only work
 with meaningful execution risk may use the deeper `plan-review` instead; Bruce does not run both
-mechanically. `plan-review: Clean` maps to D1 pass; `Issues Found` maps to D1 failure. D0 results stay
-in the current task, or enter the existing Goal audit record during Goal-backed execution. Until the
-gate is bundled with Bruce, an unavailable gate falls back to a disclosed main-agent P0/P1 pass
-unless the user explicitly requires an independent reviewer.
+mechanically. `plan-review: Clean` maps to D1 pass; `Issues Found` maps to D1 failure. Design-phase
+D0/D1 results are summarized in `artifact-review.md`; implementation/completion review evidence stays
+in the current task or enters the Goal execution audit record. Until the D1 gate is bundled with
+Bruce, an unavailable gate falls back to a disclosed main-agent P0/P1 pass unless the user explicitly
+requires an independent reviewer.
 
 ## Planning document review hook
 

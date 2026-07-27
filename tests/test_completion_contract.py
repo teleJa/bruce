@@ -54,6 +54,14 @@ class CompletionContractTest(unittest.TestCase):
         self.assertIn("missing, stale, or does not cover the actual contract diff", normalized)
         self.assertIn("return `issues`", normalized)
 
+    def test_completion_requires_current_artifact_review_against_final_diff(self) -> None:
+        normalized = " ".join(self.skill.split())
+        self.assertIn("resolved `artifact-review.md`", normalized)
+        self.assertIn("final diff", normalized)
+        self.assertIn("required artifact or review is missing", normalized)
+        self.assertIn("skip decision is no longer supported", normalized)
+        self.assertIn("return `issues`", normalized)
+
     def test_review_mode_is_proportional_to_risk(self) -> None:
         self.assertIn("main-agent-second-pass", self.skill)
         self.assertIn("ordinary guarded work", self.skill)

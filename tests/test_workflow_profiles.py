@@ -18,15 +18,27 @@ class WorkflowProfileContractTest(unittest.TestCase):
         self.assertIn("`unresolved`", normalized)
         self.assertIn("bounded read-only inspection", normalized)
         self.assertIn("does not create a Goal, design review, test design, or change directory", normalized)
+        self.assertIn("Do not begin behavior implementation while the profile is `unresolved`", normalized)
 
     def test_full_requires_structural_evidence(self) -> None:
         normalized = " ".join(self.workflow.split())
         self.assertIn("multiple independently delivered components", normalized)
         self.assertIn("cross-component contract propagation", normalized)
+        for evidence in ("`named components`", "`propagated contract`", "repository `evidence`"):
+            with self.subTest(evidence=evidence):
+                self.assertIn(evidence, normalized)
         self.assertIn("Size, duration, risk, and uncertainty are insufficient", normalized)
 
     def test_test_design_route_is_profile_independent(self) -> None:
         normalized = " ".join(self.test_design.split())
+        for trigger in (
+            "multiple component or contract boundaries",
+            "state, repeat use, retry, concurrency, partial failure, recovery, permission, or rollback",
+            "real integration, deployment, runtime evidence, or multiple verification layers",
+            "shares behavior scenarios or regression sources across tasks",
+        ):
+            with self.subTest(trigger=trigger):
+                self.assertIn(trigger, normalized)
         self.assertIn("profile alone is neither necessary nor sufficient", normalized)
         self.assertIn("for any resolved Bruce profile", normalized)
         self.assertNotIn("For a `full` Bruce task", self.test_design)
@@ -37,6 +49,12 @@ class WorkflowProfileContractTest(unittest.TestCase):
         self.assertIn("A resolved profile does not itself invoke Goal, Design Gate", normalized)
         self.assertIn("Design: pass|blocked", self.design_gate)
         self.assertNotIn("When a `full` task", self.design_gate)
+
+    def test_later_facts_recheck_only_affected_predicates(self) -> None:
+        normalized = " ".join(self.workflow.split())
+        self.assertIn("re-evaluate only the affected capability predicates", normalized)
+        self.assertIn("before continuing affected behavior implementation", normalized)
+        self.assertIn("Do not ask for approval unless", normalized)
 
     def test_risk_changes_review_mode_not_verdict_count(self) -> None:
         self.assertIn("Risk changes its review mode, not the number of", self.risk)

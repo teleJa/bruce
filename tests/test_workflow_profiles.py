@@ -10,45 +10,39 @@ class WorkflowProfileContractTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.workflow = read("skills/bruce/SKILL.md")
         cls.risk = read("skills/bruce/references/risk-policy.md")
+        cls.test_design = read("skills/write-tests/SKILL.md")
+        cls.design_gate = read("skills/design-gate/SKILL.md")
 
-    def test_standard_low_is_direct(self) -> None:
-        self.assertIn("`standard`", self.workflow)
-        self.assertIn("`low`", self.risk)
-        self.assertIn("Implement and verify directly", self.risk)
-        self.assertIn("does not create a Goal by default", self.workflow)
-
-    def test_full_low_uses_goal_without_business_gate(self) -> None:
-        self.assertIn("full + low", self.workflow)
-        self.assertIn("By default, every `full` task", self.workflow)
-        self.assertIn("goal-execution-gate", self.workflow)
-        self.assertNotIn("full requires approval", self.workflow.lower())
-
-    def test_full_test_design_route_is_deterministic_and_auditable(self) -> None:
+    def test_unresolved_profile_is_read_only_and_side_effect_free(self) -> None:
         normalized = " ".join(self.workflow.split())
-        for trigger in (
-            "two or more component or contract boundaries",
-            "state, repeat use, retry, concurrency, partial failure, recovery, permission, or rollback",
-            "real integration, deployment, or runtime-environment evidence",
-            "more than one verification layer",
-            "multiple implementation tasks map to shared behavior scenarios",
-        ):
-            with self.subTest(trigger=trigger):
-                self.assertIn(trigger, normalized)
-        self.assertIn("invoke `write-tests` before behavior implementation", normalized)
-        self.assertIn("`write-tests: skipped — <repository-backed reason>`", normalized)
-        self.assertIn("record the decision in the same-directory `artifact-review.md`", normalized)
-        self.assertNotIn("record `write-tests: skipped", read("skills/goal-execution-gate/SKILL.md"))
+        self.assertIn("`unresolved`", normalized)
+        self.assertIn("bounded read-only inspection", normalized)
+        self.assertIn("does not create a Goal, design review, test design, or change directory", normalized)
 
-    def test_full_design_must_pass_same_directory_artifact_gate(self) -> None:
+    def test_full_requires_structural_evidence(self) -> None:
         normalized = " ".join(self.workflow.split())
-        self.assertIn("invoke `artifact-review-gate` before entering Goal execution", normalized)
-        self.assertIn("same change directory", normalized)
-        self.assertIn("Do not begin behavior implementation", self.workflow)
-        self.assertIn("`Artifact gate: pass`", normalized)
+        self.assertIn("multiple independently delivered components", normalized)
+        self.assertIn("cross-component contract propagation", normalized)
+        self.assertIn("Size, duration, risk, and uncertainty are insufficient", normalized)
 
-    def test_guarded_authority_and_review_are_separate(self) -> None:
-        self.assertIn("already authorizes the exact change", self.risk)
-        self.assertIn("always run completion review", self.risk)
+    def test_test_design_route_is_profile_independent(self) -> None:
+        normalized = " ".join(self.test_design.split())
+        self.assertIn("profile alone is neither necessary nor sufficient", normalized)
+        self.assertIn("for any resolved Bruce profile", normalized)
+        self.assertNotIn("For a `full` Bruce task", self.test_design)
+
+    def test_design_gate_depends_on_downstream_design(self) -> None:
+        normalized = " ".join(self.workflow.split())
+        self.assertIn("will govern downstream implementation", normalized)
+        self.assertIn("A resolved profile does not itself invoke Goal, Design Gate", normalized)
+        self.assertIn("Design: pass|blocked", self.design_gate)
+        self.assertNotIn("When a `full` task", self.design_gate)
+
+    def test_risk_changes_review_mode_not_verdict_count(self) -> None:
+        self.assertIn("Risk changes its review mode, not the number of", self.risk)
+        self.assertIn("main-agent review mode", self.risk)
+        self.assertIn("independent mode", self.risk)
+        self.assertIn("Completion: blocked", self.risk)
 
     def test_critical_requires_impact_recovery_confirmation(self) -> None:
         self.assertIn("state target, impact, and recovery", self.risk)

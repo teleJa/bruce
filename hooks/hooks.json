@@ -1,5 +1,5 @@
 {
-  "description": "Low-noise Bruce D0 review reminder for planning and design documents.",
+  "description": "Low-noise Bruce Design Gate reminder for planning and design documents.",
   "hooks": {
     "PostToolUse": [
       {

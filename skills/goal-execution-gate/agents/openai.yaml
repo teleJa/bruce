@@ -1,4 +1,0 @@
-interface:
-  display_name: "Goal Execution Gate"
-  short_description: "Run full or explicit persistent delivery with native Goal audit"
-  default_prompt: "Use $goal-execution-gate to run this persistent Bruce delivery with native Goal state and an execute_record.md audit record."

@@ -41,12 +41,14 @@ class PostToolReviewHookTest(unittest.TestCase):
             "tool_input": {"patch": f"*** Update File: {path}"},
         }
 
-    def test_absolute_planning_path_under_payload_cwd_triggers_d0(self) -> None:
+    def test_absolute_planning_path_under_payload_cwd_triggers_design_gate(self) -> None:
         reminder = self.run_hook(
             self.patch_payload("/tmp/sample-repo/docs/change/example/plan.md")
         )
 
-        self.assertIn("Bruce D0 review reminder", reminder)
+        self.assertIn("Bruce Design Gate reminder", reminder)
+        self.assertIn("$design-gate", reminder)
+        self.assertIn("Design: pass", reminder)
         self.assertIn("advisory", reminder)
 
     def test_relative_trellis_planning_path_remains_compatible(self) -> None:
@@ -54,7 +56,7 @@ class PostToolReviewHookTest(unittest.TestCase):
             self.patch_payload(".trellis/tasks/example/test-plan.md")
         )
 
-        self.assertIn("Bruce D0 review reminder", reminder)
+        self.assertIn("Bruce Design Gate reminder", reminder)
 
     def test_code_and_regular_document_edits_stay_quiet(self) -> None:
         for path in ("src/app.py", "docs/notes.md", "README.md"):
@@ -90,7 +92,7 @@ class PostToolReviewHookTest(unittest.TestCase):
             },
         }
 
-        self.assertIn("Bruce D0 review reminder", self.run_hook(payload))
+        self.assertIn("Bruce Design Gate reminder", self.run_hook(payload))
 
 
 if __name__ == "__main__":

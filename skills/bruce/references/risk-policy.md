@@ -5,8 +5,8 @@
 | Risk | Typical triggers | Required behavior |
 |---|---|---|
 | `low` | Local, reversible work with no public contract, schema, production, security, or irreversible consequence | Implement and verify directly; do not force a reviewer or business question |
-| `guarded` | Schema, public API/contract, security-sensitive configuration, or important but recoverable data change | Continue when the current request already authorizes the exact change; otherwise ask one business question before mutation; always run completion review |
-| `critical` | Production, infrastructure, irreversible data operation, permission boundary, security incident, or irreversible external write | Before mutation, state target, impact, and recovery and obtain explicit confirmation; always run completion review; unknown state becomes L4 |
+| `guarded` | Schema, public API/contract, security-sensitive configuration, or important but recoverable data change | Continue when the current request authorizes the exact change; otherwise ask one business question before mutation; use risk-proportional Completion Gate review |
+| `critical` | Production, infrastructure, irreversible data operation, permission boundary, security incident, or irreversible external write | Before mutation, state target, impact, and recovery and obtain explicit confirmation; require independent Completion Gate review; unknown state becomes L4 |
 
 ## Reclassification
 
@@ -17,14 +17,20 @@ ceremonial approval. Never lower risk merely to bypass a pending guarded or crit
 Expanding scope, changing acceptance, or accepting a new business consequence requires a business
 decision even if the technical operation is reversible.
 
-## Completion review
+## Completion assurance
 
-Use `verify-completion` for all guarded and critical work. For ordinary guarded work, perform a
-distinct main-agent second pass. Prefer a fresh Codex-native subagent when a guarded change is broad
-enough to span multiple components/contracts, combine migration and rollout, or carry a broad
-security/data blast radius. Critical work and explicitly requested independent reviews require a
-fresh reviewer; if none is available, report blocked rather than relabeling a main-agent pass as
-independent.
+Every implementation task uses `verify-completion`. Risk changes its review mode, not the number of
+completion verdicts:
+
+- low and ordinary guarded work use the main-agent review mode;
+- guarded work uses independent mode when it spans multiple components/contracts, combines migration and
+  rollout, has semantic novelty or ambiguity, depends mainly on weak executable evidence, follows
+  repeated author repair, or carries broad security/data impact;
+- critical work and explicitly requested independent review always use independent mode.
+
+Independent mode uses a fresh Codex-native subagent with no inherited author conversation. If clean
+context is unavailable, `verify-completion` returns `Completion: blocked`. Independent review is an
+internal mode, not a separate result that callers combine with completion.
 
 Host permission prompts are outside this policy. Obey Codex and do not use a business-risk label to
 grant, deny, or bypass host authority.

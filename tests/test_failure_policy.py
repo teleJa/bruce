@@ -27,7 +27,7 @@ class FailurePolicyContractTest(unittest.TestCase):
         self.assertIn("Move exhausted L0/L1 work to L2", self.policy)
 
     def test_repair_round_requires_original_scenario_and_regression(self) -> None:
-        self.assertIn("required C0", self.policy)
+        self.assertIn("author inspection", self.policy)
         self.assertIn("unchanged original\n  failed scenario", self.policy)
         self.assertIn("related regressions", self.policy)
         self.assertIn("Do not weaken acceptance", self.policy)
@@ -37,11 +37,11 @@ class FailurePolicyContractTest(unittest.TestCase):
         self.assertIn("L4", self.policy)
         self.assertIn("never elevate privileges or replay", self.policy)
         loop = read("skills/bruce/references/verification-loop.md")
-        self.assertIn("L4: freeze writes and retries", loop)
-        self.assertIn("never replay the original scenario", loop)
+        self.assertIn("[failure-recovery.md](failure-recovery.md)", loop)
+        self.assertNotIn("L4: freeze writes and retries", loop)
 
     def test_failure_propagation_is_local_except_incident_boundary(self) -> None:
-        self.assertIn("Proven-independent work continues", self.policy)
+        self.assertIn("Proven dependency-independent work continues", self.policy)
         self.assertIn("incident boundary", self.policy)
         self.assertIn("Only read-only diagnosis and proven-isolated work may continue", self.policy)
 

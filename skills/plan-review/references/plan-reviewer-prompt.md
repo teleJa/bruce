@@ -1,7 +1,10 @@
 # Plan reviewer prompt
 
-Use this prompt with a fresh Codex-native subagent when independent review is warranted. Provide the
-raw plan, task contract, and only the artifacts the plan explicitly references.
+Use this prompt with a fresh Codex-native subagent started with `fork_turns="none"` or equivalent
+clean context when independent review is required. Provide the objective, acceptance, raw plan
+final diff or immutable snapshot, raw repository evidence, necessary constraints, and only the
+artifacts the plan explicitly references. Do not provide the author's rationale, confidence, or
+proposed conclusion.
 
 ```text
 Review the supplied implementation plan for execution readiness. Do not polish wording and do not

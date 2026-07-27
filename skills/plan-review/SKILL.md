@@ -25,9 +25,10 @@ Review readiness, not writing style.
    affect execution safety.
 5. Check referenced test design when present. Do not fail a plan merely because an optional sibling
    artifact does not exist.
-6. Prefer a fresh native subagent for a high-risk review. When unavailable, perform a separated
-   second pass and disclose the mode. Use [plan-reviewer-prompt.md](references/plan-reviewer-prompt.md)
-   when delegating.
+6. Use `main-agent` review mode by default. When the user explicitly requests independent plan
+   review, use a fresh native subagent with `fork_turns="none"` or equivalent clean context and the
+   minimal input packet in [plan-reviewer-prompt.md](references/plan-reviewer-prompt.md). Report
+   `Review mode: main-agent|independent`.
 
 ## Output
 

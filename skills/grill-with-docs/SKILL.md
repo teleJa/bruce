@@ -28,15 +28,15 @@ Resolve connected domain decisions without turning ordinary task clarification i
 6. Update durable docs only when requested or when the decision has lasting domain value:
    - use [CONTEXT-FORMAT.md](CONTEXT-FORMAT.md) for stable glossary terms;
    - use [ADR-FORMAT.md](ADR-FORMAT.md) only for hard-to-reverse, surprising trade-offs.
-7. When files changed, separately inspect their diff, factual grounding, terminology/cross-reference
+7. When files changed, inspect their diff, factual grounding, terminology/cross-reference
    consistency, omissions, placeholders, and links. Repair in-scope issues and return
-   `Document self-review: pass|issues` with the checks performed.
+   `Document check: clear|issues` with the checks performed.
 
 ## Output
 
 Return the resolved terminology, decision dependencies, constraints, acceptance impact, remaining
 unknowns, and any files explicitly updated. A chat answer is the default; do not create a
-clarification artifact merely because the skill ran. Include the document self-review verdict when
+clarification artifact merely because the skill ran. Include the document-check result when
 files changed.
 
 ## Does not own

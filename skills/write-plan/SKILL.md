@@ -29,16 +29,15 @@ Create the smallest plan that makes dependencies and verification unambiguous.
    and no task depends on unstated context.
 6. Persist the result using [plan.md](templates/plan.md). Keep status and approval outside the plan
    unless the target repository has an explicit, user-authorized convention requiring them.
-7. Separately inspect the plan diff and check requirement/acceptance coverage, task boundaries,
+7. Inspect the plan diff and check requirement/acceptance coverage, task boundaries,
    dependencies, file/interface joins, Given/When/Then evidence anchors, omissions, placeholders,
-   and links.
-   Repair issues and return `Document self-review: pass|issues`. Flag D1 readiness review when the
-   plan will drive execution; do not invoke another supporting skill automatically.
+   and links. Repair issues and return `Document check: clear|issues`. When the plan will govern
+   implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.
 
 ## Output
 
 Produce one minimal executable plan and summarize its dependency order, high-risk steps, and
-verification anchors. Include the document self-review verdict.
+verification anchors. Include the document-check result.
 
 ## Does not own
 

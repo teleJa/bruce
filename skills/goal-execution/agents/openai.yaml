@@ -1,0 +1,4 @@
+interface:
+  display_name: "Goal Execution"
+  short_description: "Persist Bruce delivery with native Goal state"
+  default_prompt: "Use $goal-execution to persist this Bruce delivery with native Goal state and one audit record."

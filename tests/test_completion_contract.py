@@ -10,70 +10,64 @@ class CompletionContractTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.skill = read("skills/verify-completion/SKILL.md")
 
-    def test_verdicts_and_evidence_are_explicit(self) -> None:
-        for verdict in ("`pass`", "`issues`", "`blocked`"):
+    def test_completion_gate_returns_one_verdict(self) -> None:
+        self.assertIn("Bruce's only completion decision", self.skill)
+        for verdict in ("Completion: pass", "Completion: issues", "Completion: blocked"):
             self.assertIn(verdict, self.skill)
-        self.assertIn("acceptance-to-evidence mapping", self.skill)
-        self.assertIn("actual change set", self.skill)
+        self.assertIn("Return exactly one terminal field", self.skill)
 
-    def test_current_evidence_is_required(self) -> None:
+    def test_final_author_quality_is_internal(self) -> None:
+        for check in (
+            "final diff",
+            "affected call sites",
+            "error paths",
+            "security",
+            "concurrency",
+            "data integrity",
+            "regression coverage",
+            "cross-document consistency",
+        ):
+            self.assertIn(check, self.skill)
+        self.assertIn("Any later change invalidates", self.skill)
+
+    def test_acceptance_evidence_is_scenario_and_layer_specific(self) -> None:
+        self.assertIn("Map every acceptance condition", self.skill)
         self.assertIn("current, reproducible evidence", self.skill)
-        self.assertIn("natural-language evidence as a gap", self.skill)
-        self.assertIn("unresolved L2/L3/L4", self.skill)
+        self.assertIn("A unit test\ndoes not prove", self.skill)
+        self.assertIn("scenario-level\nacceptance evidence", self.skill)
 
-    def test_behavior_completion_is_scenario_and_layer_specific(self) -> None:
-        self.assertIn("concrete Given/When/Then scenarios", self.skill)
-        self.assertIn("evidence layer", self.skill)
-        self.assertIn("A unit test does not prove", self.skill)
-        self.assertIn("scenario-level acceptance-to-evidence mapping", self.skill)
-
-    def test_final_code_review_and_failed_scenario_rerun_are_required(self) -> None:
-        self.assertIn("require C0 `pass` after the final code change", self.skill)
-        self.assertIn("entered an L1", self.skill)
-        self.assertIn("unchanged original scenario", self.skill)
-        self.assertIn("related regressions passed", self.skill)
-        self.assertIn("Never demand a replay", self.skill)
-
-    def test_web_acceptance_requires_current_chrome_evidence(self) -> None:
-        self.assertIn("Codex App Chrome evidence", self.skill)
+    def test_web_acceptance_requires_current_chrome(self) -> None:
+        self.assertIn("current Codex App Chrome evidence", self.skill)
         self.assertIn("keep the scenario incomplete", self.skill)
-        self.assertIn("reject a silent Playwright fallback", self.skill)
+        self.assertIn("do not silently substitute Playwright", self.skill)
 
-    def test_document_review_is_completion_evidence(self) -> None:
-        self.assertIn("Current D0 document self-review", self.skill)
-        self.assertIn("require a current D0 `pass`", self.skill)
-        self.assertIn("D1 `通过`", self.skill)
-        self.assertIn("accept `Clean` as `通过`", self.skill)
-        self.assertIn("treat `Issues Found` as", self.skill)
-        self.assertIn("D1 `不通过` as a completion issue", self.skill)
+    def test_design_alignment_returns_issue_without_reimplementing_design_gate(self) -> None:
+        self.assertIn("compare the final diff and scope with `design-review.md`", self.skill)
+        self.assertIn("Do not rerun Design Gate inside completion", self.skill)
+        self.assertIn("return the mismatch to Bruce for one explicit rerun", self.skill)
 
-    def test_public_contract_requires_current_api_contract_artifact(self) -> None:
+    def test_independence_is_an_internal_review_mode(self) -> None:
         normalized = " ".join(self.skill.split())
-        self.assertIn("public or cross-component API, event, or file-contract change", normalized)
-        self.assertIn("`api-contracts.md`", normalized)
-        self.assertIn("missing, stale, or does not cover the actual contract diff", normalized)
-        self.assertIn("return `issues`", normalized)
+        self.assertIn("Use `main-agent` mode", normalized)
+        self.assertIn("Use an `independent` clean-context", normalized)
+        self.assertIn("Exclude author rationale, confidence, and proposed verdict", normalized)
+        self.assertIn("not a second externally combined verdict", normalized)
+        self.assertIn("Completion: blocked", normalized)
 
-    def test_completion_requires_current_artifact_review_against_final_diff(self) -> None:
-        normalized = " ".join(self.skill.split())
-        self.assertIn("resolved `artifact-review.md`", normalized)
-        self.assertIn("final diff", normalized)
-        self.assertIn("required artifact or review is missing", normalized)
-        self.assertIn("skip decision is no longer supported", normalized)
-        self.assertIn("return `issues`", normalized)
+    def test_repair_and_delivery_boundaries_are_checked(self) -> None:
+        self.assertIn("unchanged original failed scenario", self.skill)
+        self.assertIn("related regressions", self.skill)
+        self.assertIn("L2-L4", self.skill)
+        self.assertIn("delivery actions", self.skill)
 
-    def test_review_mode_is_proportional_to_risk(self) -> None:
-        self.assertIn("main-agent-second-pass", self.skill)
-        self.assertIn("ordinary guarded work", self.skill)
-        self.assertIn("broad guarded work", self.skill)
-        self.assertIn("multiple components/contracts", self.skill)
-        self.assertIn("critical work", self.skill)
-        self.assertIn("return `blocked`", self.skill)
-        self.assertIn("do not present a main-agent fallback as", self.skill)
-
-    def test_review_does_not_depend_on_legacy_artifacts(self) -> None:
-        for forbidden in ("checklist", "progress.md", "completion-review.md", "sha256", "execute-complete"):
-            self.assertNotIn(forbidden, self.skill.lower())
+    def test_legacy_multi_verdict_fields_are_absent(self) -> None:
+        for marker in (
+            "Verification: V0",
+            "Author checks: C0/D0",
+            "Independent review: R1",
+            "not-run",
+        ):
+            self.assertNotIn(marker, self.skill)
 
 
 if __name__ == "__main__":

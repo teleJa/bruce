@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Gate"
+  short_description: "Decide design completeness and readiness once"
+  default_prompt: "Use $design-gate to decide whether this persisted design is ready for implementation."

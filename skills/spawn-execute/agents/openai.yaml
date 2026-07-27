@@ -1,4 +1,4 @@
 interface:
   display_name: "Spawn Execute"
   short_description: "Execute an active Goal with auditable delegation"
-  default_prompt: "Use $spawn-execute under $goal-execution-gate to execute this Goal with an audit record."
+  default_prompt: "Use $spawn-execute under $goal-execution to execute this bounded Goal task and return evidence."

@@ -1,11 +1,19 @@
 ---
 name: write-tests
-description: Use when acceptance is complex enough to need a persistent test design, including stateful workflows, retries, permissions, integrations, regressions, or multiple task-to-scenario mappings. Produce only the necessary test plan from actual acceptance and repository test capabilities.
+description: Use when acceptance crosses multiple component or contract boundaries; needs state, repeat use, retry, concurrency, partial failure, recovery, permission, or rollback coverage; requires real integration, deployment, runtime evidence, or multiple verification layers; or shares behavior scenarios or regression sources across tasks. Produce only the necessary persistent test plan from actual acceptance and repository test capabilities.
 ---
 
 # Write tests
 
 Turn acceptance into concrete, executable verification scenarios.
+
+## Invocation decision
+
+Apply the frontmatter trigger contract before behavior implementation. Do so for any resolved Bruce
+profile; profile alone is neither necessary nor sufficient. When triggered, persist `test-plan.md`; inline
+acceptance or Goal audit text is not a substitute. When no trigger applies, do not invoke this skill.
+If Design Gate is independently required, it records the repository-backed test-design skip
+in its candidate matrix; otherwise do not create a durable skip record.
 
 ## Inputs
 
@@ -27,16 +35,16 @@ Turn acceptance into concrete, executable verification scenarios.
 5. When a plan exists, map scenarios to its task ids without requiring every non-feature task to
    have a synthetic scenario.
 6. Persist `test-plan.md` using [test-plan.md](templates/test-plan.md).
-7. Separately inspect the document diff and check acceptance/requirement traceability, prerequisites,
+7. Inspect the document diff and check acceptance/requirement traceability, prerequisites,
    Given/When/Then observability, evidence-layer fit, real dependency semantics, regression coverage,
-   omissions, placeholders, and links. Repair issues and return
-   `Document self-review: pass|issues`. Flag D1 readiness review when the test design gates downstream
-   work; do not invoke another supporting skill automatically.
+   omissions, placeholders, and links. Repair issues and return `Document check: clear|issues`.
+   When the test design will govern implementation, tell Bruce that `design-gate` is required; do
+   not invoke it automatically.
 
 ## Output
 
 Produce a test design with Given/When/Then/Evidence acceptance mapping, scenarios, prerequisites,
-commands, known limits, and the document self-review verdict.
+commands, known limits, and the document-check result.
 
 ## Does not own
 

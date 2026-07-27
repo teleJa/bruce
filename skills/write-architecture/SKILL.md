@@ -55,17 +55,16 @@ trigger this requirement.
    structural decision must be persisted or handed off. For every contract change described above,
    generate or update `api-contracts.md` from [api-contracts.md](templates/api-contracts.md) in the
    resolved artifact directory before behavior implementation begins.
-7. When an artifact was persisted, separately inspect its diff, verify claims against repository
-   evidence, check contracts and cross-document references for consistency, and remove material
-   omissions, unresolved placeholders, and broken links. Repair issues and return
-   `Document self-review: pass|issues`. Flag D1 document readiness review when the artifact will
-   govern downstream work; do not invoke another supporting skill automatically.
+7. When an artifact was persisted, inspect its diff, verify claims against repository evidence,
+   check contracts and cross-document references, and remove material omissions, placeholders, and
+   broken links. Repair issues and return `Document check: clear|issues`. When the artifact will
+   govern implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.
 
 ## Output
 
 Return the selected design, alternatives and rationale, affected components/contracts, risks,
-recovery and verification impact. List any generated artifacts and include the document self-review
-verdict when one was persisted. Absence of optional `architecture.md` is not a failure; absence of
+recovery and verification impact. List any generated artifacts and include the document author-check
+check result when one was persisted. Absence of optional `architecture.md` is not a failure; absence of
 required `api-contracts.md` is a blocking contract gap and must be returned to Bruce before
 implementation.
 

@@ -6,66 +6,63 @@ from tests._support import ROOT, read
 
 
 class WorkflowRoutingContractTest(unittest.TestCase):
-    def test_main_workflow_has_one_default_path(self) -> None:
+    def test_main_workflow_has_two_decisions_and_one_optional_mode(self) -> None:
         skill = read("skills/bruce/SKILL.md")
-        self.assertIn(
-            "inspect -> task contract -> design when needed -> artifact gate when required -> "
-            "implement -> verify -> summary",
-            skill,
+        self.assertIn("Design Gate when needed", skill)
+        self.assertIn("Completion Gate", skill)
+        self.assertIn("optional Goal execution mode", skill)
+        self.assertIn("two decisions and one optional execution mode", skill)
+        for name in ("`design-gate`", "`verify-completion`", "`goal-execution`"):
+            self.assertIn(name, skill)
+
+    def test_profile_and_risk_remain_independent(self) -> None:
+        skill = read("skills/bruce/SKILL.md")
+        self.assertIn("`standard`", skill)
+        self.assertIn("`full`", skill)
+        self.assertIn("Treat execution profile and risk as independent", skill)
+        self.assertIn("Size, duration, risk, and uncertainty are insufficient", skill)
+
+    def test_active_workflow_does_not_expose_legacy_verdict_protocol(self) -> None:
+        paths = (
+            "skills/bruce/SKILL.md",
+            "skills/bruce/references/verification-loop.md",
+            "skills/design-gate/SKILL.md",
+            "skills/verify-completion/SKILL.md",
+            "skills/goal-execution/SKILL.md",
+            "skills/spawn-execute/SKILL.md",
         )
-        self.assertNotIn("express", skill.lower())
-        for reference in ("risk-policy.md", "failure-recovery.md"):
-            self.assertIn(reference, skill)
-        self.assertNotIn("workflow-contract.md", skill)
+        forbidden = (
+            "artifact-review-gate",
+            "goal-execution-gate",
+            "doc-review-gate",
+            "Author check: C0",
+            "Document author check: D0",
+            "D1 readiness",
+            "Verification: V0",
+            "Independent review: R1",
+        )
+        for path in paths:
+            body = read(path)
+            with self.subTest(path=path):
+                for marker in forbidden:
+                    self.assertNotIn(marker, body)
 
-    def test_execution_profile_is_independent_from_risk(self) -> None:
-        contract = read("skills/bruce/SKILL.md")
-        self.assertIn("`standard`", contract)
-        self.assertIn("`full`", contract)
-        self.assertIn("execution profile and risk as independent dimensions", contract)
-        self.assertIn("standard + guarded", contract)
-        self.assertIn("full + low", contract)
+    def test_goal_route_is_explicit_and_profile_independent(self) -> None:
+        workflow = read("skills/bruce/SKILL.md")
+        goal = read("skills/goal-execution/SKILL.md")
+        normalized = " ".join(goal.split())
+        self.assertIn("Enter only for explicit Goal intent", normalized)
+        self.assertIn("resolved task contract requires continuous/cross-turn", normalized)
+        self.assertIn("Profile, complexity, duration, risk, or subagent use alone does not", normalized)
+        self.assertIn(".goal/<goal-id>/execute_record.md", goal)
+        self.assertTrue((ROOT / "skills/goal-execution/SKILL.md").is_file())
+        self.assertNotIn("a `full` profile by default", workflow)
 
-    def test_capabilities_are_defined_once_in_main_workflow(self) -> None:
-        skill = read("skills/bruce/SKILL.md")
-        self.assertIn("Select only necessary capabilities", skill)
-        self.assertFalse((ROOT / "skills/bruce/references/workflow-contract.md").exists())
-
-    def test_public_contract_change_requires_persisted_api_contract(self) -> None:
-        skill = read("skills/bruce/SKILL.md")
-        normalized = " ".join(skill.split())
-        self.assertIn("public or cross-component API, event, or file-contract change", normalized)
-        self.assertIn("must invoke `write-architecture`", normalized)
-        self.assertIn("before behavior implementation begins", normalized)
-        self.assertIn("`api-contracts.md`", normalized)
-
-    def test_risk_policy_avoids_duplicate_guarded_confirmation(self) -> None:
-        policy = read("skills/bruce/references/risk-policy.md")
-        self.assertIn("already authorizes the exact change", policy)
-        self.assertIn("Lower risk when the original trigger is disproved", policy)
-        self.assertIn("Never lower risk merely to bypass", policy)
-
-    def test_host_authority_is_not_business_risk(self) -> None:
+    def test_host_authority_remains_owned_by_codex(self) -> None:
         boundary = read("skills/bruce/references/plugin-boundary.md")
         self.assertIn("Codex host approval", boundary)
         self.assertIn("Bruce business decision", boundary)
-        self.assertIn("does not prove or replace", boundary)
-
-    def test_full_and_explicit_standard_goal_route_through_bundled_gate(self) -> None:
-        skill = read("skills/bruce/SKILL.md")
-        self.assertIn("Use native subagents directly for incidental delegation", skill)
-        self.assertIn("goal-execution-gate", skill)
-        self.assertIn(".goal/<goal-id>/execute_record.md", skill)
-        self.assertIn("By default, every `full` task", skill)
-        self.assertIn("A `standard` task enters Goal", skill)
-        self.assertIn("explicit user instruction to skip Goal", skill)
-        self.assertNotIn("Until `goal-execution-gate` is bundled", skill)
-        self.assertTrue((ROOT / "skills/goal-execution-gate/SKILL.md").is_file())
-
-        boundary = read("skills/bruce/references/plugin-boundary.md")
-        self.assertIn("native Goal status", boundary)
-        self.assertIn("human audit source only", boundary)
-        self.assertIn("never\ncreates a second ledger", boundary)
+        self.assertIn("Obey host results directly", boundary)
 
 
 if __name__ == "__main__":

@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import unittest
 
-from tests._support import read
+from tests._support import ROOT, read
 
 
 DOCUMENT_WRITERS = (
-    "artifact-review-gate",
     "grill-with-docs",
     "write-architecture",
     "write-db-design",
@@ -16,18 +15,9 @@ DOCUMENT_WRITERS = (
 
 
 class DocumentReviewContractTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.workflow = read("skills/bruce/SKILL.md")
-
-    def test_every_document_change_requires_explicit_d0_verdict(self) -> None:
-        self.assertIn("If any documentation changed", self.workflow)
-        self.assertIn("separated D0 document self-review", self.workflow)
-        self.assertIn("Document review: self-review", self.workflow)
-        self.assertIn("Verdict: pass|issues", self.workflow)
-        self.assertIn("do not report completion while issues remain", self.workflow)
-
-    def test_d0_checks_facts_consistency_completeness_and_links(self) -> None:
+    def test_design_gate_combines_completeness_and_readiness(self) -> None:
+        gate = read("skills/design-gate/SKILL.md")
+        self.assertIn("owns both\nartifact completeness and document readiness", gate)
         for check in (
             "factual claims",
             "cross-document references",
@@ -36,35 +26,40 @@ class DocumentReviewContractTest(unittest.TestCase):
             "unresolved placeholders",
             "broken links",
         ):
-            self.assertIn(check, self.workflow)
+            self.assertIn(check, gate)
+        self.assertIn("Design: pass|blocked", gate)
 
-    def test_d1_is_conditional_and_not_duplicated_for_plans(self) -> None:
-        self.assertIn("doc-review-gate", self.workflow)
-        self.assertIn("multiple related documents", self.workflow)
-        self.assertIn("downstream source of truth", self.workflow)
-        self.assertIn("Use\n`plan-review` instead", self.workflow)
-        self.assertIn("Do not run both mechanically", self.workflow)
-        for verdict in ("`通过|有条件通过|不通过`", "explicitly authorized and recorded"):
-            self.assertIn(verdict, self.workflow)
-        self.assertIn("`Clean` is equivalent to `通过`", self.workflow)
-        self.assertIn("`Issues Found` is equivalent to `不通过`", self.workflow)
+    def test_design_review_persists_one_candidate_matrix(self) -> None:
+        gate = read("skills/design-gate/SKILL.md")
+        template = read("skills/design-gate/templates/design-review.md")
+        self.assertIn("exactly one same-directory `design-review.md`", gate)
+        self.assertIn("Candidate Matrix", template)
+        self.assertIn("Review mode: <main-agent|independent>", template)
+        self.assertIn("Design: <pass|blocked>", template)
+        self.assertTrue((ROOT / "skills/design-gate/SKILL.md").is_file())
 
-    def test_document_writers_report_self_review_when_they_persist_files(self) -> None:
+    def test_independence_is_a_mode_not_an_extra_verdict(self) -> None:
+        gate = read("skills/design-gate/SKILL.md")
+        policy = read("skills/bruce/references/verification-loop.md")
+        self.assertIn("review mode\n(`main-agent|independent`)", gate)
+        self.assertIn("never a third verdict", policy)
+        self.assertIn("without the author's rationale or proposed verdict", gate)
+
+    def test_document_writers_return_local_checks_and_defer_readiness(self) -> None:
         for name in DOCUMENT_WRITERS:
             body = read(f"skills/{name}/SKILL.md")
             with self.subTest(skill=name):
-                self.assertIn("Document self-review: pass|issues", body)
-                self.assertRegex(body, r"(?i)diff")
-                self.assertRegex(body, r"(?i)placeholders")
+                self.assertIn("Document check: clear|issues", body)
+                self.assertNotIn("D0", body)
+                self.assertNotIn("D1", body)
+        for name in DOCUMENT_WRITERS[1:]:
+            body = read(f"skills/{name}/SKILL.md")
+            with self.subTest(skill=name):
+                self.assertIn("`design-gate` is required", body)
 
-    def test_review_results_use_stage_appropriate_audit_locations(self) -> None:
-        self.assertIn(
-            "Keep implementation/completion D0/D1 results in the current task by default",
-            self.workflow,
-        )
-        self.assertIn("Design-phase candidate decisions", self.workflow)
-        self.assertIn("belong in `artifact-review.md`, never `execute_record.md`", self.workflow)
-        self.assertIn("existing `execute_record.md`", self.workflow)
+    def test_old_document_gate_is_removed(self) -> None:
+        self.assertFalse((ROOT / "skills/doc-review-gate/SKILL.md").exists())
+        self.assertFalse((ROOT / "skills/artifact-review-gate/SKILL.md").exists())
 
 
 if __name__ == "__main__":

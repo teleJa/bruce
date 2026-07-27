@@ -17,12 +17,12 @@
 
 ## Goal audit boundary
 
-For `full` by default, and for `standard` when the user explicitly requests Goal,
-continuous/cross-turn, or auditable execution,
-`goal-execution-gate` creates or resumes the native Goal and maintains
+When the user explicitly requests Goal or the task contract requires continuous/cross-turn
+persistence or auditable execution, `goal-execution` creates or resumes the native Goal regardless
+of the resolved profile and maintains
 `.goal/<goal-id>/execute_record.md`. Native Goal remains the execution-state truth; the Markdown file
-is the human audit source only. `spawn-execute` returns structured evidence to the gate and never
-creates a second ledger or derives Goal status from the audit file.
+is the human audit source only. Goal execution records the Design and Completion results supplied by
+their owning gates and synchronizes native status; it never re-evaluates either decision.
 
 ## Approval versus business decision
 
@@ -35,4 +35,4 @@ public-contract intent, or material business consequences. Ask one precise quest
 the dependent work.
 
 Do not read, set, or attest a host sandbox mode. Do not generate permission hashes, grants, or
-decision packages. The plugin consumes host results; it does not prove or replace them.
+decision packages. Obey host results directly.

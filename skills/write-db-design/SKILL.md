@@ -17,8 +17,8 @@ Derive persistence design from behavior and current repository facts.
 ## Procedure
 
 1. Confirm that the task needs schema or persistence design. If it does not, return `not needed`
-   with repository-backed evidence to Bruce for the same-directory `artifact-review.md`; do not
-   create a separate exemption file or write the decision to `execute_record.md`.
+   with repository-backed evidence. When Design Gate is required, it records that decision in the
+   same-directory `design-review.md`.
 2. Inspect repository conventions before choosing identifiers, foreign keys, types, timestamps,
    migration style, naming, or index patterns. Never import conventions from another project.
 3. For each important scenario, record pre-state, action, post-state, data consequences, read path,
@@ -29,16 +29,15 @@ Derive persistence design from behavior and current repository facts.
    validation. Do not execute migrations in this skill.
 6. Persist `table-design.md` from [table-design.md](templates/table-design.md) only when requested or
    needed as a durable contract.
-7. When a design file was persisted, separately inspect its diff, verify it against actual
-   schema/repository rules, and check scenario coverage, lifecycle/migration consistency, omissions,
-   placeholders, and links. Repair issues and return `Document self-review: pass|issues`. Flag D1
-   readiness review when the design governs downstream work; do not invoke another supporting skill
-   automatically.
+7. When a design file was persisted, inspect its diff against actual schema/repository rules and
+   check scenario coverage, lifecycle/migration consistency, omissions, placeholders, and links.
+   Repair issues and return `Document check: clear|issues`. When the design will govern
+   implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.
 
 ## Output
 
 Return the proposed data model, scenario mapping, migration/recovery impact, open decisions, and
-verification requirements. List the generated file and document self-review verdict when persisted.
+verification requirements. List the generated file and document-check result when persisted.
 
 ## Does not own
 

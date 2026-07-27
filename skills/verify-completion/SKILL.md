@@ -1,76 +1,95 @@
 ---
 name: verify-completion
-description: Use when guarded or critical Bruce work reaches completion, when the user asks for a completion review, or when a separate evidence-based pass is needed before claiming a software task is done. Use a structured main-agent second pass for ordinary guarded work, and prefer an independent Codex-native reviewer for broad guarded work, critical work, or an explicitly requested independent review.
+description: Use after implementation as Bruce's only completion decision. Check final scope, author quality, acceptance evidence, design alignment, failures, and delivery boundaries, adding an independent reviewer only when risk or the user requires it, then return one Completion verdict.
 ---
 
-# Verify completion
+# Completion Gate
 
-Review current evidence rather than agent confidence or historical artifacts.
+Decide whether the task is complete from current evidence. This is Bruce's only completion decision;
+callers do not rerun its checks or combine separate author, verification, and review verdicts.
 
 ## Inputs
 
-- Current objective, scope, acceptance, constraints, execution profile, and risk.
-- Actual `git status`/diff or equivalent workspace changes, including pre-existing unrelated changes.
-- Current test, lint, build, page, integration, or external-tool results.
-- Current C0 code self-review and Given/When/Then acceptance-to-evidence mapping when code or runtime
-  behavior changed.
-- Current D0 document self-review and required D1 gate results when documentation changed.
-- The resolved `artifact-review.md` path and current candidate matrix for design-bearing work.
-- The resolved `api-contracts.md` path and current contract-to-diff mapping for every public or
-  cross-component contract change.
-- L0-L4 failures, open decisions, residual risks, and requested delivery actions.
+- Objective, scope, acceptance, constraints, profile, and risk.
+- Actual workspace status and final diff, including pre-existing unrelated changes.
+- Current test, lint, build, integration, page, database, and external-tool evidence.
+- Given/When/Then acceptance scenarios when behavior changed.
+- Current `design-review.md` when Design Gate was required.
+- L0-L4 failures, repair history, open decisions, residual risks, and requested delivery actions.
 
-## Procedure
+## Internal checks
 
-1. Compare the actual change set with objective and scope. Identify unexplained out-of-scope changes
-   and distinguish them from pre-existing user work.
-2. Map every acceptance item to current, reproducible evidence. Treat missing, stale, mocked-only,
-   or natural-language evidence as a gap when the acceptance requires more.
-3. For behavior changes, verify concrete Given/When/Then scenarios and confirm the evidence layer
-   matches each `Then`. A unit test does not prove a required integration or user-visible flow.
-   Require current Codex App Chrome evidence for user-visible Web acceptance; when Chrome was
-   required but unavailable, keep the scenario incomplete and reject a silent Playwright fallback.
-4. When code changed, require C0 `pass` after the final code change. If verification entered an L1
-   repair loop, require evidence that the unchanged original scenario and related regressions passed
-   after repair. Never demand a replay that violates an unresolved L3/L4 boundary.
-5. Check risk-proportional verification, migration/recovery evidence, external side effects, and
-   unresolved L2/L3/L4 conditions.
-6. Confirm requested delivery actions were authorized and completed, or clearly remain outside the
-   completed boundary.
-7. Compare the final diff with the resolved `artifact-review.md`. Require the same-directory gate
-   for every `full` task and every `standard` task with persisted downstream design sources. If a
-   candidate is omitted, a required artifact or review is missing, a skip decision is no longer
-   supported by repository evidence, or the gate is stale or not `pass`, return `issues`. An
-   `execute_record.md` reference or conversational verdict does not replace the gate file.
-8. Inspect the actual change set for any public or cross-component API, event, or file-contract
-   change. Require `api-contracts.md` at the location resolved by `write-architecture`, and verify it
-   covers the provider, consumers, changed shape or semantics, compatibility, authentication,
-   errors, and verification. If the artifact is missing, stale, or does not cover the actual contract diff,
-   return `issues`; an OpenAPI, Proto, schema, or README alone does not satisfy this change artifact.
-9. When documentation changed, require a current D0 `pass`. Also require a current D1 `通过`, or an
-   explicitly authorized and recorded `有条件通过`, for important or downstream-governing documents.
-   When `plan-review` substituted for D1, accept `Clean` as `通过` and treat `Issues Found` as
-   `不通过`. Treat a missing required review, D0 `issues`, or D1 `不通过` as a completion issue.
-10. Return one verdict:
-   - `pass`: scope and every acceptance item have sufficient current evidence;
-   - `issues`: repairable scope or evidence gaps remain;
-   - `blocked`: authority, external state, or an unresolved L2/L3/L4 prevents completion.
-11. Select the review mode proportionally:
-   - ordinary guarded work: perform a separated pass and label it `main-agent-second-pass`;
-   - broad guarded work spanning multiple components/contracts, combining migration and rollout, or
-     carrying a broad security/data blast radius: prefer a fresh Codex-native subagent;
-   - critical work or an explicitly requested independent review: require a fresh Codex-native
-     reviewer; if unavailable, return `blocked` and do not present a main-agent fallback as
-     independent.
+### Author quality
+
+Inspect the final diff and affected call sites for unintended scope, omissions, error paths, edge
+inputs, state transitions, resource cleanup, compatibility, security, permissions, concurrency,
+idempotency, data integrity, and missing regression coverage as relevant. For changed documents,
+verify factual grounding, terminology, contracts, cross-document consistency, acceptance coverage,
+placeholders, and links.
+
+Repairable findings make the result `issues`. Any later change invalidates the affected check and
+requires this gate to run again.
+
+### Acceptance evidence
+
+Map every acceptance condition to current, reproducible evidence at the required layer. A unit test
+does not prove required integration, persistence, deployment, or user-visible behavior. Treat stale,
+missing, mocked-only, or natural-language evidence as a gap when stronger evidence is required.
+
+For user-visible Web acceptance, require current Codex App Chrome evidence against the real target
+and current user session. When Chrome is required but unavailable, keep the scenario incomplete and
+do not silently substitute Playwright.
+
+### Design alignment
+
+When Design Gate was required, compare the final diff and scope with `design-review.md`. Return
+`issues` if the review is missing, stale, blocked, omits a candidate, no longer supports a skip, or
+does not cover an actual public/cross-component contract, schema, plan, or test-design obligation.
+Do not rerun Design Gate inside completion; return the mismatch to Bruce for one explicit rerun.
+
+### Failure and delivery boundaries
+
+Require the unchanged original failed scenario and related regressions after an L1 repair. Return
+`blocked` for unresolved authority, unsafe external state, or L2-L4 conditions that prevent a valid
+completion decision. Confirm requested delivery actions were authorized and completed, or report
+them outside the completed boundary.
+
+## Review mode
+
+Use `main-agent` mode for low risk and ordinary guarded work. Use an `independent` clean-context
+native reviewer when:
+
+- guarded work spans multiple components/contracts, combines migration and rollout, has material
+  semantic ambiguity, relies mainly on weak executable evidence, follows repeated repair, or has
+  broad security/data impact;
+- risk is critical; or
+- the user explicitly requests independent review.
+
+Give the reviewer only objective, acceptance, the final diff, raw evidence, and necessary repository
+constraints. Exclude author rationale, confidence, and proposed verdict. If independent review is
+required but unavailable, return `Completion: blocked`. Independence is a mode of this gate, not a
+second externally combined verdict.
+
+## Decision
+
+Return exactly one terminal field:
+
+- `Completion: pass` when scope matches, every acceptance item has sufficient current evidence,
+  author-quality checks are clear, required design remains aligned, required independent review
+  found no blocking issue, and no required work remains.
+- `Completion: issues` when in-scope implementation, documentation, design alignment, or evidence
+  gaps are repairable.
+- `Completion: blocked` when authority, unavailable required independent review, external state, or
+  unresolved L2-L4 prevents completion.
 
 ## Output
 
-Return review mode, verdict, scenario-level acceptance-to-evidence mapping, C0 result, artifact gate
-path/currentness, API contract artifact path and coverage result, scope findings, verification and
-repair-loop results, unresolved risks, and the smallest next action. Keep the result in the current
-task by default; persist a review artifact only when the user explicitly requests one.
+Return `Completion: pass|issues|blocked`, review mode (`main-agent|independent`), scenario-level
+acceptance evidence, design alignment, scope findings, repair-loop results, residual risks, and the
+smallest next action. Keep the result in the current task; `goal-execution` may record it when Goal
+mode is active.
 
 ## Does not own
 
-Do not modify implementation, fabricate evidence, infer completion from an agent saying `done`,
-approve host permissions, maintain evidence hashes or workflow state, or execute delivery actions.
+Do not modify implementation, fabricate evidence, maintain Goal or audit state, approve host
+permissions, or execute delivery actions.

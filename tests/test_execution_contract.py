@@ -8,77 +8,49 @@ from tests._support import read
 class ExecutionContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.skill = read("skills/spawn-execute/SKILL.md")
+        cls.goal = read("skills/goal-execution/SKILL.md")
+        cls.spawn = read("skills/spawn-execute/SKILL.md")
 
-    def test_delegation_uses_native_subagents_or_sequential_fallback(self) -> None:
-        self.assertIn("bounded Codex-native delegation", self.skill)
-        self.assertRegex(self.skill, r"Otherwise execute the same\s+task sequentially")
-        self.assertIn("main agent responsible", self.skill)
+    def test_goal_execution_is_a_mode_not_a_gate(self) -> None:
+        self.assertIn("Goal execution is a mode, not a gate", self.goal)
+        self.assertIn("does not re-check", self.goal)
+        self.assertIn("Do not independently inspect artifacts", self.goal)
+        self.assertIn(".goal/<goal-id>/execute_record.md", self.goal)
 
-    def test_execution_is_goal_backed_and_auditable(self) -> None:
-        self.assertIn("goal-execution-gate", self.skill)
-        self.assertIn("active native Goal", self.skill)
-        self.assertIn(".goal/<goal-id>/execute_record.md", self.skill)
-        self.assertIn("audit evidence packet", self.skill)
-        self.assertIn("do not use for incidental delegation", self.skill)
+    def test_goal_records_two_owned_results(self) -> None:
+        self.assertIn("Design result when applicable", self.goal)
+        self.assertIn("Completion result and evidence summary", self.goal)
+        self.assertIn("`Completion: pass`", self.goal)
+        self.assertIn("`Completion: issues`", self.goal)
+        self.assertIn("`Completion: blocked`", self.goal)
+        self.assertIn("Do not independently inspect artifacts", self.goal)
 
-    def test_bundled_goal_gate_owns_native_goal_lifecycle(self) -> None:
-        gate = read("skills/goal-execution-gate/SKILL.md")
-        self.assertIn("Bruce routes a `full` task", gate)
-        self.assertIn("Native Goal", gate)
-        self.assertIn("execute_record.md", gate)
-        self.assertNotIn("progress.json", gate)
+    def test_goal_entry_is_explicit_and_profile_independent(self) -> None:
+        normalized = " ".join(self.goal.split())
+        self.assertIn("Enter only for explicit Goal intent", normalized)
+        self.assertIn("resolved task contract requires continuous/cross-turn", normalized)
+        self.assertIn("Profile, complexity, duration, risk, or subagent use alone does not", normalized)
+        self.assertNotIn("Bruce routes a `full` task", self.goal)
 
-    def test_goal_consumes_artifact_gate_without_owning_design_decisions(self) -> None:
-        gate = " ".join(read("skills/goal-execution-gate/SKILL.md").split())
-        self.assertIn("passed `artifact-review.md` path and verdict", gate)
-        self.assertIn("does not copy candidate-artifact or skip decisions", gate)
-        self.assertNotIn("`write-tests: skipped", gate)
-        self.assertNotIn("test-design decision", gate)
-
-    def test_delegation_brief_has_scope_and_acceptance(self) -> None:
-        for field in ("objective", "allowed/excluded files", "dependencies", "acceptance", "verification"):
-            self.assertIn(field, self.skill.lower())
-
-    def test_audit_packet_has_execution_evidence(self) -> None:
+    def test_spawn_execute_returns_task_evidence_not_gate_verdicts(self) -> None:
+        self.assertIn("initialized by `goal-execution`", self.spawn)
+        self.assertIn("task evidence packet", self.spawn)
+        self.assertIn("Do not\nreturn a Design or Completion verdict", self.spawn)
         for field in (
-            "task_id",
+            "task id",
             "changed files",
-            "verification",
+            "acceptance/scenario",
+            "verification layer",
             "L0-L4 classification",
-            "dependent impact",
             "remaining work",
         ):
-            self.assertIn(field.lower(), self.skill.lower())
-        for field in (
-            "acceptance/scenario ids",
-            "Given/When/Then",
-            "required verification layer",
-            "C0 verdict",
-            "repair-round number",
-            "original-scenario rerun",
-            "related regression",
-        ):
-            self.assertIn(field.lower(), self.skill.lower())
-        self.assertIn("D0/D1 document-review mode and verdict", self.skill)
+            self.assertIn(field, self.spawn)
 
-    def test_subagent_failure_is_classified_not_globalized(self) -> None:
-        self.assertIn("failure-recovery.md", self.skill)
-        self.assertIn("affected dependency", self.skill)
-        self.assertIn("global stop-on-first-failure", self.skill)
-
-    def test_no_custom_runtime_contract(self) -> None:
-        for forbidden in (
-            "progress.md",
-            "progress.json",
-            "sonnet",
-            "checklist",
-            "worker pid",
-            "worktree_isolation",
-        ):
-            self.assertNotIn(forbidden, self.skill.lower())
-        self.assertIn("as runtime state", self.skill)
-        self.assertIn("Do not own native Goal", self.skill)
+    def test_spawn_has_no_custom_runtime(self) -> None:
+        for forbidden in ("progress.md", "progress.json", "checklist", "worker pid"):
+            self.assertNotIn(forbidden, self.spawn.lower())
+        self.assertIn("second ledger", self.spawn)
+        self.assertIn("global\nstop-on-first-failure", self.spawn)
 
 
 if __name__ == "__main__":

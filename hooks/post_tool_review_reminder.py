@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Remind Codex to run Bruce D0 after editing a planning/design document.
+"""Remind Codex to consider Bruce Design Gate after a planning/design edit.
 
 This plugin hook is intentionally advisory and low-noise. It does not run a
 review, block tool execution, or attest completion. Code and ordinary document
@@ -62,13 +62,11 @@ CODE_EXTENSIONS = {
 }
 
 REMINDER = (
-    "Bruce D0 review reminder: a planning/design document was modified. Before any final "
-    "response or readiness claim, run and report a separated document self-review. Inspect "
-    "the actual diff; verify important facts; check terminology, contracts, cross-document "
-    "consistency, acceptance and test mapping, omissions, placeholders, broken links, and "
-    "remaining blockers. Report `Document review: self-review`, `Verdict: pass|issues`, "
-    "checks, and findings; repair issues before claiming completion. This hook is advisory: "
-    "the reminder itself is not review evidence."
+    "Bruce Design Gate reminder: a planning/design document was modified. If this document will "
+    "govern downstream implementation, run $design-gate before implementation and require "
+    "`Design: pass`. The gate checks artifact completeness, factual grounding, consistency, "
+    "acceptance coverage, omissions, placeholders, links, and blocking readiness issues together. "
+    "This hook is advisory: it makes neither a design-readiness nor completion decision."
 )
 
 

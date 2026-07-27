@@ -1,4 +1,4 @@
 interface:
-  display_name: "Verify Completion"
-  short_description: "Review current evidence before claiming completion"
-  default_prompt: "Use $verify-completion to verify this task against its scope and acceptance."
+  display_name: "Completion Gate"
+  short_description: "Make one evidence-backed completion decision"
+  default_prompt: "Use $verify-completion to decide completion from the final diff and current evidence."

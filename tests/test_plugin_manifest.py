@@ -31,6 +31,7 @@ class PluginManifestTest(unittest.TestCase):
         self.assertTrue((ROOT / "skills/design-gate/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/goal-execution/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/completion-gate/SKILL.md").is_file())
+        self.assertTrue((ROOT / "skills/write-prototype/SKILL.md").is_file())
         self.assertFalse((ROOT / "skills/verify-completion/SKILL.md").exists())
         hooks = read_json("hooks/hooks.json")
         command = hooks["hooks"]["PostToolUse"][0]["hooks"][0]["command"]

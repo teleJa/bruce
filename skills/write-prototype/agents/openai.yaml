@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Prototype"
+  short_description: "Generate grounded UI prototypes through Open Design"
+  default_prompt: "Use $write-prototype to create and confirm a grounded UI prototype."

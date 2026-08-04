@@ -20,8 +20,12 @@ _Avoid_: Execution profile, host permission, failure level
 A focused Bruce skill selected only when its own predicate is present; selecting one capability does not create a fixed pipeline or automatically invoke another.
 _Avoid_: Mandatory stage, profile-driven cascade, full-delivery bundle
 
+**Prototype Design Capability**:
+The optional `write-prototype` skill prepares grounded UI context, drives a user-selected Open Design provider through Codex-owned host tools, and preserves generated and user-confirmed artifacts for the existing gates.
+_Avoid_: Mandatory UI stage, bundled MCP server, prototype-as-production-code, third gate
+
 **Design Gate**:
-The `design-gate` skill makes the only implementation-entry decision for persisted requirements, architecture, contracts, schema design, plans, or test designs that will govern downstream implementation. It returns `Design: pass|blocked` and persists one `design-review.md`.
+The `design-gate` skill makes the only implementation-entry decision for persisted requirements, architecture, contracts, schema design, plans, test designs, or UI prototypes that will govern downstream implementation. It returns `Design: pass|blocked` and persists one `design-review.md`.
 _Avoid_: Plan approval, separate artifact gate, independent-agent verdict
 
 **Goal Execution Mode**:
@@ -57,7 +61,8 @@ _Avoid_: Bruce permission layer, host adapter, workflow-owned scheduler
 - **Verified**: the workflow has two decisions and one optional execution mode (`skills/bruce/SKILL.md:15-20`).
 - **Verified**: task contract, profile resolution, and profile/risk independence are defined in `skills/bruce/SKILL.md:38-63`.
 - **Verified**: capabilities are predicate-driven and do not cascade from profile selection (`skills/bruce/SKILL.md:69-93`).
-- **Verified**: Design Gate owns persisted-design readiness and its single verdict (`skills/design-gate/SKILL.md:8-10`, `skills/design-gate/SKILL.md:59-83`).
+- **Verified**: `write-prototype` keeps provider execution host-owned and returns change-scoped brief, manifest, and snapshot evidence (`skills/write-prototype/SKILL.md`).
+- **Verified**: Design Gate owns persisted-design readiness, including governing UI prototypes, and its single verdict (`skills/design-gate/SKILL.md`).
 - **Verified**: Goal Execution Mode is profile-independent, native-Goal-backed persistence rather than another gate (`skills/goal-execution/SKILL.md:8-18`).
 - **Verified**: Completion Gate owns the single completion verdict and treats independence as an internal mode (`skills/completion-gate/SKILL.md:6-9`, `skills/completion-gate/SKILL.md:57-89`).
 - **Verified**: L0-L4 recovery applies to the smallest supported dependency or incident boundary (`skills/bruce/references/failure-recovery.md:3-25`).

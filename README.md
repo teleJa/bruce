@@ -24,6 +24,9 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Planning, architecture, test design, review, delegation, and persistence run only from their own
   predicates. Explicit Goal, continuous/cross-turn persistence, or audit requests enter
   `goal-execution`; profile, complexity, duration, risk, and subagent use do not.
+- UI prototype generation is an optional `write-prototype` capability. It can drive a host-configured
+  Open Design MCP run, preserve generated and user-confirmed snapshots, and feed the existing Design
+  and Completion Gates without adding a third gate or copying product-delivery lanes.
 - Behavior acceptance uses stable `Given/When/Then/Evidence` scenarios. Development starts from a
   failing test or reproducible scenario when feasible.
 - Verification is layered across unit/component, real integration/API/database, and real use. Web

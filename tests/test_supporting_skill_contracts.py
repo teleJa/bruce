@@ -12,6 +12,7 @@ SUPPORTING_SKILLS = (
     "write-architecture",
     "write-db-design",
     "write-plan",
+    "write-prototype",
     "write-tests",
     "plan-review",
     "spawn-execute",
@@ -79,6 +80,7 @@ class SupportingSkillContractTest(unittest.TestCase):
             "`table-design.md`",
             "`plan.md`",
             "`test-plan.md`",
+            "UI prototype",
         ):
             self.assertIn(candidate, normalized)
         self.assertIn("repository-backed evidence", normalized)
@@ -99,7 +101,14 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("profile alone is neither necessary nor sufficient", tests)
 
     def test_capabilities_do_not_cascade(self) -> None:
-        for name in ("grill-with-docs", "write-architecture", "write-db-design", "write-plan", "write-tests"):
+        for name in (
+            "grill-with-docs",
+            "write-architecture",
+            "write-db-design",
+            "write-plan",
+            "write-prototype",
+            "write-tests",
+        ):
             body = read(f"skills/{name}/SKILL.md")
             with self.subTest(skill=name):
                 self.assertRegex(body, r"(?i)do not invoke it automatically|does not own")

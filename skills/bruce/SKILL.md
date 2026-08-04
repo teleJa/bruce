@@ -75,6 +75,7 @@ supporting skill only for a present need:
 - architecture or public/cross-component contract design: `write-architecture`;
 - schema or persistence design: `write-db-design`;
 - persistent implementation planning: `write-plan`;
+- an explicitly requested or implementation-governing grounded UI prototype: `write-prototype`;
 - complex acceptance and regression design: `write-tests`;
 - an explicitly requested standalone plan review: `plan-review`;
 - readiness of persisted downstream design: `design-gate`;
@@ -82,10 +83,11 @@ supporting skill only for a present need:
   record: `goal-execution`;
 - final completion decision for every implementation task: `completion-gate`.
 
-A resolved profile does not itself invoke Goal, Design Gate, or test design. Run `design-gate` only
-when a requirement, architecture, API contract, table design, implementation plan, or test design
-will govern downstream implementation. It owns artifact completeness and document readiness and
-returns one implementation-entry result: `Design: pass|blocked`.
+A resolved profile does not itself invoke Goal, Design Gate, test design, or prototype generation.
+Run `design-gate` only when a requirement, architecture, API contract, table design, implementation
+plan, test design, or confirmed UI prototype will govern downstream implementation. It owns artifact
+completeness and document readiness and returns one implementation-entry result:
+`Design: pass|blocked`.
 
 Every public or cross-component API, event, or file-contract change uses `write-architecture` and
 must generate or update `api-contracts.md` before behavior implementation.
@@ -109,6 +111,10 @@ helper under an active Goal, not a scheduler or completion authority.
 For behavior changes, start with the smallest failing test or reproducible scenario when feasible.
 Reproduce bugs before fixing them and establish a characterization baseline before refactoring.
 Documentation-only, generated, and mechanical changes do not require ceremonial TDD.
+
+When a confirmed prototype governs UI implementation, use it for visible scope, state, and
+interaction intent while implementing with the target repository's real components and theme tokens.
+Do not copy prototype source into production merely because the generated artifact renders.
 
 ## 5. Classify failures and recover
 

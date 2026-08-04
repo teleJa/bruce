@@ -19,6 +19,7 @@ class ContextContractTest(unittest.TestCase):
             "`standard`",
             "`full`",
             "**Business Risk**",
+            "**Prototype Design Capability**",
             "**Design Gate**",
             "**Goal Execution Mode**",
             "**Completion Gate**",

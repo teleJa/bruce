@@ -15,6 +15,7 @@
 | Database/table design | required\|skipped | generated\|skipped | <path or none> | <evidence> |
 | Implementation plan | required\|skipped | generated\|skipped | <path or none> | <evidence> |
 | Test design | required\|skipped | generated\|skipped | <path or none> | <evidence> |
+| UI prototype | required\|skipped | generated\|skipped | <prototype-manifest.md path or none> | <evidence> |
 
 ## Readiness
 

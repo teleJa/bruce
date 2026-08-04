@@ -1,6 +1,6 @@
 ---
 name: design-gate
-description: Use before implementation when persisted requirements, architecture, contracts, schema design, plans, or test designs will govern downstream work. Decide artifact completeness and document readiness together, persist one design-review.md, and return one Design verdict.
+description: Use before implementation when persisted requirements, architecture, contracts, schema design, plans, test designs, or UI prototypes will govern downstream work. Decide artifact completeness and document readiness together, persist one design-review.md, and return one Design verdict.
 ---
 
 # Design Gate
@@ -25,11 +25,15 @@ Resolve one change directory and enumerate these candidates in `design-review.md
 - `api-contracts.md`;
 - `table-design.md`;
 - `plan.md`;
-- `test-plan.md`.
+- `test-plan.md`;
+- UI prototype, resolved through `prototype-manifest.md` when applicable.
 
 Repository conventions may map a candidate to an equivalent filename but may not silently omit it.
 For each candidate record applicability (`required|skipped`), delivery (`generated|skipped`), the
 resolved path, and repository-backed evidence.
+
+For the UI prototype candidate, `generated` means the artifact is materialized in the current change
+directory, including an imported user-supplied prototype. An external URL alone is not delivery.
 
 ## Readiness checks
 
@@ -47,6 +51,11 @@ For every generated document:
      executable verification;
    - test design: environment/data prerequisites, real dependencies, actions, assertions, failure,
      permission, regression, and traceability.
+   - UI prototypes: surface classification; brief grounding and positive/negative assertions;
+     repository UI contract plus baseline for an existing-product extension; required
+     pages/states/interactions; preflight evidence; effective changed output; explicit user
+     confirmation; generated/confirmed snapshot separation; Functional, Visual, Safety, and
+     Provenance findings; file hashes, lineage, gaps, and implementation acceptance evidence.
 5. Record only evidence-backed blockers that can cause wrong implementation, unsafe execution, or
    unverifiable acceptance. Wording preferences and optional polish do not block.
 
@@ -65,7 +74,15 @@ the check runs, not the output schema.
 4. Perform the readiness checks against the actual files and current repository facts.
 5. Return `blocked` when a candidate is omitted, a required artifact is missing or stale, a skip is
    unsupported, documents materially conflict, a blocking readiness issue remains, or required
-   independent review cannot run.
+   independent review cannot run. A governing prototype is also blocked when
+   `prototype-manifest.md` is absent, confirmation is pending, material product facts remain
+   unresolved, an existing-product high-fidelity claim lacks its UI contract or baseline, effective
+   output is `no_artifact` or `no_effect`, hashes are stale, or its Functional, Safety, or Provenance
+   check is not clear. A governing result must retain `effective_output_state = generated` and a
+   separate `confirmation_state = confirmed`. Visual readiness accepts only
+   `automated-clear + automated`, or `manual-confirmed + manual-only` with confirmation evidence that
+   names the inspected exact snapshot. Pending or blocked Visual checks, unavailable Visual evidence,
+   and every mismatched pair cannot govern implementation.
 6. Persist or update exactly one same-directory `design-review.md` using
    [design-review.md](templates/design-review.md). Reuse it on re-review.
 7. Inspect the review file itself for matrix completeness, accurate evidence, placeholders, links,

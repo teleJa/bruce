@@ -10,6 +10,7 @@ DOCUMENT_WRITERS = (
     "write-architecture",
     "write-db-design",
     "write-plan",
+    "write-prototype",
     "write-tests",
 )
 

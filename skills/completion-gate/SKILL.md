@@ -15,6 +15,7 @@ callers do not rerun its checks or combine separate author, verification, and re
 - Current test, lint, build, integration, page, database, and external-tool evidence.
 - Given/When/Then acceptance scenarios when behavior changed.
 - Current `design-review.md` when Design Gate was required.
+- Current `prototype-manifest.md` and confirmed snapshot when a prototype governed UI implementation.
 - L0-L4 failures, repair history, open decisions, residual risks, and requested delivery actions.
 
 ## Internal checks
@@ -40,11 +41,23 @@ For user-visible Web acceptance, require current Codex App Chrome evidence again
 and current user session. When Chrome is required but unavailable, keep the scenario incomplete and
 do not silently substitute Playwright.
 
+When a confirmed prototype governed implementation, map its required pages, states, interactions,
+failure feedback, positive and negative assertions, layout invariants, reuse anchors, and visual
+tokens to the real target. Check the manifest's exact confirmed identity, effective-output state,
+lineage, hashes, four independent findings, and Visual state/evidence pair. The governing manifest
+must retain `effective_output_state = generated`, a separate `confirmation_state = confirmed`, and
+either `automated-clear + automated` or exact-snapshot `manual-confirmed + manual-only`; pending,
+blocked, unavailable, or mismatched Visual combinations are design-alignment issues. A provider score,
+prototype source, preview URL, prototype screenshot, or `manual-only` prototype confirmation does
+not prove the implementation matches it; require current Codex App Chrome evidence for every
+material visible outcome.
+
 ### Design alignment
 
 When Design Gate was required, compare the final diff and scope with `design-review.md`. Return
 `issues` if the review is missing, stale, blocked, omits a candidate, no longer supports a skip, or
-does not cover an actual public/cross-component contract, schema, plan, or test-design obligation.
+does not cover an actual public/cross-component contract, schema, plan, test-design, or UI prototype
+obligation.
 Do not rerun Design Gate inside completion; return the mismatch to Bruce for one explicit rerun.
 
 ### Failure and delivery boundaries

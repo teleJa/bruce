@@ -13,6 +13,7 @@ Derive persistence design from behavior and current repository facts.
 - Existing schema, migrations, models, repositories, queries, and project database conventions.
 - Key read/write scenarios, including retries, concurrency, history, and deletion/retention.
 - A requested output location when the design must be persisted.
+- The document language rule in [document-language.md](../bruce/references/document-language.md).
 
 ## Procedure
 
@@ -29,7 +30,9 @@ Derive persistence design from behavior and current repository facts.
    validation. Do not execute migrations in this skill.
 6. Persist `table-design.md` from [table-design.md](templates/table-design.md) only when requested or
    needed as a durable contract.
-7. When a design file was persisted, inspect its diff against actual schema/repository rules and
+7. Write natural-language content in the user's language, using Simplified Chinese for a Chinese
+   request; preserve table/column names, SQL, paths, and other stable identifiers.
+8. When a design file was persisted, inspect its diff against actual schema/repository rules and
    check scenario coverage, lifecycle/migration consistency, omissions, placeholders, and links.
    Repair issues and return `Document check: clear|issues`. When the design will govern
    implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.

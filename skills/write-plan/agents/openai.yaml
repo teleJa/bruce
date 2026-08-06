@@ -1,4 +1,4 @@
 interface:
   display_name: "Write Plan"
   short_description: "Create minimal executable implementation plans"
-  default_prompt: "Use $write-plan to create a minimal executable plan for this change."
+  default_prompt: "Use $write-plan 为本次变更创建最小可执行计划；中文请求用简体中文撰写自然语言内容。"

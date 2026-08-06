@@ -13,6 +13,7 @@ Design only when the task needs a durable structural or contract decision.
 - Current repository components, toolchains, deployables, interfaces, and architecture conventions.
 - Existing decisions or domain clarification when available.
 - The repository's documented convention and any existing change directory for the current task.
+- The document language rule in [document-language.md](../bruce/references/document-language.md).
 
 ## Artifact placement
 
@@ -55,7 +56,9 @@ trigger this requirement.
    structural decision must be persisted or handed off. For every contract change described above,
    generate or update `api-contracts.md` from [api-contracts.md](templates/api-contracts.md) in the
    resolved artifact directory before behavior implementation begins.
-7. When an artifact was persisted, inspect its diff, verify claims against repository evidence,
+7. Write natural-language content in the user's language, using Simplified Chinese for a Chinese
+   request; preserve stable contract tokens, identifiers, paths, and protocol names.
+8. When an artifact was persisted, inspect its diff, verify claims against repository evidence,
    check contracts and cross-document references, and remove material omissions, placeholders, and
    broken links. Repair issues and return `Document check: clear|issues`. When the artifact will
    govern implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.

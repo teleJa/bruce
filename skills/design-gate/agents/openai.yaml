@@ -1,4 +1,4 @@
 interface:
   display_name: "Design Gate"
   short_description: "Decide design completeness and readiness once"
-  default_prompt: "Use $design-gate to decide whether this persisted design is ready for implementation."
+  default_prompt: "Use $design-gate 判断持久化设计是否可进入实现；中文请求用简体中文撰写评审自然语言内容。"

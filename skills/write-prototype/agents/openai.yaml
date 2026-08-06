@@ -1,4 +1,4 @@
 interface:
   display_name: "Write Prototype"
   short_description: "Generate grounded UI prototypes through Open Design"
-  default_prompt: "Use $write-prototype to create and confirm a grounded UI prototype."
+  default_prompt: "Use $write-prototype 创建并确认有仓库依据的 UI 原型；中文请求用简体中文撰写自然语言内容。"

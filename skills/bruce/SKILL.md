@@ -66,6 +66,10 @@ Read [verification-loop.md](references/verification-loop.md) before changing beh
 an implementation while a material `Then` has no feasible evidence path unless the user explicitly
 accepts an exploratory or unverified boundary.
 
+For any persisted design, plan, test, handoff, or review document, read
+[document-language.md](references/document-language.md) and apply its language rule. The user's
+language controls natural-language prose; stable machine-facing contract tokens remain unchanged.
+
 ## 3. Select only necessary capabilities
 
 Continue directly when Codex can implement and verify the task without another artifact. Invoke a

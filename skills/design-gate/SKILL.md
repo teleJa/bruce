@@ -15,6 +15,7 @@ readiness, or artifact-gate protocols.
 - The repository's artifact convention and resolved change directory.
 - The actual design files and repository facts that justify generated or skipped candidates.
 - The implementation boundary that the design will govern.
+- The document language rule in [../bruce/references/document-language.md](../bruce/references/document-language.md).
 
 ## Candidate set
 
@@ -83,11 +84,13 @@ the check runs, not the output schema.
    `automated-clear + automated`, or `manual-confirmed + manual-only` with confirmation evidence that
    names the inspected exact snapshot. Pending or blocked Visual checks, unavailable Visual evidence,
    and every mismatched pair cannot govern implementation.
-6. Persist or update exactly one same-directory `design-review.md` using
+6. Write the review's natural-language fields in the user's language, using Simplified Chinese for
+   a Chinese request; preserve candidate names, paths, statuses, and verdict tokens.
+7. Persist or update exactly one same-directory `design-review.md` using
    [design-review.md](templates/design-review.md). Reuse it on re-review.
-7. Inspect the review file itself for matrix completeness, accurate evidence, placeholders, links,
+8. Inspect the review file itself for matrix completeness, accurate evidence, placeholders, links,
    and consistency.
-8. Return `Design: pass|blocked` with blocking findings and the smallest next action.
+9. Return `Design: pass|blocked` with blocking findings and the smallest next action.
 
 Any later scope or design change invalidates the affected verdict. Rerun this gate before continuing
 affected implementation.

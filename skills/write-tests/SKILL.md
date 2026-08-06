@@ -21,6 +21,7 @@ in its candidate matrix; otherwise do not create a durable skip record.
 - An actual implementation plan when one exists.
 - Current repository test frameworks, commands, fixtures, environments, and real dependency rules.
 - Risk and known regression sources.
+- The document language rule in [document-language.md](../bruce/references/document-language.md).
 
 ## Procedure
 
@@ -35,7 +36,9 @@ in its candidate matrix; otherwise do not create a durable skip record.
 5. When a plan exists, map scenarios to its task ids without requiring every non-feature task to
    have a synthetic scenario.
 6. Persist `test-plan.md` using [test-plan.md](templates/test-plan.md).
-7. Inspect the document diff and check acceptance/requirement traceability, prerequisites,
+7. Write natural-language fields in the user's language, using Simplified Chinese for a Chinese
+   request; keep `Given`/`When`/`Then`/`Evidence` and other stable tokens unchanged.
+8. Inspect the document diff and check acceptance/requirement traceability, prerequisites,
    Given/When/Then observability, evidence-layer fit, real dependency semantics, regression coverage,
    omissions, placeholders, and links. Repair issues and return `Document check: clear|issues`.
    When the test design will govern implementation, tell Bruce that `design-gate` is required; do

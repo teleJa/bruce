@@ -22,6 +22,9 @@ a provider only because it is installed.
   screenshot, DOM, accessibility, HTML, and confirmed-prototype evidence as applicable.
 - Current user feedback and the last valid artifact/run for refinement.
 - The user's explicit Open Design selection before `start_run`.
+- The document language rule in [document-language.md](../bruce/references/document-language.md).
+- For a Chinese request, write natural-language artifact content in Simplified Chinese while
+  preserving provider fields, paths, statuses, hashes, and other stable tokens.
 
 ## Artifact placement
 

@@ -12,6 +12,7 @@ Resolve connected domain decisions without turning ordinary task clarification i
 - The unresolved question and its effect on scope or acceptance.
 - The current Bruce task contract when called by Bruce.
 - Relevant code, `CONTEXT.md`, `CONTEXT-MAP.md`, ADRs, and repository documentation.
+- The document language rule in [../bruce/references/document-language.md](../bruce/references/document-language.md).
 
 ## Procedure
 
@@ -25,10 +26,12 @@ Resolve connected domain decisions without turning ordinary task clarification i
 4. Ask one focused question at a time through the dependent decisions.
 5. Challenge inconsistent terminology and concrete lifecycle edge cases. Distinguish domain facts,
    current implementation, and a new decision.
-6. Update durable docs only when requested or when the decision has lasting domain value:
+6. Write natural-language content in the user's language, using Simplified Chinese for a Chinese
+   request; preserve canonical terms, identifiers, and quoted source text.
+7. Update durable docs only when requested or when the decision has lasting domain value:
    - use [CONTEXT-FORMAT.md](CONTEXT-FORMAT.md) for stable glossary terms;
    - use [ADR-FORMAT.md](ADR-FORMAT.md) only for hard-to-reverse, surprising trade-offs.
-7. When files changed, inspect their diff, factual grounding, terminology/cross-reference
+8. When files changed, inspect their diff, factual grounding, terminology/cross-reference
    consistency, omissions, placeholders, and links. Repair in-scope issues and return
    `Document check: clear|issues` with the checks performed.
 

@@ -1,4 +1,4 @@
 interface:
   display_name: "Write Architecture"
   short_description: "Design repository-grounded architecture and contracts"
-  default_prompt: "Use $write-architecture to design the architecture and contracts for this change."
+  default_prompt: "Use $write-architecture 设计本次变更的架构与契约；中文请求用简体中文撰写自然语言内容。"

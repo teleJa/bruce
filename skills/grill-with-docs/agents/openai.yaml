@@ -1,4 +1,4 @@
 interface:
   display_name: "Grill With Docs"
   short_description: "Resolve connected domain decisions with repository evidence"
-  default_prompt: "Use $grill-with-docs to resolve these connected domain decisions against the code and docs."
+  default_prompt: "Use $grill-with-docs 基于代码与文档解决相关领域决策；中文请求用简体中文撰写自然语言内容。"

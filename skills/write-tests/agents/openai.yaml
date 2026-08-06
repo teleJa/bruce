@@ -1,4 +1,4 @@
 interface:
   display_name: "Write Tests"
   short_description: "Design executable acceptance and regression tests"
-  default_prompt: "Use $write-tests to create a test plan for this change."
+  default_prompt: "Use $write-tests 为本次变更创建测试计划；中文请求用简体中文撰写自然语言内容。"

@@ -13,6 +13,7 @@ Create the smallest plan that makes dependencies and verification unambiguous.
 - Current repository structure, commands, conventions, and dirty-worktree boundaries.
 - Optional architecture, public contracts, or database design that the plan must consume.
 - A requested output path; default to the repository's existing planning convention.
+- The document language rule in [document-language.md](../bruce/references/document-language.md).
 
 ## Procedure
 
@@ -29,7 +30,9 @@ Create the smallest plan that makes dependencies and verification unambiguous.
    and no task depends on unstated context.
 6. Persist the result using [plan.md](templates/plan.md). Keep status and approval outside the plan
    unless the target repository has an explicit, user-authorized convention requiring them.
-7. Inspect the plan diff and check requirement/acceptance coverage, task boundaries,
+7. Write natural-language fields in the user's language, using Simplified Chinese for a Chinese
+   request; keep stable machine-facing tokens unchanged as specified by the language rule.
+8. Inspect the plan diff and check requirement/acceptance coverage, task boundaries,
    dependencies, file/interface joins, Given/When/Then evidence anchors, omissions, placeholders,
    and links. Repair issues and return `Document check: clear|issues`. When the plan will govern
    implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.

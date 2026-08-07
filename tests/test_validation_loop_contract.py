@@ -26,6 +26,18 @@ class ValidationLoopContractTest(unittest.TestCase):
         self.assertIn("no feasible evidence path", self.policy)
         self.assertIn("explicitly accepts an exploratory", self.policy)
 
+    def test_visual_scope_is_proportional_not_frontend_path_based(self) -> None:
+        normalized = " ".join(self.policy.split())
+        for scope in ("visual_scope=none", "visual_scope=chrome-smoke", "visual_scope=chrome-layout"):
+            self.assertIn(scope, normalized)
+        self.assertIn("Do not infer `chrome-layout` from any frontend diff alone", normalized)
+        self.assertIn("DOM text presence alone is not visual evidence", normalized)
+        self.assertIn("basis revision", normalized)
+        self.assertIn("absent `visual_scope` remains an unresolved contract gap", normalized)
+        test_normalized = " ".join(self.write_tests.split())
+        self.assertIn("proportional `visual_scope`", test_normalized)
+        self.assertIn("layout invariant and interaction evidence", test_normalized)
+
     def test_feedback_is_not_another_gate(self) -> None:
         self.assertIn("Continuous author feedback", self.policy)
         self.assertIn("not separately named gates", self.policy)

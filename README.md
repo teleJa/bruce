@@ -29,6 +29,9 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
   and Completion Gates without adding a third gate or copying product-delivery lanes.
 - Behavior acceptance uses stable `Given/When/Then/Evidence` scenarios. Development starts from a
   failing test or reproducible scenario when feasible.
+- User-visible Web work declares proportional `visual_scope=none|chrome-smoke|chrome-layout`;
+  frontend paths alone do not trigger a full browser run, while layout-sensitive outcomes require
+  current Chrome screenshots and relevant geometry/interaction evidence.
 - Verification is layered across unit/component, real integration/API/database, and real use. Web
   acceptance uses the Codex App Chrome capability with the user's current session and real service;
   Bruce never silently replaces it with Playwright.

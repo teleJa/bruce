@@ -17,6 +17,30 @@ Give every behavior-bearing acceptance item a stable id and define:
 Do not start behavior implementation while a material outcome has no feasible evidence path unless
 the user explicitly accepts an exploratory or unverified boundary.
 
+## Proportional visual scope
+
+Classify user-visible Web verification in the task contract as one of:
+
+- `visual_scope=none`: no material rendered output, layout, responsive behavior, or user-visible
+  interaction changes; record a repository-backed reason when the task touches UI code.
+- `visual_scope=chrome-smoke`: a visible label, route, control, or state changes without a material
+  layout invariant; require the current Chrome target, state, and a screenshot or equivalent visible
+  observation.
+- `visual_scope=chrome-layout`: layout, sizing, overflow, wrapping, grid/flex, responsive behavior,
+  long content, modal/table geometry, animation, prototype matching, or a reported visual defect is
+  in scope; require current Chrome screenshots plus the relevant geometry and interaction evidence.
+
+Do not infer `chrome-layout` from any frontend diff alone. Infer it from the material acceptance
+outcome and changed rendering risk. Completion must upgrade an under-scoped declaration when the
+final diff or acceptance exposes a stronger visible outcome; it must not downgrade a declared
+layout check merely to reduce verification cost.
+
+For `chrome-layout`, the evidence records the target URL/tab, viewport, capture time, basis revision,
+screenshot path or hash, and the applicable checks (for example card boxes, row heights,
+`scrollWidth <= clientWidth`, and before/after interaction states). DOM text presence alone is not
+visual evidence. For Web acceptance, an absent `visual_scope` remains an unresolved contract gap;
+do not silently treat it as `none`.
+
 ## Development feedback
 
 For behavior changes, start with the smallest failing automated test or reproducible scenario when

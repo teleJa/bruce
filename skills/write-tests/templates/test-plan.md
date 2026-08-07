@@ -10,6 +10,12 @@
 
 - <service, database, credentials, fixture, browser session, or none>
 
+## Proportional visual scope
+
+- Scope: <none|chrome-smoke|chrome-layout>
+- Decision: <why this visible outcome and changed rendering risk require this level>
+- For `chrome-layout`: <target URL/tab, viewport, screenshot/hash, geometry/overflow, and interaction checks>
+
 ## State and intent matrix
 
 | Pre-state | User/system intent | Expected behavior | Data consequence |

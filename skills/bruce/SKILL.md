@@ -47,9 +47,15 @@ Keep the contract in the current task unless the user requests a persistent plan
 - `constraints`: repository rules, user constraints, and known risks.
 - `profile`: `unresolved` during inspection, then `standard` or `full` before implementation.
 - `risk`: `low`, `guarded`, or `critical`, with its trigger.
+- `visual_scope`: `none`, `chrome-smoke`, or `chrome-layout`, selected from the material visible
+  outcome and layout/interaction risk; a frontend path alone does not force Chrome.
 - `tasks`: only when dependent work benefits from an explicit plan.
 - `batches`: only for multi-batch work; each batch has a stable id, included task/acceptance ids,
   an evidence boundary, and its checkpoint trigger.
+
+For user-visible Web acceptance, resolve `visual_scope` before implementation. A missing scope is
+an unresolved contract field, not permission to assume `none`; record the material visible outcome
+and the reason for the selected level.
 
 Resolve `standard` after inspection proves one delivery component without cross-component API,
 event, data, or file-contract propagation. Resolve `full` only when inspection proves multiple
@@ -149,6 +155,10 @@ batch checkpoint after the current batch. The checkpoint reviews only that batch
 returns `Checkpoint: clear|issues|blocked`; it never returns `Completion`, starts a per-finding review
 chain, or makes the overall delivery decision. Repair batch findings before starting dependent work.
 Use the final `completion-gate` once all batches are complete.
+
+When a batch has `visual_scope=chrome-smoke|chrome-layout`, include its bounded Chrome evidence in
+that batch checkpoint. Do not trigger a visual checkpoint for `visual_scope=none`; re-evaluate the
+scope only when the acceptance or changed surface reveals a material visible outcome.
 
 The gate must return one complete findings packet for the current final state. When findings are
 repairable, batch compatible repairs before rerunning verification. A later change invalidates only

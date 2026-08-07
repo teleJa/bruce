@@ -55,13 +55,32 @@ Map every acceptance condition to current, reproducible evidence at the required
 does not prove required integration, persistence, deployment, or user-visible behavior. Treat stale,
 missing, mocked-only, or natural-language evidence as a gap when stronger evidence is required.
 
+### Proportional visual completeness
+
+Read the task contract's `visual_scope` before deciding Web evidence. Do not turn every frontend or
+UI-file diff into a full visual run:
+
+- `none` is valid only when the final diff and acceptance have no material rendered, layout,
+  responsive, or user-visible interaction outcome; record the repository-backed reason.
+- `chrome-smoke` requires current Codex App Chrome evidence for the affected state, but does not
+  require layout geometry when no layout invariant changed.
+- `chrome-layout` requires current Chrome evidence plus the relevant screenshot, geometry/overflow,
+  and interaction checks. For layout-sensitive changes, a DOM snapshot or text assertion cannot
+  substitute for these artifacts.
+
+Before returning a verdict, compare `visual_scope` with the final diff. A declaration that is weaker
+than the changed visible risk is an `issues` finding, and its missing visual row is material. Evidence
+must identify the target, capture time, basis revision, and screenshot/artifact path or hash; evidence
+captured before a later affected change is stale and must be rerun. If a user reports a visual defect
+after a pass, reopen the affected acceptance rows and do not reuse the old visual result.
+
 Cross-check the declared risk against the changed scope. A `low` task records `trigger=none` plus
 the repository evidence that rules out guarded and critical triggers; `guarded` and `critical` tasks
 name the matching risk-policy trigger. A missing or contradictory trigger is an `issues` finding.
 
-For user-visible Web acceptance, require current Codex App Chrome evidence against the real target
-and current user session. When Chrome is required but unavailable, keep the scenario incomplete and
-do not silently substitute Playwright.
+For `chrome-smoke` and `chrome-layout` Web acceptance, require current Codex App Chrome evidence
+against the real target and current user session. When the declared scope is missing or Chrome is
+required but unavailable, keep the scenario incomplete and do not silently substitute Playwright.
 
 When a confirmed prototype governed implementation, map its required pages, states, interactions,
 failure feedback, positive and negative assertions, layout invariants, reuse anchors, and visual

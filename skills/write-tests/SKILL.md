@@ -18,6 +18,7 @@ in its candidate matrix; otherwise do not create a durable skip record.
 ## Inputs
 
 - Task contract and acceptance criteria.
+- The task contract's proportional `visual_scope` when user-visible Web behavior is in scope.
 - An actual implementation plan when one exists.
 - Current repository test frameworks, commands, fixtures, environments, and real dependency rules.
 - Risk and known regression sources.
@@ -27,6 +28,8 @@ in its candidate matrix; otherwise do not create a durable skip record.
 
 1. Map every behavior-bearing acceptance condition to a stable scenario id with concrete `Given`,
    `When`, `Then`, and `Evidence`. Each material `Then` must have a feasible evidence path.
+   For `chrome-smoke` or `chrome-layout`, make the visible state explicit; for `chrome-layout`,
+   include the relevant layout invariant and interaction evidence rather than only DOM text.
 2. For stateful behavior, build a compact state-by-intent matrix covering first use, repeat use,
    retries, concurrent actions, partial failure, history/current pointers, and recovery as relevant.
 3. Define happy, edge, error, integration, permission, and regression scenarios only where they add

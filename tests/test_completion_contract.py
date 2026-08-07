@@ -70,6 +70,19 @@ class CompletionContractTest(unittest.TestCase):
         self.assertIn("keep the scenario incomplete", self.skill)
         self.assertIn("do not silently substitute Playwright", self.skill)
 
+    def test_visual_scope_is_risk_proportional_and_fresh(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for scope in ("`none`", "`chrome-smoke`", "`chrome-layout`"):
+            self.assertIn(scope, normalized)
+        for phrase in (
+            "Do not turn every frontend or UI-file diff into a full visual run",
+            "DOM snapshot or text assertion cannot substitute",
+            "basis revision",
+            "reopen the affected acceptance rows",
+            "declared scope is missing",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_design_alignment_returns_issue_without_reimplementing_design_gate(self) -> None:
         self.assertIn("compare the final diff and scope with `design-review.md`", self.skill)
         self.assertIn("Do not rerun Design Gate inside completion", self.skill)

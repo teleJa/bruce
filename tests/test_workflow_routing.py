@@ -21,6 +21,8 @@ class WorkflowRoutingContractTest(unittest.TestCase):
         self.assertIn("`full`", skill)
         self.assertIn("Treat execution profile and risk as independent", skill)
         self.assertIn("Size, duration, risk, and uncertainty are insufficient", skill)
+        self.assertIn("Never infer `guarded` or `critical` from `full`", skill)
+        self.assertIn("use `low` even when", skill)
 
     def test_active_workflow_does_not_expose_legacy_verdict_protocol(self) -> None:
         paths = (

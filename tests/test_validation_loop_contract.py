@@ -64,6 +64,12 @@ class ValidationLoopContractTest(unittest.TestCase):
         self.assertIn("Pass this evidence once", self.policy)
         self.assertIn("do not create parallel verdicts", self.policy)
 
+    def test_completion_repairs_converge_without_per_finding_reviews(self) -> None:
+        normalized = " ".join(self.policy.split())
+        self.assertIn("one matrix across acceptance ids", normalized)
+        self.assertIn("returns all current findings together", normalized)
+        self.assertIn("does not create a per-finding review chain", normalized)
+
 
 if __name__ == "__main__":
     unittest.main()

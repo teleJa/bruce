@@ -41,6 +41,9 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Every implementation task ends with `completion-gate`. It performs final author-quality, scope,
   evidence, design-alignment, and risk-triggered independent checks internally and returns only
   `Completion: pass|issues|blocked`.
+- Completion review first completes one acceptance/branch/evidence matrix and batches all current
+  findings. Repairs rerun only affected checks, the unchanged original failure, and related
+  regressions; they do not create a per-finding review chain.
 - Independent review is a mode inside one of those gates, not another verdict that callers combine.
 
 The canonical entry is [`skills/bruce/SKILL.md`](skills/bruce/SKILL.md). Other directories under

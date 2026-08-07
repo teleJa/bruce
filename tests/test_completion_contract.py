@@ -30,6 +30,18 @@ class CompletionContractTest(unittest.TestCase):
             self.assertIn(check, self.skill)
         self.assertIn("Any later change invalidates", self.skill)
 
+    def test_review_batches_complete_findings_before_repair(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for phrase in (
+            "build one review matrix",
+            "material early-return/error/empty/null/partial/duplicate/state path",
+            "Report all findings from the completed matrix together in one packet",
+            "does not invalidate unaffected matrix rows",
+            "does not create a per-finding review chain",
+            "completed matrix and one consolidated findings packet",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_acceptance_evidence_is_scenario_and_layer_specific(self) -> None:
         self.assertIn("Map every acceptance condition", self.skill)
         self.assertIn("current, reproducible evidence", self.skill)

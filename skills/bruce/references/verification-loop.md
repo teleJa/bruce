@@ -51,6 +51,13 @@ These checks are development feedback, not separately named gates and not comple
 themselves. `completion-gate` repeats the necessary checks against the final state once, because
 later edits can invalidate earlier observations.
 
+Before completion, the owning gate builds one matrix across acceptance ids, changed entry points,
+material error/empty/null/partial/duplicate/state paths, verification layers, and current evidence.
+It completes that matrix before reporting findings and returns all current findings together. A
+repair reruns only affected matrix rows plus the unchanged original failure and related regressions;
+it does not create a per-finding review chain or a fresh independent reviewer unless the repair changes
+an independence-triggering concern or risk trigger.
+
 ## Independent review
 
 Independence is a review mode inside `design-gate` or `completion-gate`, never a third verdict.

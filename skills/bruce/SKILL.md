@@ -62,6 +62,10 @@ disprove a route, re-evaluate only the affected capability predicates before con
 behavior implementation. Do not ask for approval unless scope, acceptance, authority, or business
 consequences also change.
 
+Never infer `guarded` or `critical` from `full`, multiple components, duration, uncertainty, or
+subagent use. Record the concrete risk-policy trigger; when no trigger remains, use `low` even when
+the delivery profile is `full`.
+
 Read [verification-loop.md](references/verification-loop.md) before changing behavior. Do not begin
 an implementation while a material `Then` has no feasible evidence path unless the user explicitly
 accepts an exploratory or unverified boundary.
@@ -135,6 +139,12 @@ record. Use [handoff.md](templates/handoff.md) only when the user explicitly req
 After implementation and targeted verification, invoke `completion-gate`. It performs all required
 author checks, evidence checks, scope checks, design-to-diff checks, and any risk-triggered independent
 review internally. No caller repeats those checks or combines their internal labels.
+
+The gate must return one complete findings packet for the current final state. When findings are
+repairable, batch compatible repairs before rerunning verification. A later change invalidates only
+the affected checks; rerun those checks, the unchanged original failure, and related regressions.
+Do not start a fresh review for each finding or repeat unaffected checks unless the review basis or
+risk trigger materially changes.
 
 Completion is allowed only when it returns `Completion: pass`. Repairable findings return `issues`;
 missing authority, unsafe external state, or unresolved L2-L4 conditions return `blocked`.

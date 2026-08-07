@@ -28,8 +28,22 @@ idempotency, data integrity, and missing regression coverage as relevant. For ch
 verify factual grounding, terminology, contracts, cross-document consistency, acceptance coverage,
 placeholders, and links.
 
+### Review completeness
+
+Before reporting findings, build one review matrix that covers every acceptance id, changed entry
+point and call site, material early-return/error/empty/null/partial/duplicate/state path, required
+verification layer, and current evidence. Mark every row `checked`, `pass`, `incomplete`, or
+`finding`; do not return the terminal verdict while a material row is unexamined. Report all findings
+from the completed matrix together in one packet, grouped by severity and affected row. Do not stop
+after the first finding or issue an interim verdict. At minimum, each row records `acceptance_id`,
+`path`, `required_layer`, `evidence`, `result`, and `affected_scope`.
+
 Repairable findings make the result `issues`. Any later change invalidates the affected check and
-requires this gate to run again.
+requires this gate to run again, but does not invalidate unaffected matrix rows or force a fresh
+independent reviewer. Batch compatible repairs, then rerun only affected checks, the unchanged
+original failed scenario, and related regressions. Start a new independent review only when the
+repair changes an independence-triggering concern or risk trigger, or when critical risk or the user
+explicitly requires it. This repair path does not create a per-finding review chain.
 
 ### Acceptance evidence
 
@@ -79,9 +93,10 @@ native reviewer when:
 - the user explicitly requests independent review.
 
 Give the reviewer only objective, acceptance, the final diff, raw evidence, and necessary repository
-constraints. Exclude author rationale, confidence, and proposed verdict. If independent review is
-required but unavailable, return `Completion: blocked`. Independence is a mode of this gate, not a
-second externally combined verdict.
+constraints, including the review matrix. Exclude author rationale, confidence, and proposed verdict.
+The reviewer must return the completed matrix and one consolidated findings packet. If independent
+review is required but unavailable, return `Completion: blocked`. Independence is a mode of this
+gate, not a second externally combined verdict.
 
 ## Decision
 
@@ -97,7 +112,8 @@ Return exactly one terminal field:
 
 ## Output
 
-Return `Completion: pass|issues|blocked`, review mode (`main-agent|independent`), scenario-level
+Return `Completion: pass|issues|blocked`, review mode (`main-agent|independent`), the completed review
+matrix, consolidated findings packet, scenario-level
 acceptance evidence, design alignment, scope findings, repair-loop results, residual risks, and the
 smallest next action. Keep the result in the current task; `goal-execution` may record it when Goal
 mode is active.

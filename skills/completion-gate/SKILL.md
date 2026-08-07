@@ -30,26 +30,34 @@ placeholders, and links.
 
 ### Review completeness
 
-Before reporting findings, build one review matrix that covers every acceptance id, changed entry
-point and call site, material early-return/error/empty/null/partial/duplicate/state path, required
-verification layer, and current evidence. Mark every row `checked`, `pass`, `incomplete`, or
-`finding`; do not return the terminal verdict while a material row is unexamined. Report all findings
-from the completed matrix together in one packet, grouped by severity and affected row. Do not stop
-after the first finding or issue an interim verdict. At minimum, each row records `acceptance_id`,
-`path`, `required_layer`, `evidence`, `result`, and `affected_scope`.
+Before reporting findings, build one review matrix for the final state. It covers every acceptance
+id, direct changed entry point and direct call site needed by that acceptance, material
+early-return/error/empty/null/partial/duplicate/state paths identified by the acceptance or changed
+code, the required verification layer, and current evidence. Group equivalent paths and do not expand
+transitive callers unless a propagated contract crosses that boundary. Mark every row `checked`,
+`pass`, `incomplete`, or `finding`; do not return the terminal verdict while a material row is
+unexamined. Report all findings from the completed matrix together in one packet, grouped by severity
+and affected row. Do not stop after the first finding or issue an interim verdict. At minimum, each
+row records `batch_id`, `acceptance_id`, `path`, `required_layer`, `basis_revision`,
+`evidence_revision`, `evidence`, `result`, and `affected_scope`.
 
-Repairable findings make the result `issues`. Any later change invalidates the affected check and
-requires this gate to run again, but does not invalidate unaffected matrix rows or force a fresh
-independent reviewer. Batch compatible repairs, then rerun only affected checks, the unchanged
-original failed scenario, and related regressions. Start a new independent review only when the
-repair changes an independence-triggering concern or risk trigger, or when critical risk or the user
-explicitly requires it. This repair path does not create a per-finding review chain.
+Repairable findings make the result `issues`. Any later change invalidates a row when its evidence
+revision differs from the current review basis, a changed path intersects its affected scope, or
+impact cannot be determined. Rerun stale rows, the unchanged original failed scenario, and related
+regressions; this does not invalidate unaffected matrix rows, which may be reused. Batch compatible repairs and do not force a fresh
+independent reviewer. Start one only when the repair changes an independence-triggering concern or
+risk trigger, or when critical risk or the user explicitly requires it. This repair path does not
+create a per-finding review chain.
 
 ### Acceptance evidence
 
 Map every acceptance condition to current, reproducible evidence at the required layer. A unit test
 does not prove required integration, persistence, deployment, or user-visible behavior. Treat stale,
 missing, mocked-only, or natural-language evidence as a gap when stronger evidence is required.
+
+Cross-check the declared risk against the changed scope. A `low` task records `trigger=none` plus
+the repository evidence that rules out guarded and critical triggers; `guarded` and `critical` tasks
+name the matching risk-policy trigger. A missing or contradictory trigger is an `issues` finding.
 
 For user-visible Web acceptance, require current Codex App Chrome evidence against the real target
 and current user session. When Chrome is required but unavailable, keep the scenario incomplete and

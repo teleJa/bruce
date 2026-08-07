@@ -70,6 +70,27 @@ class ValidationLoopContractTest(unittest.TestCase):
         self.assertIn("returns all current findings together", normalized)
         self.assertIn("does not create a per-finding review chain", normalized)
 
+    def test_batch_checkpoint_is_early_feedback_not_a_second_verdict(self) -> None:
+        normalized = " ".join(self.workflow.split())
+        for phrase in (
+            "batch checkpoint",
+            "returns `Checkpoint: clear|issues|blocked`",
+            "never returns `Completion`",
+            "Use the final `completion-gate` once all batches are complete",
+        ):
+            self.assertIn(phrase, normalized)
+
+    def test_checkpoint_matrix_is_bounded_and_stale_aware(self) -> None:
+        normalized = " ".join(self.policy.split())
+        for phrase in (
+            "Build the matrix for the current batch only",
+            "direct changed entry points and direct call sites",
+            "evidence_revision",
+            "impact cannot be determined",
+            "related regressions",
+        ):
+            self.assertIn(phrase, normalized)
+
 
 if __name__ == "__main__":
     unittest.main()

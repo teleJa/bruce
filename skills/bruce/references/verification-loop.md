@@ -58,6 +58,24 @@ repair reruns only affected matrix rows plus the unchanged original failure and 
 it does not create a per-finding review chain or a fresh independent reviewer unless the repair changes
 an independence-triggering concern or risk trigger.
 
+## Batch checkpoint
+
+Use a checkpoint only when the task contract declares multiple delivery batches, Goal execution is
+long-running or cross-component, or work is about to cross an external verification or side-effect
+boundary. Build the matrix for the current batch only. Its bounded rows are:
+
+- one row per batch acceptance id;
+- direct changed entry points and direct call sites needed to prove that acceptance;
+- material state/error paths identified by the acceptance scenario or the changed code; group
+  equivalent paths instead of expanding every transitive caller.
+
+Each row records `batch_id`, `acceptance_id`, `path`, `required_layer`, `basis_revision`,
+`evidence_revision`, `evidence`, `result`, and `affected_scope`. Return `Checkpoint:
+clear|issues|blocked` as progress feedback only; do not use a checkpoint as the overall completion
+verdict. A row is `stale` when its evidence revision differs from the current review basis, a changed
+path intersects its affected scope, or impact cannot be determined. Rerun stale rows, the unchanged
+original failure, and related regressions before dependent batches continue.
+
 ## Independent review
 
 Independence is a review mode inside `design-gate` or `completion-gate`, never a third verdict.
@@ -77,7 +95,7 @@ after each action; do not replace a failure with a smaller passing check.
 
 ## Completion evidence
 
-For each acceptance id, retain its scenario, required verification layer, current evidence, and
-result. Natural-language claims, stale runs, mocked-only evidence for a real integration requirement,
-or unit evidence for a user-visible flow keep that acceptance incomplete. Pass this evidence once to
-`completion-gate`; callers do not create parallel verdicts from it.
+For each acceptance id, retain its scenario, required verification layer, current evidence, evidence
+revision, and result. Natural-language claims, stale runs, mocked-only evidence for a real integration
+requirement, or unit evidence for a user-visible flow keep that acceptance incomplete. Pass this evidence once
+to `completion-gate`; callers do not create parallel verdicts from it.

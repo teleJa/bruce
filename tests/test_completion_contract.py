@@ -42,6 +42,23 @@ class CompletionContractTest(unittest.TestCase):
         ):
             self.assertIn(phrase, normalized)
 
+    def test_final_matrix_is_bounded_and_revision_aware(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for phrase in (
+            "direct changed entry point and direct call site",
+            "do not expand transitive callers",
+            "batch_id",
+            "basis_revision",
+            "evidence_revision",
+            "impact cannot be determined",
+        ):
+            self.assertIn(phrase, normalized)
+
+    def test_risk_trigger_is_checked(self) -> None:
+        normalized = " ".join(self.skill.split())
+        self.assertIn("A `low` task records `trigger=none`", normalized)
+        self.assertIn("matching risk-policy trigger", normalized)
+
     def test_acceptance_evidence_is_scenario_and_layer_specific(self) -> None:
         self.assertIn("Map every acceptance condition", self.skill)
         self.assertIn("current, reproducible evidence", self.skill)

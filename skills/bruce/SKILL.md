@@ -8,7 +8,7 @@ description: Use when the user asks Bruce to implement, fix, refactor, or delive
 Run one proportional workflow through the current Codex task:
 
 ```text
-inspect -> task contract -> design when needed -> Design Gate when needed -> implement -> Completion Gate -> summary
+inspect -> task contract -> design when needed -> Design Gate when needed -> implement -> [batch checkpoint when triggered] -> Completion Gate -> summary
                                       \-> optional Goal execution mode -/
 ```
 
@@ -16,6 +16,7 @@ Bruce has two decisions and one optional execution mode:
 
 - `design-gate` is the only implementation-entry decision for persisted downstream design.
 - `completion-gate` is the only completion decision.
+- A batch checkpoint is progress feedback, not a third decision or an overall completion result.
 - `goal-execution` adds persistence and an audit record; it never decides design readiness or
   completion.
 
@@ -47,6 +48,8 @@ Keep the contract in the current task unless the user requests a persistent plan
 - `profile`: `unresolved` during inspection, then `standard` or `full` before implementation.
 - `risk`: `low`, `guarded`, or `critical`, with its trigger.
 - `tasks`: only when dependent work benefits from an explicit plan.
+- `batches`: only for multi-batch work; each batch has a stable id, included task/acceptance ids,
+  an evidence boundary, and its checkpoint trigger.
 
 Resolve `standard` after inspection proves one delivery component without cross-component API,
 event, data, or file-contract propagation. Resolve `full` only when inspection proves multiple
@@ -140,9 +143,18 @@ After implementation and targeted verification, invoke `completion-gate`. It per
 author checks, evidence checks, scope checks, design-to-diff checks, and any risk-triggered independent
 review internally. No caller repeats those checks or combines their internal labels.
 
+When the contract declares multiple delivery batches, when Goal execution spans a long-running or
+cross-component task, or before crossing an external verification or side-effect boundary, run a
+batch checkpoint after the current batch. The checkpoint reviews only that batch's bounded matrix and
+returns `Checkpoint: clear|issues|blocked`; it never returns `Completion`, starts a per-finding review
+chain, or makes the overall delivery decision. Repair batch findings before starting dependent work.
+Use the final `completion-gate` once all batches are complete.
+
 The gate must return one complete findings packet for the current final state. When findings are
 repairable, batch compatible repairs before rerunning verification. A later change invalidates only
-the affected checks; rerun those checks, the unchanged original failure, and related regressions.
+the affected checks; rerun stale rows, the unchanged original failure, and related regressions. Reuse
+a checkpoint row only when its evidence revision matches the current review basis and its affected
+scope is unchanged.
 Do not start a fresh review for each finding or repeat unaffected checks unless the review basis or
 risk trigger materially changes.
 

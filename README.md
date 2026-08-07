@@ -44,6 +44,9 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Completion review first completes one acceptance/branch/evidence matrix and batches all current
   findings. Repairs rerun only affected checks, the unchanged original failure, and related
   regressions; they do not create a per-finding review chain.
+- Multi-batch, long-running, cross-component, or pre-side-effect work uses a bounded batch checkpoint
+  with `Checkpoint: clear|issues|blocked` as progress feedback; the final `Completion Gate` remains
+  the only overall completion decision.
 - Independent review is a mode inside one of those gates, not another verdict that callers combine.
 
 The canonical entry is [`skills/bruce/SKILL.md`](skills/bruce/SKILL.md). Other directories under

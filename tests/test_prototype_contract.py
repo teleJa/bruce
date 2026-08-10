@@ -128,6 +128,94 @@ class PrototypeContractTest(unittest.TestCase):
                 self.assertIn(rule, self.skill)
         self.assertIn("Source revision and drift", self.ui_contract)
 
+    def test_existing_product_visual_authority_is_strict_and_provider_defaults_are_limited(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for marker in (
+            "visual authority contract",
+            "repository theme/source governs",
+            "provider/framework defaults only for uncovered gaps",
+            "confirmed requirements > current runtime screenshot/dom",
+            "do not allow a provider default to replace",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker.lower(), normalized.lower())
+        self.assertIn("Unchanged-surface protection", self.brief)
+        self.assertIn("Visual authority and plugin compatibility", self.ui_contract)
+
+    def test_generation_skill_and_visual_plugin_are_audited_separately(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for field in (
+            "selected_generation_skill",
+            "selected_visual_plugin",
+            "selected_design_system",
+            "selection_basis",
+            "compatibility_check",
+            "effective_plugin",
+            "effective_design_system",
+            "run_input_summary",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(field, self.manifest)
+                self.assertIn(field, self.brief)
+        self.assertIn("generation capability and visual policy as separate selections", normalized)
+        self.assertIn("blocked-before-generation", normalized)
+        self.assertIn("do not silently default to `design-system-ant`", normalized)
+
+    def test_deterministic_visual_assertions_are_required_before_manual_only(self) -> None:
+        normalized = " ".join(self.skill.split())
+        self.assertIn("visual-assertions.json", normalized)
+        self.assertIn("validate_prototype_artifact.py", normalized)
+        for field in (
+            "exact_colors",
+            "exact_dimensions",
+            "required_brand_text",
+            "forbidden_tokens",
+        ):
+            self.assertIn(field, self.ui_contract)
+        self.assertIn("exact_token_assertions", self.manifest)
+        self.assertIn("artifact_visual_checker", self.manifest)
+        self.assertIn("failed exact assertion", normalized)
+        self.assertIn("manual-only", normalized)
+        self.assertIn("cannot override it", normalized)
+
+    def test_refinement_context_sync_fails_closed_before_start_run(self) -> None:
+        normalized = " ".join(self.skill.split())
+        self.assertIn("validate the complete local brief/assertion patch before project mutation", normalized)
+        self.assertIn("verify provider-side readability", normalized)
+        self.assertIn("Any step failure stops before `start_run`", normalized)
+
+    def test_design_gate_requires_compatibility_and_clear_deterministic_assertions(self) -> None:
+        normalized = " ".join(self.design_gate.split())
+        for marker in (
+            "selected/effective generation skill and visual plugin/design-system",
+            "compatibility evidence",
+            "run input summary",
+            "exact_token_assertions = blocked",
+            "deterministic assertions must be `clear` first",
+        ):
+            self.assertIn(marker, normalized)
+
+    def test_completion_gate_keeps_provider_success_and_manual_only_fail_closed(self) -> None:
+        normalized = " ".join(self.completion_gate.split())
+        for marker in (
+            "selected/effective generation skill and visual plugin/design-system",
+            "artifact checker's result",
+            "blocked exact token assertion",
+            "provider succeeded",
+            "manual-only confirmation",
+        ):
+            self.assertIn(marker, normalized)
+
+    def test_high_fidelity_requires_filled_visual_grounding(self) -> None:
+        normalized_skill = " ".join(self.skill.split())
+        normalized_gate = " ".join(self.design_gate.split())
+        for body in (normalized_skill, normalized_gate):
+            self.assertIn("placeholders", body)
+            self.assertIn("empty evidence/verification", body)
+            for dimension in ("shell/layout", "palette", "typography", "brand", "geometry"):
+                self.assertIn(dimension, body)
+        self.assertIn("A template heading alone is not grounded evidence", normalized_skill)
+
     def test_preflight_records_explicit_agent_cli_inputs_and_visual_capability(self) -> None:
         normalized = " ".join(self.skill.split())
         for field in (

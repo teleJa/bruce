@@ -22,6 +22,11 @@
 - Facts and consistency: <pass|blocked with evidence>
 - Acceptance and verification coverage: <pass|blocked with evidence>
 - Risk and recovery coverage: <pass|blocked|not-applicable with evidence>
+- Existing-product visual authority and compatibility: <clear or findings for ordered authority,
+  selected/effective generation skill and visual plugin/design-system, compatibility evidence, and
+  run input summary>
+- Deterministic artifact visual assertions: <clear or findings for exact colors/dimensions/brand/
+  forbidden tokens and whether manual-only evidence is correctly fail-closed>
 - Blocking findings: <none or findings>
 - Evidence boundary: <checked and unchecked facts>
 - Smallest next action: <none or action>

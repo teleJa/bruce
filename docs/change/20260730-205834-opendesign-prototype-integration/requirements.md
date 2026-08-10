@@ -164,6 +164,44 @@ Excluded:
   hash summary, or result notes from manifest history.
 - Evidence: feedback and manifest-history contract tests.
 
+### OD-16 Visual authority for existing-product extensions
+
+- Given: a prototype extends a visible surface that already exists in the repository or runtime.
+- When: `write-prototype` prepares the generation prompt and evaluates the result.
+- Then: visual authority is ordered as `confirmed requirements > current runtime evidence for
+  unchanged state > repository theme/source > confirmed prototype refinement baseline > provider or
+  framework defaults for uncovered gaps`; provider defaults must not replace an evidenced shell,
+  brand, palette, typography, or geometry.
+- Evidence: prototype skill, brief/UI-contract templates, and evidence-priority contract tests.
+
+### OD-17 Visual design-system/plugin compatibility
+
+- Given: Open Design exposes generation skills and visual plugins/design systems separately.
+- When: an existing-product extension selects a generation run.
+- Then: the manifest records the actual generation skill, visual plugin, design system, selection
+  basis, compatibility result, effective plugin/design-system, and run input summary. A visual plugin
+  that can inject an incompatible default theme, or whose compatibility cannot be evidenced, blocks
+  before generation. `design-system-ant` is not a global default; greenfield runs may still select it.
+- Evidence: preflight contract tests and manifest-template contract tests.
+
+### OD-18 Deterministic artifact visual drift
+
+- Given: the UI contract contains exact visual assertions for an existing-product extension.
+- When: an artifact is imported or a provider reports success.
+- Then: a local artifact checker evaluates exact normalized colors, dimensions, brand text, and
+  forbidden provider/default tokens. A failed exact assertion is `visual_check = blocked` and
+  `exact_token_assertions = blocked`; provider success or a provider score cannot override it.
+- Evidence: `scripts/validate_prototype_artifact.py`, positive/negative fixtures, and checker tests.
+
+### OD-19 Manual-only cannot bypass deterministic checks
+
+- Given: exact token or dimension assertions are declared and browser screenshots are unavailable.
+- When: a user manually confirms the rendered artifact.
+- Then: deterministic assertions run first; any failure remains blocked and cannot be relabeled as
+  unavailable or promoted by `manual-confirmed + manual-only`. Manual-only evidence may only cover
+  screenshot comparison gaps after exact assertions are clear.
+- Evidence: checker and visual-evidence contract tests.
+
 ## Constraints
 
 - Bruce remains a skills-only workflow plugin; Codex owns MCP and app execution.
@@ -175,4 +213,5 @@ Excluded:
   stale source evidence; confirmed requirements continue to govern changed behavior, and the drift
   plus source revision remains recorded.
 - Exact tokens and dimensions use exact normalized assertions. Screenshot comparison records each
-  viewport, region, and tolerance; no universal score can replace critical-region assertions.
+  viewport, region, and tolerance; no universal score can replace critical-region assertions. Exact
+  assertion failures cannot be downgraded to unavailable or bypassed by manual-only confirmation.

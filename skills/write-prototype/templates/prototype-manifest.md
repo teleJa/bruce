@@ -2,6 +2,14 @@
 
 - provider: `open-design`
 - selected_agent: <explicit agent id and version>
+- selected_generation_skill: <explicit generation skill id and version>
+- selected_visual_plugin: <explicit visual plugin id and version, or none>
+- selected_design_system: <explicit design-system id and version, or none>
+- selection_basis: <repository/runtime evidence or greenfield rationale>
+- compatibility_check: <clear, partial, or blocked with evidence>
+- effective_plugin: <exact plugin id passed to `start_run`, or none>
+- effective_design_system: <exact design-system id passed to `start_run`, or none>
+- run_input_summary: <exact Agent/skill/plugin/design-system/project/context identity>
 - base_project_id: <stable base project id>
 - project_id: <current explicit project id>
 - run_id: <provider run id>
@@ -33,6 +41,8 @@
 - functional_check: <pending, clear, or blocked with assertion findings>
 - visual_check: <pending, automated-clear, manual-confirmed, or blocked with findings>
 - visual_evidence: <automated, manual-only, or unavailable>
+- exact_token_assertions: <pending, clear, or blocked with findings>
+- artifact_visual_checker: <path, version, contract path, and result>
 - safety_check: <pending, clear, or blocked with findings>
 - provenance_check: <pending, clear, or blocked with findings>
 
@@ -72,7 +82,9 @@ Retain this history even when the user requests old local snapshot cleanup.
 ## Visual findings
 
 - Viewports: <none or dimensions>
-- Exact token assertions: <clear, unavailable, or findings>
+- Exact token assertions: <pending, clear, or findings>
+- Exact token assertions must run before manual confirmation; a failed assertion remains blocked and
+  cannot be downgraded to `unavailable` or bypassed by `manual-only` evidence.
 - Region-specific screenshot comparisons: <clear, unavailable, or findings plus tolerance>
 - Manual inspection: <not used or user signal and exact artifact identity>
 

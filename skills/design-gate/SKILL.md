@@ -56,7 +56,12 @@ For every generated document:
      repository UI contract plus baseline for an existing-product extension; required
      pages/states/interactions; preflight evidence; effective changed output; explicit user
      confirmation; generated/confirmed snapshot separation; Functional, Visual, Safety, and
-     Provenance findings; file hashes, lineage, gaps, and implementation acceptance evidence.
+     Provenance findings; file hashes, lineage, gaps, and implementation acceptance evidence. For an
+     existing-product extension, also verify the ordered visual authority, selected/effective
+     generation skill and visual plugin/design-system, compatibility evidence, run input summary,
+     filled visual anchors, and deterministic exact-token result. Reject template placeholders,
+     empty evidence/verification cells, or a high-fidelity claim whose applicable shell/layout,
+     palette, typography, brand, and geometry dimensions are not governed by baseline or anchors.
 5. Record only evidence-backed blockers that can cause wrong implementation, unsafe execution, or
    unverifiable acceptance. Wording preferences and optional polish do not block.
 
@@ -83,7 +88,8 @@ the check runs, not the output schema.
    separate `confirmation_state = confirmed`. Visual readiness accepts only
    `automated-clear + automated`, or `manual-confirmed + manual-only` with confirmation evidence that
    names the inspected exact snapshot. Pending or blocked Visual checks, unavailable Visual evidence,
-   and every mismatched pair cannot govern implementation.
+   and every mismatched pair cannot govern implementation. `manual-confirmed + manual-only` cannot
+   override `exact_token_assertions = blocked`; deterministic assertions must be `clear` first.
 6. Write the review's natural-language fields in the user's language, using Simplified Chinese for
    a Chinese request; preserve candidate names, paths, statuses, and verdict tokens.
 7. Persist or update exactly one same-directory `design-review.md` using

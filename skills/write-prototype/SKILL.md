@@ -80,6 +80,9 @@ artifact. Record the host surface, exact entry and source/selector anchor, desti
 lifecycle, layout invariants, reuse anchors, visual anchors, responsive behavior, evidence gaps, and
 fidelity limit. Missing exact entry, destination surface, or baseline blocks a high-fidelity claim;
 continue only after evidence is added or the user explicitly accepts a `source-grounded wireframe`.
+Before generation, inspect the filled UI contract: placeholders, empty evidence/verification cells,
+or visual anchors that omit applicable shell/layout, palette, typography, brand, and geometry block a
+high-fidelity claim. A template heading alone is not grounded evidence.
 
 Use these evidence rules in the brief, UI contract, and provider prompt:
 
@@ -87,11 +90,46 @@ Use these evidence rules in the brief, UI contract, and provider prompt:
 - Current runtime screenshot or DOM evidence governs unchanged visible state; record the source
   revision and drift instead of silently choosing stale source styling.
 - Repository source governs structural ownership and reusable implementation anchors.
+- Repository theme/source governs reusable visual authority for unchanged shell, palette, typography,
+  brand, spacing, dimensions, and geometry when it is evidenced.
 - The confirmed prototype governs the refinement baseline.
 - Provider and framework defaults may fill only uncovered gaps.
 
 Stop on a conflict that changes scope or behavior authority. Do not redesign an unchanged surface to
 make a new requirement easier to display.
+
+### Visual authority and compatibility
+
+For an `existing-product-extension`, use this strict order for every unchanged visible decision:
+
+```text
+confirmed requirements
+  > current runtime screenshot/DOM for unchanged visible state
+  > repository theme/source
+  > confirmed prototype for refinement
+  > provider/framework defaults only for uncovered gaps
+```
+
+This is a visual authority contract, not a prompt suggestion. Do not allow a provider default to
+replace an evidenced shell, brand, palette, typography, spacing, dimensions, radius, or layout
+relationship. Record exact token assertions in `prototype-context/visual-assertions.json` when the
+contract has normalized values. Product-specific values belong in that change-scoped contract, not in
+this generic skill.
+
+Treat generation capability and visual policy as separate selections. A generation skill (for
+example `artifacts-builder`) provides generation behavior; a visual plugin/design system (for
+example `design-system-ant`) may inject theme, layout, or brand defaults. For existing-product work:
+
+1. Record `selected_generation_skill`, `selected_visual_plugin`, `selected_design_system`, and the
+   `selection_basis` from repository/runtime evidence.
+2. Check whether the visual selection can override the repository UI contract and record
+   `compatibility_check` with evidence. Missing or incompatible evidence is
+   `blocked-before-generation`.
+3. Record the exact `effective_plugin` and `effective_design_system` actually passed to `start_run`;
+   do not silently default to `design-system-ant`.
+
+Greenfield work may select a visual plugin/design system when its constraints are explicitly part of
+the brief. A generation skill alone does not authorize a visual redesign of an existing surface.
 
 Use `confirmed`, `inferred`, and `unresolved` for every fact that can change visible scope or
 behavior. Material unresolved facts about scope, permission, state, navigation, interaction, or
@@ -107,10 +145,14 @@ After explicit provider selection and before project mutation:
 2. Use `list_skills`, `list_plugins`, and `list_agents` to select explicit ids; never rely on the
    provider's default Agent route.
 3. Record `selected_agent`, host-reported `agent_readiness`, `cli_compatibility` with version and
-   required config evidence, local `input_readability` for every source file, `visual_capability`,
-   and aggregate `preflight_status` in the manifest.
+   required config evidence, the selected generation/visual plugin/design-system ids and
+   `compatibility_check`, local `input_readability` for every source file, `visual_capability`,
+   and aggregate `preflight_status` in the manifest. Include a `run_input_summary` with the exact
+   selections and synchronized context identities.
 4. A missing Agent selection, reported authentication/readiness failure, incompatible required
    CLI/config, or unreadable input is `blocked-before-generation`.
+   For existing-product work, an incompatible or unproven visual plugin/design system is also
+   `blocked-before-generation`; do not treat it as a prompt-only warning.
 5. When the host cannot expose Agent or CLI readiness proof, record `partial` and the missing proof.
    Do not claim preflight passed. Proceed only within an explicit fidelity and evidence boundary;
    any host-reported failure still blocks.
@@ -127,8 +169,12 @@ evidence and may block an existing-product fidelity claim when no other sufficie
    surface. A collision blocks; do not create a random replacement.
 3. Create the project when absent. Synchronize the brief, UI contract, baseline, and minimum design
    context under `workflow-context/`, then verify the provider-side inputs are readable before
-   `start_run` when the host exposes that check.
-4. Call `start_run` once with the explicit project and Agent ids plus the grounded prompt. If submit
+   `start_run` when the host exposes that check. For a refinement, validate the complete local
+   brief/assertion patch before project mutation; then create/reuse the lineage project, synchronize
+   provider context, and verify provider-side readability. Any step failure stops before `start_run`.
+4. Call `start_run` once with the explicit project and Agent ids, generation skill, compatible
+   effective visual plugin/design-system selection, and grounded prompt. Persist these exact inputs
+   in `run_input_summary`. If submit
    success is ambiguous, halt without resubmitting and resolve the original run from provider facts.
 5. Continue to poll `get_run` at a reasonable interval and report useful progress. Unchanged files
    do not prove a hang. Call `cancel_run` only after an explicit user request.
@@ -167,6 +213,14 @@ Record these dimensions independently; one must not substitute for another:
 - Provenance: provider/Agent/version, project/run/parent ids, artifact count, hashes, snapshots, and
   context evidence agree.
 
+When `visual-assertions.json` is present, run
+`scripts/validate_prototype_artifact.py` from the Bruce plugin root against the
+bounded artifact before assigning a Visual state or accepting manual confirmation. It must check
+exact normalized colors, dimensions, required brand text, and forbidden tokens/strings. A failed
+exact assertion sets `exact_token_assertions = blocked` and `visual_check = blocked`; provider
+success, a provider score, or manual-only confirmation cannot override it. `manual-only` fills only
+the screenshot-comparison gap after deterministic assertions are clear.
+
 A terminal `succeeded` result has no artifact when its count is zero; preserve the provider's agent
 message and record no generated snapshot. A Jury or other provider score, must-fix count, terminal
 success, or static Functional pass cannot override another failed dimension. Store only valid changed
@@ -178,7 +232,8 @@ artifact may set `visual_check = manual-confirmed` with `visual_evidence = manua
 mean automated Visual pass. Record the inspected exact snapshot in confirmation evidence. Automated
 Visual readiness uses `visual_check = automated-clear` with `visual_evidence = automated`.
 
-Only `automated-clear + automated` or `manual-confirmed + manual-only` may govern implementation.
+Only `automated-clear + automated` or `manual-confirmed + manual-only` may govern implementation,
+and the latter is valid only after deterministic exact-token assertions are clear.
 Pending or blocked Visual checks, unavailable Visual evidence, and every mismatched pair cannot
 govern. Do not convert `unavailable` to `manual-only` without explicit exact-snapshot inspection.
 

@@ -15,6 +15,14 @@
 - Product or requirement evidence: <paths and relevant sections>
 - Repository UI contract: <path or not applicable for greenfield>
 - Design system evidence: <paths or approved greenfield constraints>
+- `selected_generation_skill`: <explicit id/version or none>
+- `selected_visual_plugin`: <explicit id/version or none>
+- `selected_design_system`: <explicit id/version or none>
+- `selection_basis`: <repository/runtime evidence or greenfield rationale>
+- `compatibility_check`: <clear|blocked with evidence and override-risk assessment>
+- `effective_plugin`: <exact plugin id passed to `start_run`, or none>
+- `effective_design_system`: <exact design-system id passed to `start_run`, or none>
+- `run_input_summary`: <exact Agent/skill/plugin/design-system/project/context identity>
 - Source/runtime evidence: <paths, screenshots, DOM, current HTML, or current browser evidence>
 - Confirmed refinement baseline: <path and SHA-256 or none>
 - Known evidence gaps: <none or explicit gaps and fidelity impact>
@@ -24,8 +32,19 @@
 - Confirmed requirements govern changed behavior.
 - Current runtime evidence governs unchanged visible state; source revision and drift remain recorded.
 - Repository source governs structural ownership and reuse anchors.
+- Repository theme/source governs unchanged shell, palette, typography, brand, spacing, dimensions,
+  radius, and geometry when evidenced.
 - The confirmed prototype governs the refinement baseline.
 - Provider/framework defaults fill only uncovered gaps.
+
+### Visual authority contract
+
+- Authority order: `confirmed requirements > current runtime evidence for unchanged state > repository
+  theme/source > confirmed prototype refinement baseline > provider/framework defaults only for
+  uncovered gaps`.
+- Fidelity mode: <high-fidelity, source-grounded wireframe, or exploratory>
+- Unchanged-surface protection: <shell/layout/palette/typography/brand/geometry that must not be
+  redesigned>
 
 ## Fact register
 
@@ -72,6 +91,8 @@ Every confirmed correction must add at least one assertion in each table before 
 - Preserve every unchanged layout and visual invariant in the repository UI contract.
 - The prototype must not contain credentials, tokens, cookies, test accounts, private keys, remote
   resources, or real authenticated backend connections.
+- Existing-product exact visual values and forbidden defaults must be listed in
+  `prototype-context/visual-assertions.json`; do not rely on prompt wording alone.
 - Prototype source is design evidence, not production frontend implementation.
 
 ## Output contract

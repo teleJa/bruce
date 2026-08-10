@@ -47,6 +47,35 @@ Exact normalized colors, dimensions, and radii use exact assertions. Automated s
 must record viewport and region-specific tolerance; one global score cannot replace critical-region
 assertions.
 
+## Visual authority and plugin compatibility
+
+- Authority order: `confirmed requirements > current runtime evidence for unchanged state > repository
+  theme/source > confirmed prototype refinement baseline > provider/framework defaults only for
+  uncovered gaps`.
+- Unchanged visual protection: <shell, palette, typography, brand, spacing, dimensions, radii, and
+  geometry that the provider must preserve>
+- Selected generation skill: <explicit id/version>
+- Selected visual plugin: <explicit id/version or none>
+- Selected design system: <explicit id/version or none>
+- Selection basis: <repository/runtime evidence>
+- Compatibility check: <clear|blocked, evidence path, and whether plugin defaults can override tokens>
+- Effective plugin/design system: <exact values passed to `start_run`>
+- Run input summary: <exact selection and context identity>
+- Exact assertion sidecar: `prototype-context/visual-assertions.json`
+
+```json
+{
+  "schema_version": 1,
+  "exact_colors": [{"selector": ".surface", "value": "#112233"}],
+  "exact_dimensions": [{"selector": ".sidebar", "property": "width", "value": "184px"}],
+  "required_brand_text": [{"selector": ".brand", "value": "<confirmed brand text>"}],
+  "forbidden_tokens": [{"value": "<forbidden provider/default token or text>"}]
+}
+```
+
+An incompatible or unproven visual plugin/design system is `blocked-before-generation`. Do not
+silently select `design-system-ant` for an existing-product extension.
+
 ## Baseline artifacts
 
 | Artifact | Type | SHA-256 | What it governs |

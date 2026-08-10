@@ -4,7 +4,8 @@
 
 - Objective: give Bruce an optional, evidence-grounded prototype workflow backed by Open Design.
 - Included: capability routing, external MCP invocation rules, prototype input and artifact
-  provenance, Design Gate readiness, and Completion Gate alignment.
+  provenance, visual authority and design-system compatibility preflight, deterministic artifact
+  drift checks, Design Gate readiness, and Completion Gate alignment.
 - Excluded: MCP installation/runtime ownership, product-management lanes, artifact publishing, and
   production frontend generation.
 
@@ -29,7 +30,8 @@
 | Component | Existing stack/deliverable | Owns | Does not own |
 |---|---|---|---|
 | Bruce main workflow | `skills/bruce/SKILL.md` | Predicate-based selection of prototype capability | Open Design execution or mandatory UI stages |
-| Prototype writer | `skills/write-prototype/` | Grounding bundle, readiness/preflight requirements, run and effective-output policy, independent artifact checks, provenance | Product decisions, MCP installation, host execution, final UI code, gate verdicts |
+| Prototype writer | `skills/write-prototype/` | Grounding bundle, visual authority, plugin/design-system compatibility preflight, run and effective-output policy, independent artifact checks, provenance | Product decisions, MCP installation, host execution, final UI code, gate verdicts |
+| Artifact visual checker | `scripts/validate_prototype_artifact.py` | Deterministic exact-token, dimension, brand, and forbidden-token assertions over an imported artifact | Screenshot comparison, provider quality score, product-specific theme policy |
 | Codex host | Existing host tools | MCP/app/file execution and actual tool responses | Bruce business readiness or completion decisions |
 | Design Gate | Existing `skills/design-gate/` | Prototype candidate applicability and implementation-entry readiness | Generating or refining prototypes |
 | Completion Gate | Existing `skills/completion-gate/` | Final implementation-to-prototype alignment evidence | Re-running design generation or making product decisions |
@@ -43,31 +45,37 @@
    the exact host/entry/destination, unchanged layout and visual invariants, and evidence gaps.
 3. Evidence is partitioned by authority: confirmed requirements own changed behavior; current
    runtime product evidence owns unchanged visual state; repository structure and revision evidence
-   own implementation anchors; the last confirmed prototype owns refinement baseline; provider
-   defaults fill only uncovered gaps. An unresolved conflict stops rather than silently redesigns.
-4. Codex checks host capabilities and records an explicit Agent, host-reported auth/readiness,
+   own implementation anchors; the repository theme/source owns reusable visual tokens; the last
+   confirmed prototype owns refinement baseline; provider defaults fill only uncovered gaps. An
+   unresolved conflict stops rather than silently redesigns.
+4. Before project mutation, Codex resolves generation skills separately from visual plugins/design
+   systems. For `existing-product-extension`, it records the selected and effective values, checks
+   whether the visual selection can override evidenced theme tokens, and blocks on incompatibility or
+   missing compatibility evidence. Greenfield selection remains open.
+5. Codex checks host capabilities and records an explicit Agent, host-reported auth/readiness,
    CLI/config compatibility, synchronized input readability, and visual-capture capability. A hard
    failure ends as `blocked-before-generation`; unavailable proof remains `partial` and limits claims.
-5. Codex derives `<repository>-<change>-<surface>` as the base project id, creates or reuses only a
+6. Codex derives `<repository>-<change>-<surface>` as the base project id, creates or reuses only a
    matching project, synchronizes the context bundle, starts one run, and polls it to terminal.
-6. Terminal provider status is mapped to an immutable effective-output fact:
+7. Terminal provider status is mapped to an immutable effective-output fact:
    `blocked-before-generation`, `failed`, `canceled`, `no_artifact`, `no_effect`, or `generated`.
    Confirmation remains a separate lifecycle field. Non-generated results retain history but create
    no snapshot. After the first explicit no-op, another requested attempt uses deterministic
    `<base-project-id>-r<sequence>` lineage with parent ids and baseline SHA.
-7. Codex imports changed output as untrusted content, validates Functional, Visual, Safety, and
+8. Codex imports changed output as untrusted content, runs deterministic exact-token artifact
+   assertions before manual visual confirmation, then validates Functional, Visual, Safety, and
    Provenance evidence independently, and stores an immutable generated snapshot plus manifest
    history. Exact token checks and viewport/region screenshot checks remain distinct.
-8. The user confirms or corrects the result. Corrections are converted into positive and negative
+9. The user confirms or corrects the result. Corrections are converted into positive and negative
    assertions before refinement. A governing repulled exact snapshot requires either
    `automated-clear + automated`, or `manual-confirmed + manual-only` with confirmation evidence that
    names the inspected snapshot. Pending, blocked, unavailable, and mismatched Visual combinations
    fail closed; manual evidence is never reported as automated Visual pass.
-9. Design Gate requires the UI prototype candidate only when it governs implementation and blocks
+10. Design Gate requires the UI prototype candidate only when it governs implementation and blocks
    on missing grounding, confirmation, effective output, hashes, safety/provenance, or an unstated
    visual limitation.
-10. Implementation uses real repository components and tokens rather than copying prototype code.
-11. Completion Gate compares required visible states, interactions, invariants, and tokens against
+11. Implementation uses real repository components and tokens rather than copying prototype code.
+12. Completion Gate compares required visible states, interactions, invariants, and tokens against
    the confirmed artifact using current Codex App Chrome evidence from the actual implementation.
 
 ## Decisions
@@ -131,6 +139,32 @@
 - Reversibility: additional automated screenshot evidence can later upgrade the evidence field
   without changing the confirmed artifact identity.
 
+### Separate generation capability from visual authority
+
+- Chosen: treat a generation skill (for example `artifacts-builder`) as a capability and a visual
+  plugin/design system (for example `design-system-ant`) as an independently selected policy input.
+  Existing-product extensions require a compatibility result and do not pass an incompatible or
+  unproven visual selection to `start_run`. Greenfield runs may still select such a plugin.
+- Rationale: the Joytime run explicitly requested `design-system-ant`; Open Design therefore applied
+  Ant defaults (`#d32029`, `248px`, `JT`) over confirmed Joytime values. A generic generation skill
+  should not silently become visual authority.
+- Rejected: globally disabling all design-system plugins, which would unnecessarily constrain
+  greenfield work, or trusting a prompt-only instruction that the provider may ignore.
+- Reversibility: selection fields and preflight checks are change-scoped; host plugin behavior remains
+  unchanged.
+
+### Add a deterministic artifact drift checker
+
+- Chosen: evaluate a small structured `visual-assertions.json` contract against imported HTML/CSS
+  before provider success or manual confirmation can govern. Check exact normalized colors and
+  dimensions, required brand text, and forbidden default tokens/strings.
+- Rationale: Markdown `assertIn` tests and provider scores cannot detect concrete visual drift in the
+  returned artifact. A generic checker can remain product-agnostic while a product supplies its own
+  assertions.
+- Rejected: hard-coding Joytime colors in Bruce or treating screenshot/manual review as a substitute
+  for deterministic token checks.
+- Reversibility: the sidecar is optional for greenfield and additive for existing-product contracts.
+
 ### Extend the existing gates instead of adding a prototype gate
 
 - Chosen: add an optional UI prototype row and readiness view to Design Gate, then add prototype
@@ -172,6 +206,8 @@
 - OD-11/OD-12 -> effective-output and fresh-lineage contract tests.
 - OD-13/OD-14 -> four-check, visual evidence, confirmation, and gate contract tests.
 - OD-15 -> feedback assertion and durable manifest-history contract tests.
+- OD-16/OD-17 -> evidence-authority, design-system/plugin selection, and manifest contract tests.
+- OD-18/OD-19 -> deterministic artifact checker and fail-closed manual-only contract tests.
 - Full plugin validation covers packaging and cross-skill references; no live provider run is required.
 
 ## Open decisions

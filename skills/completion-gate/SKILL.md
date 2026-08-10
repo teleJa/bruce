@@ -84,12 +84,17 @@ required but unavailable, keep the scenario incomplete and do not silently subst
 
 When a confirmed prototype governed implementation, map its required pages, states, interactions,
 failure feedback, positive and negative assertions, layout invariants, reuse anchors, and visual
-tokens to the real target. Check the manifest's exact confirmed identity, effective-output state,
-lineage, hashes, four independent findings, and Visual state/evidence pair. The governing manifest
+tokens to the real target. For an existing-product extension, also check the ordered visual authority,
+selected/effective generation skill and visual plugin/design-system, compatibility evidence, exact
+run-input summary, and the artifact checker's result. Check the manifest's exact confirmed identity,
+effective-output state, lineage, hashes, four independent findings, and Visual state/evidence pair.
+The governing manifest
 must retain `effective_output_state = generated`, a separate `confirmation_state = confirmed`, and
 either `automated-clear + automated` or exact-snapshot `manual-confirmed + manual-only`; pending,
-blocked, unavailable, or mismatched Visual combinations are design-alignment issues. A provider score,
-prototype source, preview URL, prototype screenshot, or `manual-only` prototype confirmation does
+blocked, unavailable, or mismatched Visual combinations are design-alignment issues. A blocked exact
+token assertion remains a design-alignment issue even when the provider succeeded or the user supplied
+manual-only confirmation. A provider score, prototype source, preview URL, prototype screenshot, or
+`manual-only` prototype confirmation does
 not prove the implementation matches it; require current Codex App Chrome evidence for every
 material visible outcome.
 

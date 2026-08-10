@@ -3,7 +3,7 @@ run: "20260710-105828-bruce-workflow-flexibility"
 task: "将 Bruce v4 简化为 Codex 原生执行的风险驱动工作流插件"
 plan: plan.md
 created: "2026-07-10T10:58:28+08:00"
-updated: "2026-07-18"
+updated: "2026-07-23"
 ---
 
 # 测试计划：将 Bruce v4 简化为 Codex 原生执行的风险驱动工作流插件
@@ -75,7 +75,13 @@ updated: "2026-07-18"
   - one unresolved requirement ambiguity -> only clarification capability
   - public contract freeze/handoff -> architecture capability；DB schema only when needed
   - complex dependency/handoff -> plan capability
-  - complex acceptance matrix -> test-plan capability
+  - full + at least two component/contract boundaries -> test-plan capability before behavior implementation
+  - full + state/retry/concurrency/partial failure/recovery/permission/rollback -> test-plan capability
+  - full + real integration/deployment/runtime environment or multiple verification layers -> test-plan capability
+  - full + multiple tasks sharing behavior scenarios/regression sources -> test-plan capability
+  - full + none of the test-design triggers -> no test-plan, but record a repository-backed skip reason in same-directory `artifact-review.md`
+  - full or persisted downstream design source -> same-directory artifact review gate before implementation
+  - required artifact missing / skipped without evidence / D0-D1 not ready -> artifact gate blocks
   - actual plan + meaningful risk -> plan review capability
   - any document mutation -> separated D0 self-review -> explicit pass/issues
   - requirement/architecture/public-contract/plan/test-design/multi-doc/downstream-source -> conditional D1 P0/P1 gate

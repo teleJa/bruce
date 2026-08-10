@@ -24,6 +24,32 @@ dependency or incident boundary supported by current facts.
 - Do not weaken acceptance, replace the original failure with a smaller passing check, or claim a
   user-visible Web scenario passed from unit evidence alone.
 
+## Work interval
+
+For multi-batch or long-running work, use `max_tool_calls=40` and `max_elapsed=45m` unless the task
+contract records a smaller repository-driven limit. Count all tool invocations, including retries and
+polls. When either limit is reached, stop starting new work, inspect live handles, record current
+evidence and remaining work, and run the batch checkpoint. Ordinary work returns control after the
+checkpoint. Explicit Goal or continuous execution may begin a new interval only after recording the
+checkpoint and resetting both counters; a reset never erases retry or repair counts.
+
+A long-running command may remain active across an interval when it is known, owned by the current
+task, and safe to leave running. Do not terminate it merely to satisfy the interval boundary.
+
+## Tool-handle lifecycle
+
+- Track each active async handle with its owning batch, command purpose, creation result, and latest
+  observed state in the current task; Goal mode records only material long-running handles in its
+  existing audit record.
+- Wait or write only through the latest live handle returned by that exact tool call. Mark it closed
+  after completion, termination, rejection, or a definitive invalid-handle response, and never use it
+  again.
+- Do not treat repeated no-output polls as progress. Use bounded waits of at most 60 seconds; after
+  two no-progress polls, inspect the process or dependency state before another wait.
+- When a handle disappears, inspect the actual process and external state before retrying. Classify an
+  unknown external side effect as L4; otherwise use L2 when the result cannot be recovered safely.
+- Never terminate or adopt a process that the current task did not start.
+
 ## Resume sources
 
 For the same Codex task, inspect the current conversation, native plan, tool results, and actual

@@ -50,6 +50,8 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Multi-batch, long-running, cross-component, or pre-side-effect work uses a bounded batch checkpoint
   with `Checkpoint: clear|issues|blocked` as progress feedback; the final `Completion Gate` remains
   the only overall completion decision.
+- Runtime-dependent batches perform one read-only capability preflight. Long-running work checkpoints
+  after at most 40 tool calls or 45 minutes, and closed or invalid async handles are never polled again.
 - Independent review is a mode inside one of those gates, not another verdict that callers combine.
 
 The canonical entry is [`skills/bruce/SKILL.md`](skills/bruce/SKILL.md). Other directories under

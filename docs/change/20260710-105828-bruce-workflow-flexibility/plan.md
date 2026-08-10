@@ -3,12 +3,12 @@ status: implemented
 run: "20260710-105828-bruce-workflow-flexibility"
 task: "将 Bruce v4 简化为 Codex 原生执行的风险驱动工作流插件"
 created: "2026-07-10T10:58:28+08:00"
-updated: "2026-07-21"
+updated: "2026-07-23"
 ---
 
 # 计划：将 Bruce v4 简化为 Codex 原生执行的风险驱动工作流插件
 
-## 实施结果（更新至 2026-07-21）
+## 实施结果（更新至 2026-07-23）
 
 - 已建立标准 Codex plugin manifest、repo-local marketplace 和单一 `skills/bruce/SKILL.md` 真源。
 - 已将主流程、topology、业务风险、L0-L4、恢复与完成判断拆为可达 references。
@@ -17,6 +17,10 @@ updated: "2026-07-21"
 - 已增加 contract/package tests 和只读 validator；真实插件安装仍是需用户另行授权的手工 smoke。
 - 已增加行为验收与验证闭环：Given/When/Then/Evidence、开发期失败反馈、C0 代码自检、
   分层真实验证、原场景重跑与关联回归；Web 真实使用验收复用 Codex App Chrome 当前会话。
+- 已将 full test-design 路由改为确定性条件判断：命中复杂验收条件时强制生成
+  `test-plan.md`，全部不命中时必须在同级 `artifact-review.md` 记录 repository-backed skip reason。
+- 已恢复设计产物完整性门禁：full 或持久化下游设计真源的任务在实现前必须生成同级
+  `artifact-review.md`，缺少必需产物或跳过证据时阻断。
 
 本节是实施快照，不是运行状态真相；当前代码、工具结果和工作区事实仍优先。
 
@@ -127,7 +131,11 @@ task contract 是当前 Codex 任务中的结构化工作上下文，不要求�
 补充规则：
 
 - 单组件中的架构、schema 或高风险修改仍是 standard；由 risk 决定治理强度。
-- full 不等于必须并行，也不等于必须生成 architecture/plan/test-plan。
+- full 不等于必须并行，也不机械生成 architecture/plan/test-plan；但行为实现前必须执行
+  test-design decision。验收跨越至少两个组件/契约边界，包含状态、重试、并发、部分失败、
+  恢复、权限或回滚，需要真实集成/部署/运行环境或多个验证层，或多个实现任务共享行为场景/
+  回归来源时，必须调用 `write-tests`。均不命中时必须记录
+  `write-tests: skipped — <repository-backed reason>`，不得静默跳过。
 - 使用 subagent 时，只委派边界清晰、低耦合任务；主 Agent 负责说明依赖和文件范围、汇总结果并处理冲突。Bruce 不维护 worker 状态。
 - topology 可以随仓库事实升级或纠正；只要 objective/scope 未扩大，不需要用户批准路由变化。
 
@@ -151,7 +159,8 @@ Codex 是否弹出宿主 approval 与本表无关。Bruce 不读取或设置 san
 | 多个相互依赖的领域决策、需要持久化领域文档或用户明确要求 grilling | `grill-with-docs` |
 | 需要冻结架构/公共契约、需要交接 | `write-architecture`，必要时 `write-db-design` |
 | 多步骤、多人交接、full 依赖复杂 | `write-plan` |
-| 验收矩阵复杂或需要独立测试设计 | `write-tests` |
+| full 验收跨至少两个组件/契约边界；涉及状态/重试/并发/部分失败/恢复/权限/回滚；需要真实集成、部署、运行环境或多个验证层；多个任务共享行为场景或回归来源 | 实现行为前调用 `write-tests` 并持久化 `test-plan.md`；全部不命中则记录 repository-backed skip reason |
+| full，或 standard 已持久化下游设计真源 | 实现前调用 `artifact-review-gate` 并在同级生成 `artifact-review.md`；缺文件、缺评审或 skipped 无证据时阻断 |
 | 代码或运行行为变化 | 读取 `verification-loop.md`；实现前检查 Evidence 可行性，完成后强制 C0 与分层验证 |
 | 任意文档发生修改 | 强制 D0 self-review：事实、跨文档一致性、完整性、占位符和链接，输出 pass/issues |
 | 需求、架构、公共契约、开发计划、测试设计、多文档联动或下游真源 | 条件式 D1 `doc-review-gate` P0/P1 放行；仅计划深度执行风险可改用 `plan-review`，不机械双跑；Clean=通过，Issues Found=不通过 |
@@ -324,11 +333,11 @@ repo marketplace 只用于本地安装测试。任何修改用户全局 Codex �
 - **interfaces**:
   - consumes: Bruce task contract 和明确的 capability request
   - produces: 仅在需要时生成的 clarification/design/plan/test/review artifact
-- **detail**: 移除 supporting skills 及其被引用 references/templates 对旧 lane、checklist 和固定 stage transition 的依赖。每个 skill 明确输入、输出与不负责事项；它们可以独立使用，也可以由 Bruce 按需调用，但不得成为全局必经门禁或运行状态真相。普通单点阻塞歧义由 Bruce 直接询问，`grill-with-docs` 只处理多个依赖决策、持久领域文档或显式 grilling。contract test 必须遍历 skill frontmatter/body 以及从中可达的本地 reference/template，不能只检查 `SKILL.md`。
+- **detail**: 移除 supporting skills 及其被引用 references/templates 对旧 lane、checklist 和固定 stage transition 的依赖。每个 skill 明确输入、输出与不负责事项；它们可以独立使用，也可以由 Bruce 按需调用，但不得成为运行状态真相。普通单点阻塞歧义由 Bruce 直接询问，`grill-with-docs` 只处理多个依赖决策、持久领域文档或显式 grilling。full 的 test-design decision 使用可机械核对的复杂度条件：跨至少两个组件/契约边界，状态/重试/并发/部分失败/恢复/权限/回滚，真实集成/部署/运行环境或多验证层，以及多任务共享行为场景/回归来源；命中任一条件必须调用 `write-tests`，全部不命中必须在同级 `artifact-review.md` 留下 repository-backed skip reason。full 或持久化下游设计真源的 standard 任务必须通过 artifact review gate，但该门禁只检查按需产物集合的完整性，不强制生成全部内容。contract test 必须遍历 skill frontmatter/body 以及从中可达的本地 reference/template，不能只检查 `SKILL.md`。
 - **document-review**: 所有持久文档修改必须由写入 Agent 做独立于写作步骤的 D0 自评并返回 pass/issues；需求、架构、公共契约、开发计划、测试设计、多文档联动或下游真源按条件进入 D1 P0/P1 放行。D1 reviewer 默认只读，Bruce 只在原修改授权和 scope 内修复，修复后重新评审。
 - **feature_bearing**: true
 - **tests**: `test-plan.md#bruce-v4-4`
-- **acceptance**: 不存在真实触发条件时零 artifact；触发单项能力时只生成对应产物，不级联完整旧流水线；任何文档修改都有显式 D0 verdict，重要文档在进入下游前具有合格 D1 verdict。
+- **acceptance**: 不存在真实内容触发条件时不生成对应设计文档，但 full 必须在同级 `artifact-review.md` 记录完整候选集合和 test-design skip reason；命中 test-design 任一条件时实现前存在 `test-plan.md`，且内联验收表不能替代；触发单项能力时只生成对应内容，不级联完整旧流水线；任何文档修改都有显式 D0 verdict，重要文档在进入下游前具有合格 D1 verdict，artifact gate 不通过时禁止实现。
 
 ### bruce-v4-5
 - **title**: 对齐 Codex 原生执行、subagent 和完成验证
@@ -392,12 +401,14 @@ repo marketplace 只用于本地安装测试。任何修改用户全局 Codex �
 
 - 6 个 task id 与 `test-plan.md` 6 个 anchor 一一对应、唯一且依赖无环。
 - `.codex-plugin/plugin.json` 存在并只指向真实 plugin components；主入口是 `skills/bruce/SKILL.md`。
-- 默认流程只有 inspect/task contract/implement/verify/summary，没有 express 和固定 artifact gate。
+- 默认流程只有 inspect/task contract/按需设计/条件式 artifact gate/implement/verify/summary，没有 express 和固定内容产物链。
 - standard/full 只影响拓扑；low/guarded/critical 只影响业务治理。
 - full+low 不产生人工业务 gate；已明确授权的 standard+guarded 不重复询问。
 - L0-L4 有界且按依赖传播；宿主 permission denied 只触发替代路径或 blocked，插件不提升权限。
 - 不存在 SandboxBackend、HostAdapter、PermissionGrant、DecisionPackage、lease/fencing、ChangeSet merge 或 JSONL runtime store。
-- 不存在 mandatory clarification/architecture/plan/test-plan/review/progress/completion artifact 链。
+- 不存在 mandatory clarification/architecture/plan/test-plan/review/progress/completion 内容产物链；full
+  必须有同级 `artifact-review.md`，其中包含可审计的 test-design decision；命中复杂验收条件时
+  `test-plan.md` 是条件式必需产物。
 - 完成判断引用当前 Codex task 的真实 diff、命令/页面结果和 acceptance。
 - 行为 acceptance 以 Given/When/Then/Evidence 逐场景验收；代码有最终 C0 pass，失败修复后重跑原场景和关联回归。
 - 用户可见 Web 行为优先且默认使用 Codex App Chrome 当前会话验证真实服务；Chrome 不可用不声称通过，也不静默退回 Playwright。

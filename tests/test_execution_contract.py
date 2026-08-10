@@ -25,6 +25,17 @@ class ExecutionContractTest(unittest.TestCase):
         self.assertIn("`Completion: blocked`", self.goal)
         self.assertIn("Do not independently inspect artifacts", self.goal)
 
+    def test_goal_records_preflight_checkpoint_and_interval_rollover(self) -> None:
+        normalized = " ".join(self.goal.split())
+        for phrase in (
+            "capability preflight results",
+            "latest batch checkpoint",
+            "work-interval counters",
+            "At each work-interval boundary",
+            "not a Completion result",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_goal_entry_is_explicit_and_profile_independent(self) -> None:
         normalized = " ".join(self.goal.split())
         self.assertIn("Enter only for explicit Goal intent", normalized)

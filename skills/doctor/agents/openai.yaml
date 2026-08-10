@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bruce Doctor"
+  short_description: "Audit Codex logs with read-only evidence links"
+  default_prompt: "Use $doctor only when explicitly asked to audit a Codex execution log."

@@ -45,6 +45,28 @@ class FailurePolicyContractTest(unittest.TestCase):
         self.assertIn("incident boundary", self.policy)
         self.assertIn("Only read-only diagnosis and proven-isolated work may continue", self.policy)
 
+    def test_long_running_work_has_a_checkpoint_interval(self) -> None:
+        normalized = " ".join(self.policy.split())
+        for phrase in (
+            "`max_tool_calls=40`",
+            "`max_elapsed=45m`",
+            "stop starting new work",
+            "run the batch checkpoint",
+            "reset never erases retry or repair counts",
+        ):
+            self.assertIn(phrase, normalized)
+
+    def test_async_handles_have_a_bounded_lifecycle(self) -> None:
+        normalized = " ".join(self.policy.split())
+        for phrase in (
+            "latest live handle returned by that exact tool call",
+            "never use it again",
+            "bounded waits of at most 60 seconds",
+            "after two no-progress polls",
+            "Never terminate or adopt a process",
+        ):
+            self.assertIn(phrase, normalized)
+
 
 if __name__ == "__main__":
     unittest.main()

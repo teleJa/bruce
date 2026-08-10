@@ -38,6 +38,17 @@ class ValidationLoopContractTest(unittest.TestCase):
         self.assertIn("proportional `visual_scope`", test_normalized)
         self.assertIn("layout invariant and interaction evidence", test_normalized)
 
+    def test_runtime_dependencies_require_one_read_only_preflight(self) -> None:
+        normalized = " ".join(self.policy.split())
+        for phrase in (
+            "perform one minimal read-only preflight",
+            "status=available|unavailable|unknown",
+            "dependent acceptance ids",
+            "pause only their batch",
+            "Do not repeat the same preflight",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_feedback_is_not_another_gate(self) -> None:
         self.assertIn("Continuous author feedback", self.policy)
         self.assertIn("not separately named gates", self.policy)

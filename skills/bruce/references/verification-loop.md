@@ -41,6 +41,20 @@ screenshot path or hash, and the applicable checks (for example card boxes, row 
 visual evidence. For Web acceptance, an absent `visual_scope` remains an unresolved contract gap;
 do not silently treat it as `none`.
 
+## Capability preflight
+
+Before the first batch that depends on a browser, database, model, external service, or another
+runtime capability, perform one minimal read-only preflight. Record `capability`, exact `target`,
+`check`, `status=available|unavailable|unknown`, current evidence, and dependent acceptance ids. A
+configured client, installed extension, environment variable, or planned test is not availability
+evidence by itself; verify the actual target and required operation without creating production data
+or triggering a billable/irreversible action.
+
+When preflight is unavailable or unknown, mark dependent scenarios `blocked` or `unexecuted`, pause
+only their batch, and continue proven-independent work. Do not repeat the same preflight until a
+relevant configuration, credential, process, target, or host-capability fact changes. Rerun it before
+dependent work resumes and carry its evidence revision into the batch matrix.
+
 ## Development feedback
 
 For behavior changes, start with the smallest failing automated test or reproducible scenario when

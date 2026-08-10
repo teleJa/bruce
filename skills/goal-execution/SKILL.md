@@ -36,6 +36,8 @@ Goal id is returned, use a stable timestamp slug and record the native objective
 - objective, acceptance, scope, and constraints;
 - current plan and material decisions;
 - Design result when applicable;
+- capability preflight results and dependent acceptance ids;
+- latest batch checkpoint, work-interval counters, and any material live tool handle;
 - executed verification and current outcomes;
 - Completion result and evidence summary when available;
 - blocking facts and exact unlock condition;
@@ -49,6 +51,10 @@ mirror every Goal transition or infer native status from the Markdown file.
 Maintain the nearest executable plan with native planning tools. Use `spawn-execute` only for
 boundary-clear delegated work under the active Goal. Ordinary implementation and verification remain
 owned by Bruce and the selected capabilities.
+
+At each work-interval boundary, update the existing audit record and run the batch checkpoint before
+starting another interval. This rollover is execution persistence, not a Completion result, and it
+does not reset L0/L1 retry or repair counts.
 
 Continue until `completion-gate` returns one of its terminal results:
 

@@ -17,6 +17,7 @@ SUPPORTING_SKILLS = (
     "plan-review",
     "spawn-execute",
     "completion-gate",
+    "doctor",
 )
 
 LEGACY_MARKERS = (
@@ -108,10 +109,19 @@ class SupportingSkillContractTest(unittest.TestCase):
             "write-plan",
             "write-prototype",
             "write-tests",
+            "doctor",
         ):
             body = read(f"skills/{name}/SKILL.md")
             with self.subTest(skill=name):
                 self.assertRegex(body, r"(?i)do not invoke it automatically|does not own")
+
+    def test_doctor_is_explicit_and_not_a_completion_authority(self) -> None:
+        body = read("skills/doctor/SKILL.md")
+        normalized = " ".join(body.split())
+        self.assertIn("only when the user explicitly asks", normalized)
+        self.assertIn("Do not add or use a hook", normalized)
+        self.assertIn("Do not emit or change `Design: pass`", body)
+        self.assertIn("does not own the main Bruce workflow", body)
 
 
 if __name__ == "__main__":

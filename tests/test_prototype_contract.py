@@ -5,17 +5,20 @@ import unittest
 from tests._support import read
 
 
-REQUIRED_OPEN_DESIGN_CAPABILITIES = (
-    "list_projects",
+CORE_OPEN_DESIGN_CAPABILITIES = (
     "create_project",
     "write_file",
-    "list_skills",
-    "list_plugins",
-    "list_agents",
     "start_run",
     "get_run",
     "cancel_run",
     "get_artifact",
+)
+
+CONDITIONAL_DISCOVERY_CAPABILITIES = (
+    "list_projects",
+    "list_skills",
+    "list_plugins",
+    "list_agents",
 )
 
 
@@ -25,6 +28,9 @@ class PrototypeContractTest(unittest.TestCase):
         cls.workflow = read("skills/bruce/SKILL.md")
         cls.skill = read("skills/write-prototype/SKILL.md")
         cls.brief = read("skills/write-prototype/templates/prototype-brief.md")
+        cls.generation_input = read(
+            "skills/write-prototype/templates/generation-input.md"
+        )
         cls.ui_contract = read(
             "skills/write-prototype/templates/repository-ui-contract.md"
         )
@@ -42,9 +48,14 @@ class PrototypeContractTest(unittest.TestCase):
         self.assertIn("Do not invoke another supporting skill automatically", self.skill)
 
     def test_open_design_requires_the_complete_host_capability_set(self) -> None:
-        for capability in REQUIRED_OPEN_DESIGN_CAPABILITIES:
+        for capability in CORE_OPEN_DESIGN_CAPABILITIES:
             with self.subTest(capability=capability):
                 self.assertIn(f"`{capability}`", self.skill)
+        for capability in CONDITIONAL_DISCOVERY_CAPABILITIES:
+            with self.subTest(capability=capability):
+                self.assertIn(f"`{capability}`", self.skill)
+        self.assertIn("Conditional discovery capabilities", self.skill)
+        self.assertIn("selected conditional discovery capability", self.skill)
         self.assertIn("fixed MCP server prefix", self.skill)
         self.assertIn("Block before creating or changing an Open Design project", self.skill)
         self.assertIn("Do not install", self.skill)
@@ -65,11 +76,83 @@ class PrototypeContractTest(unittest.TestCase):
         self.assertIn("100 characters", self.skill)
         self.assertIn("Pass the project id explicitly", self.skill)
         self.assertIn("halt without resubmitting", normalized)
-        self.assertIn("poll `get_run`", normalized)
+        self.assertIn("otherwise use `get_run`", normalized)
         self.assertIn("explicit user request", normalized)
         self.assertIn("terminal `succeeded` result has no artifact", normalized)
         self.assertIn("provider's agent message", normalized)
         self.assertIn("no generated snapshot", normalized)
+
+    def test_preflight_discovery_is_selective_when_inputs_are_explicit(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for marker in (
+            "selection matrix",
+            "do not enumerate",
+            "plugin=none",
+            "design-system=none",
+            "Never rely on a provider default Agent route",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker.lower(), normalized.lower())
+        self.assertIn("discovery_mode", self.manifest)
+
+    def test_repository_visual_authority_skips_direction_discovery(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for marker in (
+            "direction_selection=skip",
+            "repository/runtime visual authority",
+            "prohibit Direction library probing",
+            "unknown subcommand",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker.lower(), normalized.lower())
+        self.assertIn("direction_selection", self.brief)
+        self.assertIn("direction_selection", self.manifest)
+
+    def test_generation_uses_compact_context_and_incremental_hashes(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for marker in (
+            "generation-input.md",
+            "context_hash",
+            "context_files",
+            "sync_mode=full",
+            "synchronize only the changed",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker.lower(), normalized.lower())
+        for field in ("context_hash", "sync_mode", "source_evidence"):
+            self.assertIn(field, self.generation_input)
+            self.assertIn(field, self.manifest)
+
+    def test_generation_skill_readiness_does_not_mislabel_a_wrapper_as_a_template(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for marker in (
+            "generation_skill_readiness",
+            "wrapper-only generation skill",
+            "generate from scratch",
+            "ready-made prototype template",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker.lower(), normalized.lower())
+        self.assertIn("generation_skill_readiness", self.brief)
+        self.assertIn("generation_skill_readiness", self.manifest)
+
+    def test_run_observation_is_incremental_and_specific(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for marker in (
+            "45–60 second interval",
+            "wait_run",
+            "get_run_events",
+            "get_run_summary",
+            "reconnecting",
+            "stalled_candidate",
+            "last_event_id",
+            "last_progress_at",
+            "without nested long sleeps",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker.lower(), normalized.lower())
+        for field in ("provider_state", "observation_mode", "last_event_id"):
+            self.assertIn(field, self.manifest)
 
     def test_generated_and_confirmed_artifacts_remain_distinct_and_safe(self) -> None:
         normalized = " ".join(self.skill.split())

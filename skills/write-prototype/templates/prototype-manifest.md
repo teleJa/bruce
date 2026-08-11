@@ -3,6 +3,7 @@
 - provider: `open-design`
 - selected_agent: <explicit agent id and version>
 - selected_generation_skill: <explicit generation skill id and version>
+- generation_skill_readiness: <clear, partial, or blocked plus reusable workflow/seed evidence>
 - selected_visual_plugin: <explicit visual plugin id and version, or none>
 - selected_design_system: <explicit design-system id and version, or none>
 - selection_basis: <repository/runtime evidence or greenfield rationale>
@@ -10,10 +11,19 @@
 - effective_plugin: <exact plugin id passed to `start_run`, or none>
 - effective_design_system: <exact design-system id passed to `start_run`, or none>
 - run_input_summary: <exact Agent/skill/plugin/design-system/project/context identity>
+- discovery_mode: <selective, full, or legacy>
+- direction_selection: <skip, provider-capability, or legacy-unknown>
+- context_hash: <none or sha256 of compact provider-facing context>
+- context_files: <compact provider input plus local evidence references>
+- sync_mode: <full, incremental, or legacy>
 - base_project_id: <stable base project id>
 - project_id: <current explicit project id>
 - run_id: <provider run id>
 - run_status: <pending, running, succeeded, failed, or canceled>
+- provider_state: <queued, thinking, working, reconnecting, degraded, stalled_candidate, succeeded, failed, or canceled>
+- observation_mode: <summary, event-incremental, or full-run-legacy>
+- last_event_id: <none or provider event cursor>
+- last_progress_at: <none or timestamp>
 - effective_output_state: <pending, blocked-before-generation, failed, canceled, no_artifact, no_effect, or generated>
 - artifact_count: <pending or integer>
 - parent_project_id: <none or parent project id>

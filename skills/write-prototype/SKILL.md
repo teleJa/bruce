@@ -39,6 +39,9 @@ Create or update:
 - `prototype-context/baseline/` for bounded screenshots, DOM/accessibility evidence, current HTML, or
   the last confirmed prototype that is actually supplied to the provider;
 - `prototype-manifest.md` from [prototype-manifest.md](templates/prototype-manifest.md);
+- `prototype-context/generation-input.md` from [generation-input.md](templates/generation-input.md)
+  for the compact provider-facing context; keep detailed source evidence local and referenced by
+  hash/path instead of copying it into every provider prompt;
 - `prototype/versions/<run-id>/generated/` for the first valid changed run result;
 - `prototype/versions/<run-id>/confirmed/` for the exact artifact repulled after user confirmation.
 
@@ -52,22 +55,24 @@ logical capability from the current host tool surface; do not require a fixed MC
 
 Required capabilities:
 
-- `list_projects`;
 - `create_project`;
 - `write_file`;
-- `list_skills`;
-- `list_plugins`;
-- `list_agents`;
 - `start_run`;
 - `get_run`;
 - `cancel_run`;
 - `get_artifact`.
 
-Optional capabilities are `search_files` and `get_file`. Their absence disables only the associated
-inspection convenience.
+Conditional discovery capabilities are `list_projects`, `list_skills`, `list_plugins`, and
+`list_agents`. Require only the capabilities selected by the preflight matrix below. Optional
+inspection capabilities are `search_files` and `get_file`; their absence disables only the
+associated inspection convenience.
 
-Block before creating or changing an Open Design project when any required capability is not
-callable. Report missing logical names and the smallest host action. Do not install or configure an
+Optional run-observation capabilities are `get_run_summary`, `get_run_events`, and `wait_run`. Use
+them when the host exposes them; do not implement a Bruce-side adapter when they are absent.
+
+Block before creating or changing an Open Design project when any core required capability or any
+selected conditional discovery capability is not callable. Report missing logical names and the
+smallest host action. Do not install or configure an
 MCP server, launch a replacement daemon, or wrap Open Design behind Bruce. Do not silently substitute
 hand-written HTML or another design tool.
 
@@ -142,18 +147,30 @@ context.
 After explicit provider selection and before project mutation:
 
 1. Resolve every required logical capability.
-2. Use `list_skills`, `list_plugins`, and `list_agents` to select explicit ids; never rely on the
-   provider's default Agent route.
-3. Record `selected_agent`, host-reported `agent_readiness`, `cli_compatibility` with version and
+2. Apply a selection matrix before discovery. If the task contract or user already supplies an
+   Agent/model/skill/plugin/design-system id, verify that selection directly and do not enumerate
+   the corresponding full catalog. Run `list_agents` only when Agent/model selection is missing or
+   stale; run `list_skills` only when the generation skill is missing; run `list_plugins` only when a
+   visual plugin is requested; run design-system discovery only when a design system is requested.
+   `plugin=none` and `design-system=none` skip their catalogs. Never rely on a provider default Agent
+   route.
+3. For an existing-product extension with repository/runtime visual authority, record
+   `direction_selection=skip` when plugin and design-system are both `none`; prohibit Direction
+   library probing in the provider prompt. Permit a `tools directions`-style capability only when
+   there is no visual authority and the host explicitly declares that capability. Never discover a
+   CLI command by executing an unknown subcommand.
+4. Record `selected_agent`, host-reported `agent_readiness`, `cli_compatibility` with version and
    required config evidence, the selected generation/visual plugin/design-system ids and
-   `compatibility_check`, local `input_readability` for every source file, `visual_capability`,
-   and aggregate `preflight_status` in the manifest. Include a `run_input_summary` with the exact
-   selections and synchronized context identities.
-4. A missing Agent selection, reported authentication/readiness failure, incompatible required
+   `compatibility_check`, `generation_skill_readiness`, local `input_readability` for every source
+   file, `visual_capability`, and aggregate `preflight_status` in the manifest. Include a
+   `run_input_summary` with the exact selections and synchronized context identities. Treat a
+   wrapper-only generation skill with no reusable seed/workflow as `partial`, and state that the
+   provider will generate from scratch; do not describe it as a ready-made prototype template.
+5. A missing Agent selection, reported authentication/readiness failure, incompatible required
    CLI/config, or unreadable input is `blocked-before-generation`.
    For existing-product work, an incompatible or unproven visual plugin/design system is also
    `blocked-before-generation`; do not treat it as a prompt-only warning.
-5. When the host cannot expose Agent or CLI readiness proof, record `partial` and the missing proof.
+6. When the host cannot expose Agent or CLI readiness proof, record `partial` and the missing proof.
    Do not claim preflight passed. Proceed only within an explicit fidelity and evidence boundary;
    any host-reported failure still blocks.
 
@@ -165,19 +182,27 @@ evidence and may block an existing-product fidelity claim when no other sufficie
 1. Derive the base project id as `<repository>-<change>-<surface>`. Normalize to lowercase ASCII
    letters, digits, and hyphens; collapse and trim hyphens; cap the complete id at 100 characters.
    Pass the project id explicitly to every project-scoped call.
-2. Call `list_projects`. Reuse the id only when its context matches this repository, change, and
-   surface. A collision blocks; do not create a random replacement.
-3. Create the project when absent. Synchronize the brief, UI contract, baseline, and minimum design
-   context under `workflow-context/`, then verify the provider-side inputs are readable before
-   `start_run` when the host exposes that check. For a refinement, validate the complete local
-   brief/assertion patch before project mutation; then create/reuse the lineage project, synchronize
-   provider context, and verify provider-side readability. Any step failure stops before `start_run`.
+2. Call `list_projects` only when the provider cannot deterministically resolve the explicit base
+   project id. Reuse the id only when its context matches this repository, change, and surface. A
+   collision blocks; do not create a random replacement.
+3. Create the project when absent. Synchronize the compact `generation-input.md` plus only changed
+   context files under `workflow-context/`, then verify provider-side readability before `start_run`
+   when the host exposes that check. Record `context_hash`, `context_files`, and `sync_mode=full` or
+   `incremental`. For a refinement, validate the complete local brief/assertion patch before
+   project mutation; reuse the stable context hash and synchronize only the changed input/baseline
+   diff. Any step failure stops before `start_run`.
 4. Call `start_run` once with the explicit project and Agent ids, generation skill, compatible
    effective visual plugin/design-system selection, and grounded prompt. Persist these exact inputs
    in `run_input_summary`. If submit
    success is ambiguous, halt without resubmitting and resolve the original run from provider facts.
-5. Continue to poll `get_run` at a reasonable interval and report useful progress. Unchanged files
-   do not prove a hang. Call `cancel_run` only after an explicit user request.
+5. Observe the run at a bounded 45–60 second interval. Prefer `wait_run`, `get_run_events`, or
+   `get_run_summary` with a `since`/event cursor when available; otherwise use `get_run` without
+   nested long sleeps and retain only changed fields. Record `last_event_id`, `last_progress_at`,
+   `observation_mode`, and a specific state: `queued`, `thinking`, `working`, `reconnecting`,
+   `degraded`, `stalled_candidate`, `succeeded`, `failed`, or `canceled`. Map provider
+   `running + error` to the specific observed state; do not report it as ordinary running. After
+   two bounded polls with no event/progress, inspect the provider state before waiting again. Do not
+   infer a hang from unchanged files alone. Call `cancel_run` only after an explicit user request.
 6. Map provider outcome to effective output rather than trusting terminal status alone:
    - preflight failure -> `blocked-before-generation`;
    - failed run -> `failed`, with no snapshot;

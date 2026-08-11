@@ -16,6 +16,7 @@
 - Repository UI contract: <path or not applicable for greenfield>
 - Design system evidence: <paths or approved greenfield constraints>
 - `selected_generation_skill`: <explicit id/version or none>
+- `generation_skill_readiness`: <clear, partial, or blocked plus reusable workflow/seed evidence>
 - `selected_visual_plugin`: <explicit id/version or none>
 - `selected_design_system`: <explicit id/version or none>
 - `selection_basis`: <repository/runtime evidence or greenfield rationale>
@@ -23,6 +24,11 @@
 - `effective_plugin`: <exact plugin id passed to `start_run`, or none>
 - `effective_design_system`: <exact design-system id passed to `start_run`, or none>
 - `run_input_summary`: <exact Agent/skill/plugin/design-system/project/context identity>
+- `discovery_mode`: <selective, full, or legacy>
+- `direction_selection`: <skip, provider-capability, or legacy-unknown>
+- `context_hash`: <none or sha256 of compact provider-facing context>
+- `context_files`: <compact provider input plus local evidence references>
+- `sync_mode`: <full, incremental, or legacy>
 - Source/runtime evidence: <paths, screenshots, DOM, current HTML, or current browser evidence>
 - Confirmed refinement baseline: <path and SHA-256 or none>
 - Known evidence gaps: <none or explicit gaps and fidelity impact>

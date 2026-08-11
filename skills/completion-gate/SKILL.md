@@ -62,8 +62,9 @@ UI-file diff into a full visual run:
 
 - `none` is valid only when the final diff and acceptance have no material rendered, layout,
   responsive, or user-visible interaction outcome; record the repository-backed reason.
-- `chrome-smoke` requires current Codex App Chrome evidence for the affected state, but does not
-  require layout geometry when no layout invariant changed.
+- `chrome-smoke` requires a current Codex App Chrome pass consisting of a real interaction against
+  the target, the resulting visible state, and a screenshot or equivalent Chrome visual artifact;
+  it does not require layout geometry when no layout invariant changed.
 - `chrome-layout` requires current Chrome evidence plus the relevant screenshot, geometry/overflow,
   and interaction checks. For layout-sensitive changes, a DOM snapshot or text assertion cannot
   substitute for these artifacts.
@@ -79,8 +80,11 @@ the repository evidence that rules out guarded and critical triggers; `guarded` 
 name the matching risk-policy trigger. A missing or contradictory trigger is an `issues` finding.
 
 For `chrome-smoke` and `chrome-layout` Web acceptance, require current Codex App Chrome evidence
-against the real target and current user session. When the declared scope is missing or Chrome is
-required but unavailable, keep the scenario incomplete and do not silently substitute Playwright.
+against the real target and current user session. The evidence must show the action, resulting
+visible state, and visual artifact; `chrome-layout` must also show the relevant geometry/overflow
+checks. When the declared scope is missing or Chrome is required but unavailable, keep the scenario
+incomplete or blocked. Playwright is prohibited and any Playwright-only evidence is invalid; do not
+substitute it for the required Chrome pass under any circumstance.
 
 When a confirmed prototype governed implementation, map its required pages, states, interactions,
 failure feedback, positive and negative assertions, layout invariants, reuse anchors, and visual

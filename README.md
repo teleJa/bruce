@@ -30,11 +30,12 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Behavior acceptance uses stable `Given/When/Then/Evidence` scenarios. Development starts from a
   failing test or reproducible scenario when feasible.
 - User-visible Web work declares proportional `visual_scope=none|chrome-smoke|chrome-layout`;
-  frontend paths alone do not trigger a full browser run, while layout-sensitive outcomes require
-  current Chrome screenshots and relevant geometry/interaction evidence.
+  visible acceptance requires a real Codex App Chrome interaction plus visual evidence. Layout-
+  sensitive outcomes additionally require current Chrome screenshots and relevant geometry/overflow
+  evidence. Playwright is prohibited as an acceptance runner or fallback.
 - Verification is layered across unit/component, real integration/API/database, and real use. Web
   acceptance uses the Codex App Chrome capability with the user's current session and real service;
-  Bruce never silently replaces it with Playwright.
+  Bruce rejects Playwright-only evidence and never uses Playwright as an acceptance fallback.
 - An L1 failed scenario enters a bounded repair loop: fix, inspect the change, rerun the unchanged scenario,
   then run related regressions. Two unsuccessful complete rounds escalate to L2 replanning; L0,
   L2, L3, and L4 retain their retry, replan, decision, and incident-freeze semantics.

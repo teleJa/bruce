@@ -48,4 +48,6 @@
 - Every behavior scenario has concrete Given/When/Then and each material Then has a feasible evidence path.
 - Stateful behavior covers repeat use, failure, and recovery where relevant.
 - Commands and environments exist in the target repository.
-- User-visible Web acceptance uses real Chrome evidence unless an explicit SOP requires Playwright.
+- User-visible Web acceptance must use the Codex App Chrome capability with the current user session.
+  The acceptance row must record a real interaction, resulting visible state, and screenshot or
+  equivalent Chrome visual artifact. Playwright is prohibited and cannot replace this evidence.

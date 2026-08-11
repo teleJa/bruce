@@ -24,8 +24,8 @@ Classify user-visible Web verification in the task contract as one of:
 - `visual_scope=none`: no material rendered output, layout, responsive behavior, or user-visible
   interaction changes; record a repository-backed reason when the task touches UI code.
 - `visual_scope=chrome-smoke`: a visible label, route, control, or state changes without a material
-  layout invariant; require the current Chrome target, state, and a screenshot or equivalent visible
-  observation.
+  layout invariant; require one real user interaction against the current Chrome target, the
+  resulting visible state, and a screenshot or equivalent Chrome visual artifact.
 - `visual_scope=chrome-layout`: layout, sizing, overflow, wrapping, grid/flex, responsive behavior,
   long content, modal/table geometry, animation, prototype matching, or a reported visual defect is
   in scope; require current Chrome screenshots plus the relevant geometry and interaction evidence.
@@ -73,10 +73,13 @@ higher one:
 3. Real-use checks prove user-visible workflows and deployed/runtime wiring.
 
 For user-visible Web behavior, use the Codex App Chrome capability with the user's current Chrome
-session, login state, extensions, and real localhost or target service. Record the context, actions,
-visible result, and supporting network/API/screenshot evidence when useful. If Chrome is unavailable,
-report the missing evidence and do not claim acceptance passed. Do not silently substitute Playwright;
-use it only for an established repository SOP or explicit user request.
+session, login state, extensions, and real localhost or target service. The required acceptance pass
+is: connect to Chrome, perform the real interaction described by `When`, observe the resulting
+visible state, and capture the visual artifact and supporting evidence. Record the target, tab,
+actions, visible result, capture time, and screenshot/artifact path or hash. If Chrome is
+unavailable, report the missing evidence and keep the acceptance incomplete or blocked; do not
+claim it passed. Playwright is prohibited in Bruce acceptance and cannot be used as a fallback,
+repository-SOP exception, or user-request override. Any Playwright-only result is invalid evidence.
 
 ## Continuous author feedback
 

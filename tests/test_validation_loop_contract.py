@@ -72,7 +72,8 @@ class ValidationLoopContractTest(unittest.TestCase):
         self.assertIn("Codex App Chrome capability", self.policy)
         self.assertIn("current Chrome\nsession", self.policy)
         self.assertIn("real localhost or target service", self.policy)
-        self.assertIn("Do not silently substitute Playwright", self.policy)
+        self.assertIn("Playwright is prohibited", self.policy)
+        self.assertIn("Any Playwright-only result is invalid evidence", self.policy)
 
     def test_failed_scenario_closes_repair_and_regression_loop(self) -> None:
         self.assertIn("preserve the original scenario and evidence", self.policy.lower())

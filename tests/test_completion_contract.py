@@ -67,8 +67,9 @@ class CompletionContractTest(unittest.TestCase):
 
     def test_web_acceptance_requires_current_chrome(self) -> None:
         self.assertIn("current Codex App Chrome evidence", self.skill)
-        self.assertIn("keep the scenario incomplete", self.skill)
-        self.assertIn("do not silently substitute Playwright", self.skill)
+        self.assertIn("keep the scenario\nincomplete or blocked", self.skill)
+        self.assertIn("Playwright is prohibited", self.skill)
+        self.assertIn("Playwright-only evidence is invalid", self.skill)
 
     def test_visual_scope_is_risk_proportional_and_fresh(self) -> None:
         normalized = " ".join(self.skill.split())

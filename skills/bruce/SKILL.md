@@ -48,7 +48,10 @@ Keep the contract in the current task unless the user requests a persistent plan
 - `profile`: `unresolved` during inspection, then `standard` or `full` before implementation.
 - `risk`: `low`, `guarded`, or `critical`, with its trigger.
 - `visual_scope`: `none`, `chrome-smoke`, or `chrome-layout`, selected from the material visible
-  outcome and layout/interaction risk; a frontend path alone does not force Chrome.
+  outcome and layout/interaction risk. Any user-visible Web acceptance must use the Codex App
+  Chrome capability; Playwright is prohibited as an acceptance runner or fallback. A frontend
+  path alone does not force Chrome, but a visible Web outcome always requires one real Chrome
+  interaction and visual-evidence pass before completion.
 - `tasks`: only when dependent work benefits from an explicit plan.
 - `batches`: only for multi-batch work; each batch has a stable id, included task/acceptance ids,
   an evidence boundary, and its checkpoint trigger.
@@ -157,8 +160,11 @@ chain, or makes the overall delivery decision. Repair batch findings before star
 Use the final `completion-gate` once all batches are complete.
 
 When a batch has `visual_scope=chrome-smoke|chrome-layout`, include its bounded Chrome evidence in
-that batch checkpoint. Do not trigger a visual checkpoint for `visual_scope=none`; re-evaluate the
-scope only when the acceptance or changed surface reveals a material visible outcome.
+that batch checkpoint. The evidence must include a real action against the target, the resulting
+visible state, and a screenshot or equivalent Chrome visual artifact; `chrome-layout` additionally
+requires geometry/overflow checks. Do not trigger a visual checkpoint for `visual_scope=none`;
+re-evaluate the scope only when the acceptance or changed surface reveals a material visible
+outcome. Playwright output is never valid evidence for these rows.
 
 The gate must return one complete findings packet for the current final state. When findings are
 repairable, batch compatible repairs before rerunning verification. A later change invalidates only

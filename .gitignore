@@ -1,3 +1,7 @@
 .idea
 .omc
 .goal
+.codewhale
+.DS_Store
+__pycache__/
+*.py[cod]

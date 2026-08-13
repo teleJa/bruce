@@ -36,12 +36,26 @@ class WorkflowProfileContractTest(unittest.TestCase):
             "state, repeat use, retry, concurrency, partial failure, recovery, permission, or rollback",
             "real integration, deployment, runtime evidence, or multiple verification layers",
             "shares behavior scenarios or regression sources across tasks",
+            "stateful UI with repeat entry, mutable data, or lifecycle-sensitive interaction",
         ):
             with self.subTest(trigger=trigger):
                 self.assertIn(trigger, normalized)
         self.assertIn("profile alone is neither necessary nor sufficient", normalized)
         self.assertIn("for any resolved Bruce profile", normalized)
         self.assertNotIn("For a `full` Bruce task", self.test_design)
+
+    def test_ui_changes_route_to_test_design_by_lifecycle_risk(self) -> None:
+        normalized = " ".join(self.test_design.split())
+        for trigger in (
+            "closed and entered again",
+            "change while the surface is closed",
+            "cache, refresh, reset, re-fetch",
+            "stale state, duplicate interaction, reopening, or recovery",
+        ):
+            self.assertIn(trigger, normalized)
+        self.assertIn("Do not invoke this skill for a copy, icon, color, or layout-only change", self.test_design)
+        self.assertIn("first entry, close and reopen", normalized)
+        self.assertIn("fresh observable result", normalized)
 
     def test_design_gate_depends_on_downstream_design(self) -> None:
         normalized = " ".join(self.workflow.split())

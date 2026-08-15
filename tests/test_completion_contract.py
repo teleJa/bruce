@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import unittest
 
 from tests._support import read
@@ -91,11 +92,42 @@ class CompletionContractTest(unittest.TestCase):
 
     def test_independence_is_an_internal_review_mode(self) -> None:
         normalized = " ".join(self.skill.split())
-        self.assertIn("Use `main-agent` mode", normalized)
-        self.assertIn("Use an `independent` clean-context", normalized)
+        self.assertIn("Mandatory review-mode selection", self.skill)
+        self.assertIn("Before author-quality checks or review-matrix construction", normalized)
+        self.assertIn("record exactly one `review_mode` plus one stable `review_mode_reason`", normalized)
+        reasons = (
+            "`explicit-independent-request`: the user explicitly requested independent review",
+            "`critical-risk`: risk is `critical`",
+            "`guarded-multi-component-contract`: risk is `guarded` and the final state spans multiple components or propagated contracts",
+            "`guarded-migration-rollout`: risk is `guarded` and the task combines migration and rollout",
+            "`guarded-semantic-ambiguity`: risk is `guarded` and material semantic ambiguity remains",
+            "`guarded-weak-evidence`: risk is `guarded` and the result relies mainly on weak executable evidence",
+            "`guarded-repeated-repair`: risk is `guarded` and the current task completed two or more L1 repair rounds",
+            "`guarded-broad-security-data-impact`: risk is `guarded` and the final state has broad security or data impact",
+            "`none`: no independent trigger remains",
+        )
+        self.assertIn("Select the first matching reason in this precedence order", normalized)
+        section = self.skill.split("## Mandatory review-mode selection", 1)[1].split(
+            "## Internal checks", 1
+        )[0]
+        actual_reasons = re.findall(r"^\d+\. (`[^`]+`):", section, flags=re.MULTILINE)
+        normalized_section = " ".join(section.split())
+        for reason in reasons:
+            self.assertIn(reason, normalized_section)
+        expected_reasons = [reason.split(":", 1)[0] for reason in reasons]
+        self.assertEqual(expected_reasons, actual_reasons)
+        self.assertIn(
+            "Reasons 1-8 require `review_mode: independent`; reason 9 requires `review_mode: main-agent`",
+            normalized,
+        )
+        self.assertIn("Do not silently downgrade", normalized)
         self.assertIn("Exclude author rationale, confidence, and proposed verdict", normalized)
         self.assertIn("not a second externally combined verdict", normalized)
-        self.assertIn("Completion: blocked", normalized)
+        self.assertIn(
+            "if a clean-context native reviewer is unavailable, return `Completion: blocked`",
+            normalized,
+        )
+        self.assertIn("`review_mode_reason`", self.skill)
 
     def test_repair_and_delivery_boundaries_are_checked(self) -> None:
         self.assertIn("unchanged original failed scenario", self.skill)

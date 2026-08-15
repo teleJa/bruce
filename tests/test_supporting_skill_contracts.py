@@ -6,6 +6,7 @@ from tests._support import ROOT, frontmatter, markdown_links, read
 
 
 SUPPORTING_SKILLS = (
+    "inspect-parallel",
     "design-gate",
     "goal-execution",
     "grill-with-docs",
@@ -100,6 +101,33 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertNotIn("When a `full` task", read("skills/design-gate/SKILL.md"))
         tests = read("skills/write-tests/SKILL.md")
         self.assertIn("profile alone is neither necessary nor sufficient", tests)
+
+    def test_parallel_inspection_is_read_only_and_advisory(self) -> None:
+        body = read("skills/inspect-parallel/SKILL.md")
+        normalized = " ".join(body.split())
+        for phrase in (
+            "at least two read-only scopes can be investigated independently",
+            "Dispatch no more than five read-only scopes",
+            "preserve the working tree",
+            "inspect only the missing scope directly",
+            "profile-relevant evidence",
+            "leave the actual profile and risk decisions to Bruce",
+        ):
+            self.assertIn(phrase, normalized)
+        self.assertIn("Do not modify files", body)
+        self.assertIn("Dispatch native subagents as read-only explorers", normalized)
+        self.assertIn(
+            "Do not select a provider-specific agent name, model, token budget, scheduler, or persistent execution mode",
+            normalized,
+        )
+        self.assertIn("Do not invoke another supporting skill automatically", normalized)
+        self.assertNotIn("oh-my-claudecode", body.lower())
+
+    def test_write_plan_does_not_cascade_to_parallel_inspection(self) -> None:
+        normalized = " ".join(read("skills/write-plan/SKILL.md").split())
+        self.assertIn("when Bruce already produced them", normalized)
+        self.assertIn("use bounded native read-only subagents directly", normalized)
+        self.assertIn("do not invoke another supporting skill automatically", normalized)
 
     def test_capabilities_do_not_cascade(self) -> None:
         for name in (

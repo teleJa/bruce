@@ -1,0 +1,4 @@
+interface:
+  display_name: "Parallel Inspection"
+  short_description: "Explore repository boundaries with bounded parallel agents"
+  default_prompt: "Use $inspect-parallel to inspect this repository scope and synthesize evidence without changing files."

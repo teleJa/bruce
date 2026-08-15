@@ -17,7 +17,17 @@ Create the smallest plan that makes dependencies and verification unambiguous.
 
 ## Procedure
 
-1. Inspect the files and commands each step will touch. Do not plan against invented paths or APIs.
+1. Inspect the files and commands each step will touch. Read the task contract's component boundary
+   and repository evidence; for a `full` profile, also read its named components and propagated
+   contract or independent delivery boundary. Consume synthesized `inspect-parallel` findings when
+   Bruce already produced them. If material planning facts remain missing and at least two scopes can
+   be inspected independently, use bounded native read-only subagents directly, one primary scope per
+   component or concern. Require each scope to report current files, public interfaces and consumers,
+   available verification commands, dependencies, ownership, and dirty-worktree constraints;
+   synthesize cross-scope joins before writing tasks. If scopes share mutable ownership, evidence is
+   already sufficient, or parallel capability is unavailable, inspect the affected scopes directly.
+   Profile and risk alone are neither necessary nor sufficient for parallel planning inspection. Do
+   not plan against invented paths or APIs, and do not invoke another supporting skill automatically.
 2. Split work into feature-bearing tasks with stable ids. For each task record title, dependencies,
    files/scope, consumed/produced interfaces, implementation detail, acceptance, and verification.
    Reference the parent Given/When/Then scenario ids and required evidence layer for behavior tasks.
@@ -45,4 +55,5 @@ verification anchors. Include the document-check result.
 ## Does not own
 
 Do not generate a test plan, database design, architecture, review, approval, progress ledger, or
-execution automatically. Do not choose Bruce risk/profile or declare completion.
+execution automatically. Do not choose Bruce risk/profile, invoke another supporting skill
+automatically, or declare completion.

@@ -18,6 +18,34 @@ callers do not rerun its checks or combine separate author, verification, and re
 - Current `prototype-manifest.md` and confirmed snapshot when a prototype governed UI implementation.
 - L0-L4 failures, repair history, open decisions, residual risks, and requested delivery actions.
 
+## Mandatory review-mode selection
+
+Before author-quality checks or review-matrix construction, evaluate the final task contract, diff,
+evidence, and repair history and record exactly one `review_mode` plus one stable
+`review_mode_reason`. Select the first matching reason in this precedence order:
+
+1. `explicit-independent-request`: the user explicitly requested independent review;
+2. `critical-risk`: risk is `critical`;
+3. `guarded-multi-component-contract`: risk is `guarded` and the final state spans multiple
+   components or propagated contracts;
+4. `guarded-migration-rollout`: risk is `guarded` and the task combines migration and rollout;
+5. `guarded-semantic-ambiguity`: risk is `guarded` and material semantic ambiguity remains;
+6. `guarded-weak-evidence`: risk is `guarded` and the result relies mainly on weak executable
+   evidence;
+7. `guarded-repeated-repair`: risk is `guarded` and the current task completed two or more L1 repair
+   rounds;
+8. `guarded-broad-security-data-impact`: risk is `guarded` and the final state has broad security or
+   data impact;
+9. `none`: no independent trigger remains.
+
+Reasons 1-8 require `review_mode: independent`; reason 9 requires `review_mode: main-agent`.
+
+A `full` profile, multiple files, task duration, or subagent availability alone does not select
+`independent`. Perform this check before any other internal review work, and repeat it when a repair
+changes the final scope, risk trigger, review basis, or independence-triggering concern. Do not
+silently downgrade a required independent review; if a clean-context native reviewer is unavailable,
+return `Completion: blocked`.
+
 ## Internal checks
 
 ### Author quality
@@ -119,20 +147,12 @@ them outside the completed boundary.
 
 ## Review mode
 
-Use `main-agent` mode for low risk and ordinary guarded work. Use an `independent` clean-context
-native reviewer when:
-
-- guarded work spans multiple components/contracts, combines migration and rollout, has material
-  semantic ambiguity, relies mainly on weak executable evidence, follows repeated repair, or has
-  broad security/data impact;
-- risk is critical; or
-- the user explicitly requests independent review.
-
-Give the reviewer only objective, acceptance, the final diff, raw evidence, and necessary repository
-constraints, including the review matrix. Exclude author rationale, confidence, and proposed verdict.
-The reviewer must return the completed matrix and one consolidated findings packet. If independent
-review is required but unavailable, return `Completion: blocked`. Independence is a mode of this
-gate, not a second externally combined verdict.
+Apply the mandatory selection recorded above. In `main-agent` mode, perform the matrix and all
+internal checks directly. In `independent` mode, give the clean-context native reviewer only the
+objective, acceptance, final diff, raw evidence, necessary repository constraints, and review-matrix
+schema. Exclude author rationale, confidence, and proposed verdict. The reviewer must return the
+completed matrix and one consolidated findings packet. Independence is a mode of this gate, not a
+second externally combined verdict.
 
 ## Decision
 
@@ -148,8 +168,8 @@ Return exactly one terminal field:
 
 ## Output
 
-Return `Completion: pass|issues|blocked`, review mode (`main-agent|independent`), the completed review
-matrix, consolidated findings packet, scenario-level
+Return `Completion: pass|issues|blocked`, `review_mode: main-agent|independent`,
+`review_mode_reason`, the completed review matrix, consolidated findings packet, scenario-level
 acceptance evidence, design alignment, scope findings, repair-loop results, residual risks, and the
 smallest next action. Keep the result in the current task; `goal-execution` may record it when Goal
 mode is active.

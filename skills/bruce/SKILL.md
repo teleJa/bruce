@@ -36,6 +36,19 @@ bounded read-only inspection until the profile is resolved. Inspection alone doe
 Goal, design review, test design, or change directory. Do not begin behavior implementation while
 the profile is `unresolved`.
 
+Use direct inspection when the entry point, component boundary, and relevant conventions are already
+clear. Use `inspect-parallel` when unresolved facts can be divided into at least two independent
+read-only scopes and the task spans multiple components/directories, a cross-cutting concern, or
+repository-wide patterns whose separate evidence must be synthesized. Repository size, expected
+`full` profile, or a desire to use subagents is not sufficient by itself.
+
+For parallel inspection, give each native subagent a bounded scope, concrete questions, and a common
+evidence format. Keep every shard read-only, preserve the working tree, and require repository paths,
+symbols, commands, and observed cross-boundary relationships rather than broad summaries. The main
+agent owns synthesis, resolves conflicting findings against the current workspace, and makes the
+profile and task-contract decisions. If native subagents are unavailable or one shard fails, inspect
+only the missing scope directly; unavailable parallelism alone does not block contract formation.
+
 ## 2. Form the task contract
 
 Keep the contract in the current task unless the user requests a persistent plan or handoff. Include:
@@ -91,6 +104,8 @@ language controls natural-language prose; stable machine-facing contract tokens 
 Continue directly when Codex can implement and verify the task without another artifact. Invoke a
 supporting skill only for a present need:
 
+- parallel read-only discovery of unresolved component, contract, or repository-pattern facts:
+  `inspect-parallel`;
 - connected domain decisions or durable domain documentation: `grill-with-docs`;
 - architecture or public/cross-component contract design: `write-architecture`;
 - schema or persistence design: `write-db-design`;

@@ -20,6 +20,20 @@ class WorkflowProfileContractTest(unittest.TestCase):
         self.assertIn("does not create a Goal, design review, test design, or change directory", normalized)
         self.assertIn("Do not begin behavior implementation while the profile is `unresolved`", normalized)
 
+    def test_unresolved_inspection_can_use_bounded_parallel_exploration(self) -> None:
+        normalized = " ".join(self.workflow.split())
+        for phrase in (
+            "Use `inspect-parallel` when unresolved facts can be divided",
+            "at least two independent read-only scopes",
+            "the task spans multiple components/directories, a cross-cutting concern, or repository-wide patterns",
+            "Repository size, expected `full` profile, or a desire to use subagents is not sufficient",
+            "The main agent owns synthesis",
+            "If native subagents are unavailable or one shard fails",
+            "inspect only the missing scope directly",
+            "unavailable parallelism alone does not block contract formation",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_full_requires_structural_evidence(self) -> None:
         normalized = " ".join(self.workflow.split())
         self.assertIn("multiple independently delivered components", normalized)

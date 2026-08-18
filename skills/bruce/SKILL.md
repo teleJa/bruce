@@ -66,12 +66,17 @@ Keep the contract in the current task unless the user requests a persistent plan
   path alone does not force Chrome, but a visible Web outcome always requires one real Chrome
   interaction and visual-evidence pass before completion.
 - `tasks`: only when dependent work benefits from an explicit plan.
-- `batches`: only for multi-batch work; each batch has a stable id, included task/acceptance ids,
-  an evidence boundary, and its checkpoint trigger.
+- `batches`: required before implementation for a `full` or `critical` task that spans two or more
+  independently delivered components or a propagated cross-component contract. Each batch is a closed,
+  verifiable delivery boundary, not a remaining-work bucket. Record its stable `batch_id`, included
+  task/acceptance ids, owned components and allowed paths, excluded work, dependency preconditions,
+  evidence boundary, checkpoint trigger, and repair budget.
 
 For user-visible Web acceptance, resolve `visual_scope` before implementation. A missing scope is
 an unresolved contract field, not permission to assume `none`; record the material visible outcome
-and the reason for the selected level.
+and the reason for the selected level. For a `full` or `critical` cross-component task, missing,
+open-ended, or overlapping batches also leave the task contract unresolved; do not implement until
+those batch boundaries are closed and assigned.
 
 Resolve `standard` after inspection proves one delivery component without cross-component API,
 event, data, or file-contract propagation. Resolve `full` only when inspection proves multiple

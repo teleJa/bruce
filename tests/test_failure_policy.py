@@ -52,6 +52,9 @@ class FailurePolicyContractTest(unittest.TestCase):
             "`max_elapsed=45m`",
             "stop starting new work",
             "run the batch checkpoint",
+            "Do not begin another behavior edit,",
+            "assistant message records the complete checkpoint schema",
+            "an `update_plan`, progress summary, or test output is not a checkpoint",
             "reset never erases retry or repair counts",
         ):
             self.assertIn(phrase, normalized)

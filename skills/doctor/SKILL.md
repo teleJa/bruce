@@ -35,6 +35,8 @@ Return:
 
 - source path or thread id, snapshot boundary, line count, and source SHA-256;
 - event/turn/time statistics and parsing errors;
+- checkpoint-protocol statistics: valid/incomplete checkpoints, work-interval overruns, missing
+  checkpoints, and clearly labelled suspected `update_plan` substitutions or single-finding churn;
 - Bruce-specific findings with source line references;
 - evidence coverage: designed, executed, passed, blocked, unexecuted;
 - residual privacy and snapshot risks;

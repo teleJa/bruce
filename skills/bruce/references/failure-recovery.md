@@ -29,9 +29,12 @@ dependency or incident boundary supported by current facts.
 For multi-batch or long-running work, use `max_tool_calls=40` and `max_elapsed=45m` unless the task
 contract records a smaller repository-driven limit. Count all tool invocations, including retries and
 polls. When either limit is reached, stop starting new work, inspect live handles, record current
-evidence and remaining work, and run the batch checkpoint. Ordinary work returns control after the
-checkpoint. Explicit Goal or continuous execution may begin a new interval only after recording the
-checkpoint and resetting both counters; a reset never erases retry or repair counts.
+evidence and remaining work, and run the batch checkpoint. Do not begin another behavior edit,
+dependent batch, or work interval until an assistant message records the complete checkpoint schema
+from [verification-loop.md](verification-loop.md); an `update_plan`, progress summary, or test output
+is not a checkpoint. Ordinary work returns control after the checkpoint. Explicit Goal or continuous
+execution may begin a new interval only after recording the checkpoint and resetting both counters; a
+reset never erases retry or repair counts.
 
 A long-running command may remain active across an interval when it is known, owned by the current
 task, and safe to leave running. Do not terminate it merely to satisfy the interval boundary.

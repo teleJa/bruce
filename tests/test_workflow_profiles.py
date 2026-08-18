@@ -43,6 +43,20 @@ class WorkflowProfileContractTest(unittest.TestCase):
                 self.assertIn(evidence, normalized)
         self.assertIn("Size, duration, risk, and uncertainty are insufficient", normalized)
 
+    def test_cross_component_full_or_critical_requires_closed_batches(self) -> None:
+        normalized = " ".join(self.workflow.split())
+        for phrase in (
+            "required before implementation for a `full` or `critical` task",
+            "two or more independently delivered components or a propagated cross-component contract",
+            "Each batch is a closed, verifiable delivery boundary",
+            "not a remaining-work bucket",
+            "owned components and allowed paths",
+            "excluded work",
+            "repair budget",
+            "missing, open-ended, or overlapping batches also leave the task contract unresolved",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_test_design_route_is_profile_independent(self) -> None:
         normalized = " ".join(self.test_design.split())
         for trigger in (

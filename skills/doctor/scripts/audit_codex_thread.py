@@ -237,6 +237,204 @@ def preview_text(text: str, limit: int) -> str:
     return f"{text[:head]}\n…<TRUNCATED {len(text) - limit} CHARS>…\n{text[-tail:]}"
 
 
+CHECKPOINT_STATUS = re.compile(r"(?im)^\s*Checkpoint:\s*(clear|issues|blocked)\s*$")
+CHECKPOINT_FIELDS = (
+    "batch_id",
+    "basis_revision",
+    "acceptance",
+    "findings",
+    "repair_sets",
+    "next_action",
+)
+VERIFY_COMMAND = re.compile(
+    r"(?i)(?:\bgo\s+test\b|\b(?:pnpm|npm|yarn|bun)\b[^\n]*\b(?:test|vitest|jest|tsc|typecheck|eslint)\b|\bpytest\b|\bvitest\b|\bpython(?:3)?\s+-m\s+unittest\b|\bmake\s+test\b)"
+)
+EDIT_COMMAND = re.compile(
+    r"(?i)(?:\bapply_patch\b|\bcat\s+>\s*[^\n]+|\btee\s+[^\n]+|\b(?:python|python3|perl)\b[^\n]*(?:write_text|replace\(|unlink\(|rename\())"
+)
+
+
+def checkpoint_from_text(text: str) -> dict[str, Any] | None:
+    match = CHECKPOINT_STATUS.search(text)
+    if match is None:
+        return None
+    missing = [
+        field
+        for field in CHECKPOINT_FIELDS
+        if re.search(rf"(?im)^\s*{re.escape(field)}\s*:", text) is None
+    ]
+    return {"status": match.group(1), "missing_fields": missing}
+
+
+def tool_action_kind(event: dict[str, Any]) -> str | None:
+    if event.get("category") != "tool_call":
+        return None
+    if event.get("tool_name") != "exec_command":
+        return None
+    text = str(event.get("text") or "")
+    if VERIFY_COMMAND.search(text):
+        return "verify"
+    if EDIT_COMMAND.search(text):
+        return "edit"
+    return None
+
+
+def interval_snapshot(interval: dict[str, Any], end_timestamp: str | None, end_line: int) -> dict[str, Any]:
+    start = parse_timestamp(interval.get("started_at"))
+    end = parse_timestamp(end_timestamp)
+    elapsed_seconds = (end - start).total_seconds() if start and end and end >= start else None
+    return {
+        "start_line": interval["start_line"],
+        "end_line": end_line,
+        "tool_calls": interval["tool_calls"],
+        "elapsed_seconds": elapsed_seconds,
+    }
+
+
+def analyze_checkpoint_protocol(normalized_path: Path) -> dict[str, Any]:
+    """Audit explicit checkpoint messages and bounded-work protocol evidence.
+
+    Only explicit checkpoint-shaped assistant/lifecycle messages are treated as checkpoints.
+    `update_plan` and edit/verify cycles remain labelled suspected signals, not proof of a violation.
+    """
+    valid: list[dict[str, Any]] = []
+    incomplete: list[dict[str, Any]] = []
+    overruns: list[dict[str, Any]] = []
+    missing: list[dict[str, Any]] = []
+    substitutions: list[dict[str, Any]] = []
+    churn_cycles: list[dict[str, Any]] = []
+    interval: dict[str, Any] | None = None
+    last_timestamp: str | None = None
+    last_line = 0
+    seen_checkpoint_text: set[str] = set()
+
+    def start_interval(timestamp: str | None, line_no: int) -> dict[str, Any]:
+        return {
+            "started_at": timestamp,
+            "start_line": line_no,
+            "tool_calls": 0,
+            "last_action": None,
+            "last_verify_line": None,
+            "churn_cycle_count": 0,
+            "substitution_lines": set(),
+        }
+
+    def exceeds(snapshot: dict[str, Any]) -> bool:
+        return snapshot["tool_calls"] > 40 or (
+            isinstance(snapshot["elapsed_seconds"], (int, float))
+            and snapshot["elapsed_seconds"] > 45 * 60
+        )
+
+    def record_churn(current: dict[str, Any]) -> None:
+        if current["churn_cycle_count"] >= 2:
+            churn_cycles.append(
+                {
+                    "start_line": current["start_line"],
+                    "last_verify_line": current["last_verify_line"],
+                    "cycles": current["churn_cycle_count"],
+                }
+            )
+
+    for raw in normalized_path.open(encoding="utf-8"):
+        event = json.loads(raw)
+        timestamp = event.get("timestamp") if isinstance(event.get("timestamp"), str) else None
+        line_no = int(event.get("line_no") or 0)
+        last_timestamp = timestamp or last_timestamp
+        last_line = line_no or last_line
+        category = event.get("category")
+        event_type = event.get("event_type")
+
+        if category == "lifecycle" and event_type == "task_started":
+            if interval is not None:
+                snapshot = interval_snapshot(interval, timestamp, line_no)
+                if exceeds(snapshot):
+                    missing.append({**snapshot, "reason": "new_task_started_before_checkpoint"})
+                    record_churn(interval)
+            interval = start_interval(timestamp, line_no)
+            continue
+
+        if interval is None and category == "tool_call":
+            interval = start_interval(timestamp, line_no)
+
+        if interval is not None and category == "tool_call":
+            interval["tool_calls"] += 1
+            if event.get("tool_name") == "update_plan":
+                snapshot = interval_snapshot(interval, timestamp, line_no)
+                if exceeds(snapshot) and line_no not in interval["substitution_lines"]:
+                    substitutions.append(
+                        {
+                            "line_no": line_no,
+                            "start_line": interval["start_line"],
+                            "tool_calls": snapshot["tool_calls"],
+                            "elapsed_seconds": snapshot["elapsed_seconds"],
+                        }
+                    )
+                    interval["substitution_lines"].add(line_no)
+            action = tool_action_kind(event)
+            if action == "edit":
+                if interval["last_action"] == "verify":
+                    interval["churn_cycle_count"] += 1
+                interval["last_action"] = "edit"
+            elif action == "verify":
+                interval["last_action"] = "verify"
+                interval["last_verify_line"] = line_no
+
+        if category in {"assistant_message", "lifecycle"}:
+            text = str(event.get("text") or "")
+            checkpoint = checkpoint_from_text(text)
+            text_hash = str(event.get("text_sha256") or "")
+            if checkpoint is not None and text_hash not in seen_checkpoint_text:
+                seen_checkpoint_text.add(text_hash)
+                if interval is None:
+                    interval = start_interval(timestamp, line_no)
+                snapshot = interval_snapshot(interval, timestamp, line_no)
+                record = {
+                    "line_no": line_no,
+                    "status": checkpoint["status"],
+                    "tool_calls": snapshot["tool_calls"],
+                    "elapsed_seconds": snapshot["elapsed_seconds"],
+                }
+                if checkpoint["missing_fields"]:
+                    incomplete.append({**record, "missing_fields": checkpoint["missing_fields"]})
+                else:
+                    valid.append(record)
+                    if exceeds(snapshot):
+                        overruns.append({**snapshot, "checkpoint_line": line_no})
+                    record_churn(interval)
+                    interval = start_interval(timestamp, line_no)
+
+        if interval is not None and category == "lifecycle" and event_type in {"task_complete", "turn_aborted"}:
+            snapshot = interval_snapshot(interval, timestamp, line_no)
+            if exceeds(snapshot):
+                missing.append({**snapshot, "reason": event_type})
+            record_churn(interval)
+            interval = None
+
+    if interval is not None:
+        snapshot = interval_snapshot(interval, last_timestamp, last_line)
+        if exceeds(snapshot):
+            missing.append({**snapshot, "reason": "source_ended"})
+        record_churn(interval)
+
+    return {
+        "limits": {"max_tool_calls": 40, "max_elapsed_seconds": 45 * 60},
+        "valid_checkpoints": len(valid),
+        "incomplete_checkpoints": len(incomplete),
+        "interval_overruns": len(overruns),
+        "missing_checkpoints": len(missing),
+        "suspected_update_plan_substitutions": len(substitutions),
+        "suspected_single_finding_churn_cycles": sum(item["cycles"] for item in churn_cycles),
+        "evidence": {
+            "valid_checkpoints": valid,
+            "incomplete_checkpoints": incomplete,
+            "interval_overruns": overruns,
+            "missing_checkpoints": missing,
+            "suspected_update_plan_substitutions": substitutions,
+            "suspected_single_finding_churn": churn_cycles,
+        },
+    }
+
+
 def union_duration_seconds(intervals: Iterable[tuple[datetime, datetime]]) -> float:
     ordered = sorted((start, end) for start, end in intervals if end >= start)
     if not ordered:
@@ -479,6 +677,8 @@ def clean_thread(
     if not parse_errors:
         errors_path.unlink()
 
+    checkpoint_protocol = analyze_checkpoint_protocol(normalized_path)
+
     intervals: list[tuple[datetime, datetime]] = []
     reported_duration_ms = 0
     for turn in turns.values():
@@ -526,6 +726,7 @@ def clean_thread(
             "reported_completed_turn_duration_sum_ms": reported_duration_ms,
             "note": "Active time is an interval estimate, not model compute time; overlapping turns are merged.",
         },
+        "checkpoint_protocol": checkpoint_protocol,
         "generation": {
             "large_threshold_bytes": large_threshold,
             "preview_limit_characters": preview_limit,
@@ -552,6 +753,7 @@ def write_timeline(
     source_info = inventory["source"]
     counts = inventory["counts"]
     time_info = inventory["time"]
+    checkpoint_protocol = inventory["checkpoint_protocol"]
     lines = [
         "# Codex thread audit timeline",
         "",
@@ -565,7 +767,14 @@ def write_timeline(
         f"- Normalized events: {counts['normalized_events']}",
         f"- Large outputs: {counts['large_outputs']}",
         f"- Redactions: {counts['redactions']}",
+        f"- Checkpoints: {checkpoint_protocol['valid_checkpoints']} valid, "
+        f"{checkpoint_protocol['incomplete_checkpoints']} incomplete, "
+        f"{checkpoint_protocol['missing_checkpoints']} missing",
+        f"- Work-interval deviations: {checkpoint_protocol['interval_overruns']} checkpointed overrun, "
+        f"{checkpoint_protocol['suspected_update_plan_substitutions']} suspected update-plan substitution, "
+        f"{checkpoint_protocol['suspected_single_finding_churn_cycles']} suspected single-finding churn cycles",
         "",
+        "Checkpoint deviations are protocol evidence where explicit; update-plan substitution and churn are heuristic signals.",
         "Active time is an interval estimate derived from task lifecycle events; it is not model compute time.",
         "",
         "| Turn | Started | Completed | Duration ms | Tools | Patches | Errors | Objective |",

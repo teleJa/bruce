@@ -62,6 +62,14 @@ feasible. Reproduce bugs before fixing them and establish a passing characteriza
 refactoring. When test-first work is genuinely impractical, record why and establish the nearest
 repeatable check. Do not impose TDD on documentation-only, generated, or mechanical changes.
 
+For a cross-component batch, use the first failing scenario only to establish the batch boundary.
+Before the next behavior edit, build a batch change map covering the owned entry points, direct call
+sites, allowed paths, material state/error paths, and planned evidence. Implement that declared
+compatible slice before rerunning the batch matrix; do not follow each downstream failure into an
+undeclared component. After the second non-blocking finding in the same batch, stop single-finding
+repair, complete the current batch matrix, and return its findings packet. Only a failure that prevents
+safe evidence collection or continuation of the current batch may be repaired immediately.
+
 ## Verification layers
 
 Use the smallest sufficient evidence at each layer, but never substitute a lower layer for a required
@@ -113,7 +121,20 @@ boundary. Build the matrix for the current batch only. Its bounded rows are:
 Each row records `batch_id`, `acceptance_id`, `path`, `required_layer`, `basis_revision`,
 `evidence_revision`, `evidence`, `result`, and `affected_scope`. Return `Checkpoint:
 clear|issues|blocked` as progress feedback only; do not use a checkpoint as the overall completion
-verdict.
+verdict. Every checkpoint uses this machine-readable summary, with `[]` when a collection is empty:
+
+```yaml
+Checkpoint: clear|issues|blocked
+batch_id: B1-example
+basis_revision: <working-tree-or-commit>
+acceptance:
+  passed: []
+  failed: []
+  unexecuted: []
+findings: []
+repair_sets: []
+next_action: <repair-set|next-batch|blocked-unlock|return-control>
+```
 
 Before repairing a non-blocking batch failure, complete the current batch matrix and return all
 currently observable failures in one batch findings packet. Classify every finding as:

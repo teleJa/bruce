@@ -104,6 +104,31 @@ class ValidationLoopContractTest(unittest.TestCase):
         ):
             self.assertIn(phrase, normalized)
 
+    def test_cross_component_batch_change_map_stops_single_finding_expansion(self) -> None:
+        normalized = " ".join(self.policy.split())
+        for phrase in (
+            "use the first failing scenario only to establish the batch boundary",
+            "build a batch change map",
+            "owned entry points, direct call sites, allowed paths, material state/error paths, and planned evidence",
+            "do not follow each downstream failure into an undeclared component",
+            "After the second non-blocking finding in the same batch",
+            "stop single-finding repair",
+            "Only a failure that prevents safe evidence collection",
+        ):
+            self.assertIn(phrase, normalized)
+
+    def test_checkpoint_schema_is_machine_readable_and_complete(self) -> None:
+        for phrase in (
+            "Every checkpoint uses this machine-readable summary",
+            "Checkpoint: clear|issues|blocked",
+            "batch_id: B1-example",
+            "basis_revision",
+            "acceptance:",
+            "repair_sets: []",
+            "next_action:",
+        ):
+            self.assertIn(phrase, self.policy)
+
     def test_checkpoint_batches_non_blocking_findings_before_repair(self) -> None:
         normalized = " ".join(self.policy.split())
         for phrase in (

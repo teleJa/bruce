@@ -167,6 +167,93 @@ class AuditCodexThreadTest(unittest.TestCase):
             self.assertIn("保留", normalized)
             self.assertNotIn("排除", normalized)
 
+    def test_reports_checkpoint_protocol_deviations_with_explicit_and_heuristic_labels(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "thread.jsonl"
+            output = root / "audit"
+            turn_id = "turn-checkpoint"
+            checkpoint = """Checkpoint: issues
+batch_id: B1
+basis_revision: working-tree:test
+acceptance:
+  passed: []
+  failed: []
+  unexecuted: []
+findings: []
+repair_sets: []
+next_action: next-batch
+"""
+            source.write_text(
+                "\n".join(
+                    [
+                        record("2026-08-04T00:00:00Z", "session_meta", {"id": "one"}),
+                        record(
+                            "2026-08-04T00:00:00Z",
+                            "event_msg",
+                            {"type": "task_started", "turn_id": turn_id},
+                        ),
+                        record(
+                            "2026-08-04T00:46:00Z",
+                            "response_item",
+                            {
+                                "type": "function_call",
+                                "name": "exec_command",
+                                "call_id": "edit-1",
+                                "arguments": '{"cmd":"apply_patch"}',
+                                "internal_chat_message_metadata_passthrough": {"turn_id": turn_id},
+                            },
+                        ),
+                        record(
+                            "2026-08-04T00:46:01Z",
+                            "response_item",
+                            {
+                                "type": "message",
+                                "role": "assistant",
+                                "content": [{"type": "output_text", "text": checkpoint}],
+                                "internal_chat_message_metadata_passthrough": {"turn_id": turn_id},
+                            },
+                        ),
+                        record(
+                            "2026-08-04T01:32:00Z",
+                            "response_item",
+                            {
+                                "type": "function_call",
+                                "name": "update_plan",
+                                "call_id": "plan-1",
+                                "arguments": "{}",
+                                "internal_chat_message_metadata_passthrough": {"turn_id": turn_id},
+                            },
+                        ),
+                        record(
+                            "2026-08-04T01:32:01Z",
+                            "event_msg",
+                            {
+                                "type": "task_complete",
+                                "turn_id": turn_id,
+                                "duration_ms": 5521000,
+                            },
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            result = self.run_script(source, output)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            protocol = json.loads((output / "inventory.json").read_text())["checkpoint_protocol"]
+            self.assertEqual(protocol["valid_checkpoints"], 1)
+            self.assertEqual(protocol["incomplete_checkpoints"], 0)
+            self.assertEqual(protocol["interval_overruns"], 1)
+            self.assertEqual(protocol["missing_checkpoints"], 1)
+            self.assertEqual(protocol["suspected_update_plan_substitutions"], 1)
+            self.assertEqual(protocol["limits"], {"max_tool_calls": 40, "max_elapsed_seconds": 2700})
+            timeline = (output / "timeline.md").read_text()
+            self.assertIn("Checkpoint deviations are protocol evidence where explicit", timeline)
+            self.assertIn("suspected update-plan substitution", timeline)
+
     def test_rejects_invalid_until_timestamp(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

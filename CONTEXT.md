@@ -24,6 +24,10 @@ _Avoid_: Mandatory stage, profile-driven cascade, full-delivery bundle
 The optional `write-prototype` skill prepares grounded UI context, drives a user-selected Open Design provider through Codex-owned host tools, and preserves generated and user-confirmed artifacts for the existing gates.
 _Avoid_: Mandatory UI stage, bundled MCP server, prototype-as-production-code, third gate
 
+**Prototype Exploration Capability**:
+The optional `explore-prototype` skill answers one logic or UI-structure question with throwaway code. A native subagent may generate a frozen, path-bounded slice, while the main agent retains decisions, feedback, integration, and promotion through `write-prototype` when the result must govern implementation.
+_Avoid_: Formal prototype evidence, production code, delegated product authority, mandatory subagent
+
 **Design Gate**:
 The `design-gate` skill makes the only implementation-entry decision for persisted requirements, architecture, contracts, schema design, plans, test designs, or UI prototypes that will govern downstream implementation. It returns `Design: pass|blocked` and persists one `design-review.md`.
 _Avoid_: Plan approval, separate artifact gate, independent-agent verdict
@@ -62,6 +66,7 @@ _Avoid_: Bruce permission layer, host adapter, workflow-owned scheduler
 - **Verified**: task contract, profile resolution, and profile/risk independence are defined in `skills/bruce/SKILL.md:38-63`.
 - **Verified**: capabilities are predicate-driven and do not cascade from profile selection (`skills/bruce/SKILL.md:69-93`).
 - **Verified**: `write-prototype` keeps provider execution host-owned and returns change-scoped brief, manifest, and snapshot evidence (`skills/write-prototype/SKILL.md`).
+- **Verified**: `explore-prototype` separates logic/UI exploration from formal prototype readiness and bounds optional generation delegation (`skills/explore-prototype/SKILL.md`).
 - **Verified**: Design Gate owns persisted-design readiness, including governing UI prototypes, and its single verdict (`skills/design-gate/SKILL.md`).
 - **Verified**: Goal Execution Mode is profile-independent, native-Goal-backed persistence rather than another gate (`skills/goal-execution/SKILL.md:8-18`).
 - **Verified**: Completion Gate owns the single completion verdict and treats independence as an internal mode (`skills/completion-gate/SKILL.md:6-9`, `skills/completion-gate/SKILL.md:57-89`).

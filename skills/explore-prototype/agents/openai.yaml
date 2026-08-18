@@ -1,0 +1,4 @@
+interface:
+  display_name: "Explore Prototype"
+  short_description: "Explore logic and UI questions with throwaway prototypes"
+  default_prompt: "Use $explore-prototype to answer this design question with a bounded throwaway prototype."

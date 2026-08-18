@@ -32,6 +32,7 @@ class PluginManifestTest(unittest.TestCase):
         self.assertTrue((ROOT / "skills/goal-execution/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/completion-gate/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/doctor/SKILL.md").is_file())
+        self.assertTrue((ROOT / "skills/explore-prototype/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/write-prototype/SKILL.md").is_file())
         self.assertFalse((ROOT / "skills/verify-completion/SKILL.md").exists())
         hooks = read_json("hooks/hooks.json")

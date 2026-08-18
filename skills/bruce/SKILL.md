@@ -115,6 +115,7 @@ supporting skill only for a present need:
 - architecture or public/cross-component contract design: `write-architecture`;
 - schema or persistence design: `write-db-design`;
 - persistent implementation planning: `write-plan`;
+- a question-driven throwaway logic or UI-variant exploration: `explore-prototype`;
 - an explicitly requested or implementation-governing grounded UI prototype: `write-prototype`;
 - complex acceptance and regression design: `write-tests`;
 - an explicitly requested standalone plan review: `plan-review`;
@@ -139,6 +140,13 @@ Do not chain supporting skills merely because one was selected.
 Use the current Codex task and available tools. Use native subagents directly for incidental
 delegation and only for boundary-clear, low-coupling tasks. Keep the main agent responsible for
 scope, file ownership, dependency order, integration, and conflict resolution.
+
+For `explore-prototype`, a native subagent may generate the bounded prototype only after the main
+agent freezes the question, mode, exclusive allowed paths, repository facts, scenarios or variants,
+run instructions, observable checks, and prohibited side effects. The main agent retains product
+decisions, user feedback, actual-diff inspection, production promotion, and every Gate decision. If
+native subagents are unavailable or ownership overlaps, generate sequentially; unavailable
+delegation alone does not block exploration.
 
 When Design Gate is required, do not implement affected behavior until the current same-directory
 `design-review.md` reports `Design: pass`. If scope changes a design decision, rerun Design Gate

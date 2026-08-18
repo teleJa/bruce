@@ -27,6 +27,11 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - UI prototype generation is an optional `write-prototype` capability. It can drive a host-configured
   Open Design MCP run, preserve generated and user-confirmed snapshots, and feed the existing Design
   and Completion Gates without adding a third gate or copying product-delivery lanes.
+- Question-driven prototype exploration is an optional `explore-prototype` capability. It builds a
+  throwaway logic demo or structurally different UI variants to answer one uncertainty. A bounded
+  native subagent may generate the code after the main agent freezes the question, paths, scenarios,
+  and checks; the main agent keeps product decisions, user feedback, integration, and Gate ownership.
+  Exploration becomes implementation-governing only after promotion through `write-prototype`.
 - Behavior acceptance uses stable `Given/When/Then/Evidence` scenarios. Development starts from a
   failing test or reproducible scenario when feasible.
 - User-visible Web work declares proportional `visual_scope=none|chrome-smoke|chrome-layout`;

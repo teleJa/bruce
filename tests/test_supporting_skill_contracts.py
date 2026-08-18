@@ -13,6 +13,7 @@ SUPPORTING_SKILLS = (
     "write-architecture",
     "write-db-design",
     "write-plan",
+    "explore-prototype",
     "write-prototype",
     "write-tests",
     "plan-review",

@@ -113,9 +113,25 @@ boundary. Build the matrix for the current batch only. Its bounded rows are:
 Each row records `batch_id`, `acceptance_id`, `path`, `required_layer`, `basis_revision`,
 `evidence_revision`, `evidence`, `result`, and `affected_scope`. Return `Checkpoint:
 clear|issues|blocked` as progress feedback only; do not use a checkpoint as the overall completion
-verdict. A row is `stale` when its evidence revision differs from the current review basis, a changed
-path intersects its affected scope, or impact cannot be determined. Rerun stale rows, the unchanged
-original failure, and related regressions before dependent batches continue.
+verdict.
+
+Before repairing a non-blocking batch failure, complete the current batch matrix and return all
+currently observable failures in one batch findings packet. Classify every finding as:
+
+- `blocking`: prevents safe continuation of the current batch; repair it immediately only when the
+  repair remains inside the current batch boundary;
+- `compatible`: can be repaired together without conflicting file ownership, dependency order, or
+  acceptance scope; group these findings into one bounded repair set;
+- `deferred`: belongs to another declared batch or needs a scope, authority, or design decision;
+  record its owning batch and do not implement it opportunistically.
+
+Do not repair each newly observed non-blocking finding while the batch matrix remains incomplete, and
+do not use an `update_plan` progress update as a substitute for the batch findings packet. After the
+packet, repair compatible findings together, then rerun only affected matrix rows, each unchanged
+original failure, and related regressions. A row is `stale` when its evidence revision differs from the
+current review basis, a changed path intersects its affected scope, or impact cannot be determined.
+Rerun stale rows, the unchanged original failure, and related regressions before dependent batches
+continue.
 
 ## Independent review
 

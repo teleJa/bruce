@@ -171,8 +171,11 @@ When the contract declares multiple delivery batches, when Goal execution spans 
 cross-component task, or before crossing an external verification or side-effect boundary, run a
 batch checkpoint after the current batch. The checkpoint reviews only that batch's bounded matrix and
 returns `Checkpoint: clear|issues|blocked`; it never returns `Completion`, starts a per-finding review
-chain, or makes the overall delivery decision. Repair batch findings before starting dependent work.
-Use the final `completion-gate` once all batches are complete.
+chain, or makes the overall delivery decision. Complete the batch matrix and return one batch findings
+packet before repairing non-blocking failures; classify findings as blocking, compatible, or deferred,
+and repair compatible findings together in one bounded repair set. An `update_plan` progress update
+never substitutes for this checkpoint. Repair the resulting batch repair set before starting dependent
+work. Use the final `completion-gate` once all batches are complete.
 
 When a batch has `visual_scope=chrome-smoke|chrome-layout`, include its bounded Chrome evidence in
 that batch checkpoint. The evidence must include a real action against the target, the resulting

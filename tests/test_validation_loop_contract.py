@@ -104,6 +104,30 @@ class ValidationLoopContractTest(unittest.TestCase):
         ):
             self.assertIn(phrase, normalized)
 
+    def test_checkpoint_batches_non_blocking_findings_before_repair(self) -> None:
+        normalized = " ".join(self.policy.split())
+        for phrase in (
+            "Before repairing a non-blocking batch failure, complete the current batch matrix",
+            "all currently observable failures in one batch findings packet",
+            "`blocking`",
+            "`compatible`",
+            "`deferred`",
+            "group these findings into one bounded repair set",
+            "Do not repair each newly observed non-blocking finding while the batch matrix remains incomplete",
+            "do not use an `update_plan` progress update as a substitute",
+            "repair compatible findings together",
+        ):
+            self.assertIn(phrase, normalized)
+
+    def test_workflow_requires_batch_packet_before_non_blocking_repair(self) -> None:
+        normalized = " ".join(self.workflow.split())
+        for phrase in (
+            "Complete the batch matrix and return one batch findings packet before repairing non-blocking failures",
+            "repair compatible findings together in one bounded repair set",
+            "An `update_plan` progress update never substitutes for this checkpoint",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_checkpoint_matrix_is_bounded_and_stale_aware(self) -> None:
         normalized = " ".join(self.policy.split())
         for phrase in (

@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""Remind Codex to consider Bruce Design Gate after a planning/design edit.
+"""Remind on planning edits and validate written Bruce design reviews.
 
-This plugin hook is intentionally advisory and low-noise. It does not run a
-review, block tool execution, or attest completion. Code and ordinary document
-edits remain governed by the active Bruce workflow without per-edit reminders.
+Ordinary planning reminders remain advisory. A successfully written
+``design-review.md`` is checked deterministically and an invalid review blocks
+normal PostToolUse processing until the files are repaired.
 """
 
 from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 
@@ -25,9 +26,11 @@ EDIT_TOOLS = {
     "insert_after_symbol",
     "insert_before_symbol",
 }
+SHELL_TOOLS = {"Bash", "exec_command"}
 
 PLANNING_FILENAMES = {
     "prd.md",
+    "requirements.md",
     "design.md",
     "implement.md",
     "test-plan.md",
@@ -36,8 +39,12 @@ PLANNING_FILENAMES = {
     "arch-design.md",
     "api.md",
     "api-contract.md",
+    "api-contracts.md",
+    "table-design.md",
     "functional-design.md",
+    "prototype-manifest.md",
     "acceptance-gate.md",
+    "design-review.md",
 }
 PLANNING_NAME_KEYWORDS = ("方案", "设计", "架构", "需求", "验收", "测试计划", "评审")
 DOCUMENT_EXTENSIONS = {".md", ".mdx", ".rst", ".txt"}
@@ -71,16 +78,18 @@ REMINDER = (
 
 
 def main() -> int:
+    payload: dict[str, Any] = {}
     try:
         payload = _read_payload()
-        reminder = _build_reminder(payload)
-        if reminder:
-            _emit_context(f"<system-reminder>{reminder}</system-reminder>")
-    except Exception as exc:  # noqa: BLE001 - an advisory hook must not block tool flow.
-        _emit_context(
-            "<system-reminder>Bruce PostToolUse review reminder skipped: "
-            f"{exc}</system-reminder>"
-        )
+        output = _build_output(payload)
+        if output:
+            print(json.dumps(output, ensure_ascii=False))
+    except Exception as exc:  # noqa: BLE001 - fail closed only for a review write.
+        reason = f"Bruce PostToolUse Design Review validation failed unexpectedly: {exc}"
+        if _payload_mentions_design_review(payload):
+            print(json.dumps(_block_output(reason), ensure_ascii=False))
+        else:
+            _emit_context(f"<system-reminder>{reason}</system-reminder>")
     return 0
 
 
@@ -92,15 +101,192 @@ def _read_payload() -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
-def _build_reminder(payload: dict[str, Any]) -> str:
+def _build_output(payload: dict[str, Any]) -> dict[str, Any] | None:
     tool_name = _tool_name(payload)
-    if tool_name and tool_name not in EDIT_TOOLS:
-        return ""
+    if tool_name and tool_name not in EDIT_TOOLS | SHELL_TOOLS:
+        return None
     if not _tool_succeeded(payload):
-        return ""
+        return None
 
-    categories = _classify_paths(_extract_paths(payload))
-    return REMINDER if "planning" in categories else ""
+    paths = _extract_paths(payload)
+    wrote_files = _may_have_written_files(tool_name, payload)
+    if wrote_files:
+        design_reviews = _design_reviews_to_validate(payload, paths)
+        if design_reviews:
+            written_reviews = {path for path in paths if _is_design_review_path(path)}
+            stale_reviews = [path for path in design_reviews if path not in written_reviews]
+            if stale_reviews:
+                joined = ", ".join(stale_reviews)
+                return _block_output(
+                    "Bruce Design Gate invalidated an existing review because a same-directory "
+                    "design artifact changed without updating design-review.md in the same tool "
+                    f"call: {joined}. Rerun $design-gate and the validator before implementation."
+                )
+            return _validate_design_reviews(payload, design_reviews)
+
+    categories = _classify_paths(paths)
+    if "planning" in categories and wrote_files:
+        return _context_output(f"<system-reminder>{REMINDER}</system-reminder>")
+    return None
+
+
+def _may_have_written_files(tool_name: str, payload: dict[str, Any]) -> bool:
+    if tool_name in EDIT_TOOLS:
+        return True
+    if tool_name not in SHELL_TOOLS:
+        return False
+    command = _shell_command(payload)
+    if not command:
+        return False
+    return bool(
+        re.search(
+            r"(?:^|[;&|]\s*)(?:cat|printf|echo)\b[^\n]*(?:>|>>)|"
+            r"(?:>|>>)\s*[^\n]+|"
+            r"\b(?:tee|touch|cp|mv|install|sed\s+-i|perl\s+-pi)\b|"
+            r"\b(?:write_text|write_bytes)\s*\(",
+            command,
+            flags=re.IGNORECASE | re.MULTILINE,
+        )
+    )
+
+
+def _shell_command(payload: dict[str, Any]) -> str:
+    tool_input = payload.get("tool_input")
+    if not isinstance(tool_input, dict):
+        return ""
+    for key in ("command", "cmd"):
+        value = tool_input.get(key)
+        if isinstance(value, str):
+            return value
+    return ""
+
+
+def _is_design_review_path(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    pure_path = PurePosixPath(normalized)
+    return (
+        not pure_path.is_absolute()
+        and normalized != ".."
+        and not normalized.startswith("../")
+        and pure_path.name == "design-review.md"
+    )
+
+
+def _design_reviews_to_validate(
+    payload: dict[str, Any], paths: set[str]
+) -> list[str]:
+    cwd = _effective_cwd(payload)
+    if cwd is None:
+        return sorted(path for path in paths if _is_design_review_path(path))
+
+    reviews: set[str] = set()
+    for path in paths:
+        normalized = path.replace("\\", "/")
+        candidate = PurePosixPath(normalized)
+        if candidate.is_absolute() or normalized == ".." or normalized.startswith("../"):
+            continue
+        review_relative = (candidate.parent / "design-review.md").as_posix()
+        if _is_design_review_path(normalized):
+            reviews.add(review_relative)
+        elif _is_gate_artifact_path(normalized) and (cwd / review_relative).is_file():
+            reviews.add(review_relative)
+    return sorted(reviews)
+
+
+def _validate_design_reviews(
+    payload: dict[str, Any], paths: list[str]
+) -> dict[str, Any] | None:
+    cwd = _effective_cwd(payload)
+    if cwd is None:
+        return _block_output("Cannot validate design-review.md because the hook payload has no cwd.")
+    validator = (Path(__file__).resolve().parents[1] / "skills/design-gate/scripts/validate_design_review.py")
+    failures: list[str] = []
+    validated: list[str] = []
+
+    for relative in paths:
+        review = (cwd / relative).resolve()
+        try:
+            review.relative_to(cwd)
+        except ValueError:
+            continue
+        if not review.is_file():
+            failures.append(f"{relative}: design-review.md was referenced by a write but does not exist")
+            continue
+        if not validator.is_file():
+            failures.append(f"{relative}: Design Review validator is missing: {validator}")
+            continue
+        try:
+            result = subprocess.run(
+                [sys.executable, str(validator), "--change-dir", str(review.parent)],
+                cwd=cwd,
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=15,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            failures.append(f"{relative}: Design Review validator could not run: {exc}")
+            continue
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout).strip()
+            failures.append(f"{relative}: {detail}")
+        else:
+            validated.append(relative)
+
+    if failures:
+        detail = "\n".join(failures)
+        return _block_output(
+            "Bruce Design Gate rejected the written design review. Repair the current files and "
+            f"rerun the validator before reporting Design: pass.\n{detail[:6000]}"
+        )
+    if validated:
+        joined = ", ".join(validated)
+        return _context_output(
+            "<system-reminder>Bruce Design Review validator passed for "
+            f"{joined}. Use the current validator result as gate evidence; file presence or prose "
+            "alone is not a pass.</system-reminder>"
+        )
+    return None
+
+
+def _context_output(context: str) -> dict[str, Any]:
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUse",
+            "additionalContext": context,
+        }
+    }
+
+
+def _block_output(reason: str) -> dict[str, Any]:
+    return {
+        "decision": "block",
+        "reason": reason,
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUse",
+            "additionalContext": reason,
+        },
+    }
+
+
+def _payload_mentions_design_review(payload: dict[str, Any]) -> bool:
+    try:
+        return "design-review.md" in json.dumps(payload, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return False
+
+
+def _effective_cwd(payload: dict[str, Any]) -> Path | None:
+    cwd_value = payload.get("cwd")
+    base = Path(cwd_value).resolve() if isinstance(cwd_value, str) and cwd_value else None
+    tool_input = payload.get("tool_input")
+    workdir = tool_input.get("workdir") if isinstance(tool_input, dict) else None
+    if not isinstance(workdir, str) or not workdir:
+        return base
+    candidate = Path(workdir).expanduser()
+    if candidate.is_absolute():
+        return candidate.resolve()
+    return (base / candidate).resolve() if base is not None else candidate.resolve()
 
 
 def _tool_name(payload: dict[str, Any]) -> str:
@@ -134,6 +320,12 @@ def _tool_succeeded(payload: dict[str, Any]) -> bool:
 
     for key in ("tool_result", "tool_response", "result", "output"):
         result = payload.get(key)
+        if isinstance(result, str) and re.search(
+            r"(?:Process exited with code|exit_code[=:]|returncode[=:])\s*[1-9]\d*",
+            result,
+            flags=re.IGNORECASE,
+        ):
+            return False
         if not isinstance(result, dict):
             continue
         if _bool_value(result.get("success")) is False:
@@ -147,6 +339,10 @@ def _tool_succeeded(payload: dict[str, Any]) -> bool:
             "failure",
         }:
             return False
+        for exit_key in ("exit_code", "exitCode", "returncode", "return_code"):
+            exit_code = result.get(exit_key)
+            if isinstance(exit_code, int) and exit_code != 0:
+                return False
     return True
 
 
@@ -168,12 +364,16 @@ def _extract_paths(payload: dict[str, Any]) -> set[str]:
     for text in _collect_text(payload):
         paths.update(_paths_from_text(text))
 
-    cwd = payload.get("cwd") if isinstance(payload.get("cwd"), str) else ""
+    effective_cwd = _effective_cwd(payload)
+    raw_cwd = payload.get("cwd") if isinstance(payload.get("cwd"), str) else ""
+    cwd_candidates = {raw_cwd.rstrip("/",)} if raw_cwd else set()
+    if effective_cwd is not None:
+        cwd_candidates.add(str(effective_cwd).rstrip("/"))
     return {
         normalized
         for path in paths
         if _looks_like_path(path)
-        for normalized in [_normalize_path(path, cwd)]
+        for normalized in [_normalize_path(path, cwd_candidates)]
         if normalized
     }
 
@@ -241,6 +441,9 @@ def _paths_from_text(text: str) -> set[str]:
     )
     for match in pattern.finditer(text):
         paths.add(match.group("path").strip())
+    for filename in PLANNING_FILENAMES:
+        if re.search(rf"(?<![\w.-]){re.escape(filename)}(?![\w.-])", text):
+            paths.add(filename)
     return paths
 
 
@@ -254,14 +457,15 @@ def _looks_like_path(path: str) -> bool:
     return "/" in normalized or suffix in DOCUMENT_EXTENSIONS | CODE_EXTENSIONS
 
 
-def _normalize_path(path: str, cwd: str) -> str:
+def _normalize_path(path: str, cwd_candidates: set[str]) -> str:
     normalized = path.strip().strip('"').strip("'").replace("\\", "/")
     while normalized.startswith("./"):
         normalized = normalized[2:]
 
-    normalized_cwd = cwd.strip().replace("\\", "/").rstrip("/")
-    if normalized_cwd and normalized.startswith(f"{normalized_cwd}/"):
-        normalized = normalized[len(normalized_cwd) + 1 :]
+    for cwd in sorted(cwd_candidates, key=len, reverse=True):
+        normalized_cwd = cwd.strip().replace("\\", "/").rstrip("/")
+        if normalized_cwd and normalized.startswith(f"{normalized_cwd}/"):
+            return normalized[len(normalized_cwd) + 1 :]
     return normalized
 
 
@@ -277,6 +481,19 @@ def _classify_paths(paths: set[str]) -> set[str]:
         else:
             categories.add("unknown")
     return categories
+
+
+def _is_gate_artifact_path(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    pure_path = PurePosixPath(normalized)
+    if pure_path.is_absolute() or normalized == ".." or normalized.startswith("../"):
+        return False
+    name = pure_path.name
+    return (
+        name in PLANNING_FILENAMES
+        or name.endswith("评审结果.md")
+        or any(keyword in name for keyword in PLANNING_NAME_KEYWORDS)
+    )
 
 
 def _is_planning_design_path(path: str) -> bool:
@@ -312,13 +529,7 @@ def _is_code_path(path: str) -> bool:
 
 
 def _emit_context(context: str) -> None:
-    output = {
-        "hookSpecificOutput": {
-            "hookEventName": "PostToolUse",
-            "additionalContext": context,
-        }
-    }
-    print(json.dumps(output, ensure_ascii=False))
+    print(json.dumps(_context_output(context), ensure_ascii=False))
 
 
 if __name__ == "__main__":

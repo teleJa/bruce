@@ -10,32 +10,55 @@ class ParallelPlanningContractTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.plan = read("skills/write-plan/SKILL.md")
 
-    def test_full_profile_has_evidence_bounded_parallel_path(self) -> None:
+    def test_write_plan_consumes_bruce_inspection_evidence(self) -> None:
         normalized = " ".join(self.plan.split())
         for phrase in (
-            "task contract's component boundary and repository evidence",
-            "for a `full` profile, also read its named components",
+            "task contract and repository evidence already provided by Bruce",
+            "For a `full` profile, require named components",
             "Consume synthesized `inspect-parallel` findings when Bruce already produced them",
-            "If material planning facts remain missing and at least two scopes can be inspected independently",
-            "bounded native read-only subagents",
-            "one primary scope per component or concern",
-            "public interfaces and consumers",
-            "synthesize cross-scope joins before writing tasks",
-            "Profile and risk alone are neither necessary nor sufficient for parallel planning inspection",
-            "do not invoke another supporting skill automatically",
+            "Do not plan against invented paths or APIs",
         ):
             self.assertIn(phrase, normalized)
 
-    def test_parallel_planning_has_direct_fallback(self) -> None:
+    def test_write_plan_does_not_own_parallel_exploration(self) -> None:
         normalized = " ".join(self.plan.split())
-        self.assertIn("scopes share mutable ownership", normalized)
-        self.assertIn("evidence is already sufficient", normalized)
-        self.assertIn("parallel capability is unavailable", normalized)
-        self.assertIn("inspect the affected scopes directly", normalized)
+        for phrase in (
+            "Do not launch subagents, invoke `inspect-parallel`, or own parallel repository inspection",
+            "Do not choose Bruce risk/profile, launch subagents, own repository exploration",
+            "invoke another supporting skill automatically",
+        ):
+            self.assertIn(phrase, normalized)
+        for forbidden in (
+            "use bounded native read-only subagents directly",
+            "inspect the affected scopes directly",
+        ):
+            self.assertNotIn(forbidden, normalized)
 
-    def test_planning_does_not_own_subagent_runtime_details(self) -> None:
+    def test_missing_evidence_returns_to_bruce_without_persisting_plan(self) -> None:
         normalized = " ".join(self.plan.split())
-        self.assertIn("Do not select a model, process, isolation mechanism, or scheduler", normalized)
+        for phrase in (
+            "If material facts about files, interfaces and consumers, verification commands, dependencies, ownership, or dirty-worktree boundaries remain missing",
+            "do not persist a plan",
+            "Return `Missing planning evidence`",
+            "unresolved questions and smallest bounded scopes Bruce must inspect",
+            "before invoking `write-plan` again",
+            "Return exactly one outcome",
+            "`Missing planning evidence`: do not create or update `plan.md`",
+            "smallest bounded inspection scopes to Bruce",
+        ):
+            self.assertIn(phrase, normalized)
+
+    def test_ready_output_is_distinct_from_missing_evidence(self) -> None:
+        normalized = " ".join(self.plan.split())
+        self.assertIn("`Plan: ready`: persist one minimal executable plan", normalized)
+        self.assertIn("`Document check: clear|issues`", normalized)
+        missing_outcome = self.plan.split("- `Missing planning evidence`:", 1)[1].split(
+            "## Does not own", 1
+        )[0]
+        normalized_missing = " ".join(missing_outcome.split())
+        self.assertIn("do not create or update `plan.md`", normalized_missing)
+        self.assertNotIn("persist one minimal executable plan", normalized_missing)
+        self.assertNotIn("`Plan: ready`", normalized_missing)
 
 
 if __name__ == "__main__":

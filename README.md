@@ -4,7 +4,8 @@ Bruce is a Codex workflow plugin for software delivery. It organizes a task arou
 contract, proportional planning, scenario-based acceptance, bounded verification/repair loops, and
 evidence-backed completion. Standard/full describes evidenced delivery topology; Goal persistence,
 design readiness, and test design are selected independently. A low-noise plugin hook reminds Codex
-when changed planning or design documents may require Design Gate before implementation.
+when changed planning or design documents may require Design Gate before implementation and
+deterministically validates any written `design-review.md`.
 
 ## Workflow
 
@@ -73,11 +74,15 @@ helper under an active Goal.
 ## Planning document review hook
 
 The bundled `PostToolUse` hook recognizes planning and design documents under `docs/` plus Trellis
-task documents. It injects a Design Gate reminder after a successful edit-like tool call. Code,
-ordinary documentation, failed tools, and absolute paths outside the active task `cwd` stay quiet.
+task documents, including writes performed through Bash. Ordinary planning edits receive an advisory
+Design Gate reminder. A written `design-review.md` is instead checked by the bundled deterministic
+validator; an invalid review blocks normal tool-result processing until the current files are repaired.
+Code, ordinary documentation, failed tools, read-only Bash calls, and absolute paths outside the active
+task `cwd` stay quiet. The validator checks candidate completeness, required artifact delivery, real
+paths, placeholders, readiness/verdict consistency, and the behavior-plan-to-test-plan invariant.
 
-The hook is advisory: it runs no check and does not make a readiness or completion decision. Plugin
-hooks run whenever the Bruce plugin is enabled,
+The hook does not itself author or approve a review: it only validates the persisted gate artifact.
+Plugin hooks run whenever the Bruce plugin is enabled,
 not only when the `$bruce` skill is selected. Codex requires hooks to be enabled and the installed
 definition to be reviewed in `/hooks`; users can decline or disable it there.
 

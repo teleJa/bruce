@@ -125,7 +125,9 @@ supporting skill only for a present need:
 - final completion decision for every implementation task: `completion-gate`.
 
 A resolved profile does not itself invoke Goal, Design Gate, test design, or prototype generation.
-Run `design-gate` only when a requirement, architecture, API contract, table design, implementation
+A required persisted implementation plan does invoke `write-tests`; plan verification bullets do not
+replace the resulting `test-plan.md`. Run `design-gate` only when a requirement, architecture, API
+contract, table design, implementation
 plan, test design, or confirmed UI prototype will govern downstream implementation. It owns artifact
 completeness and document readiness and returns one implementation-entry result:
 `Design: pass|blocked`.
@@ -149,8 +151,10 @@ native subagents are unavailable or ownership overlaps, generate sequentially; u
 delegation alone does not block exploration.
 
 When Design Gate is required, do not implement affected behavior until the current same-directory
-`design-review.md` reports `Design: pass`. If scope changes a design decision, rerun Design Gate
-before continuing affected implementation.
+`design-review.md` reports `Design: pass` and the Design Gate validator passes against that current
+change directory. A prose verdict, plan status, or file presence without validator evidence is not
+implementation entry. If scope changes a design decision, rerun Design Gate before continuing
+affected implementation.
 
 Enter `goal-execution` only for explicit Goal intent or a resolved task-contract need for
 continuous/cross-turn persistence or an audit record. `spawn-execute` is an optional delegation

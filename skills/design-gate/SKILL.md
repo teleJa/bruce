@@ -16,6 +16,7 @@ readiness, or artifact-gate protocols.
 - The actual design files and repository facts that justify generated or skipped candidates.
 - The implementation boundary that the design will govern.
 - The document language rule in [../bruce/references/document-language.md](../bruce/references/document-language.md).
+- The deterministic [Design Review validator](scripts/validate_design_review.py).
 
 ## Candidate set
 
@@ -30,8 +31,15 @@ Resolve one change directory and enumerate these candidates in `design-review.md
 - UI prototype, resolved through `prototype-manifest.md` when applicable.
 
 Repository conventions may map a candidate to an equivalent filename but may not silently omit it.
-For each candidate record applicability (`required|skipped`), delivery (`generated|skipped`), the
-resolved path, and repository-backed evidence.
+For each candidate record applicability (`required|skipped`), delivery
+(`generated|missing|skipped`), the resolved path, and repository-backed evidence. `required/missing`
+is a valid blocked-state record; `required/skipped` and `skipped/generated` are invalid.
+
+Record the fixed applicability decisions `Behavior implementation: yes|no`,
+`Public/cross-component contract change: yes|no`, `Database/persistence design change: yes|no`, and
+`Governing UI prototype: yes|no`. A required persisted implementation plan always makes Test design
+required; a few verification bullets inside `plan.md` are not a substitute for `test-plan.md`. A `yes`
+contract, persistence, or governing-prototype decision makes its corresponding candidate required.
 
 For the UI prototype candidate, `generated` means the artifact is materialized in the current change
 directory, including an imported user-supplied prototype. An external URL alone is not delivery.
@@ -75,7 +83,8 @@ the check runs, not the output schema.
 
 1. Reuse the current change directory. When no repository convention or current directory exists,
    create `docs/change/<YYYYMMDD-HHmmss>-<short-slug>/`.
-2. Populate the complete candidate matrix. A required but missing file cannot be marked skipped.
+2. Populate the complete candidate matrix. Record a required absent artifact as `required/missing`;
+   it cannot be marked skipped.
 3. Verify every generated path exists and every skip cites concrete repository and scope evidence.
 4. Perform the readiness checks against the actual files and current repository facts.
 5. Return `blocked` when a candidate is omitted, a required artifact is missing or stale, a skip is
@@ -94,9 +103,14 @@ the check runs, not the output schema.
    a Chinese request; preserve candidate names, paths, statuses, and verdict tokens.
 7. Persist or update exactly one same-directory `design-review.md` using
    [design-review.md](templates/design-review.md). Reuse it on re-review.
-8. Inspect the review file itself for matrix completeness, accurate evidence, placeholders, links,
-   and consistency.
-9. Return `Design: pass|blocked` with blocking findings and the smallest next action.
+8. Run `python3 <plugin-root>/skills/design-gate/scripts/validate_design_review.py --change-dir
+   <change-directory>` against the current files. A non-zero result or an unexecuted validator forces
+   `Design: blocked`; never write or report `Design: pass` from prose inspection alone.
+9. Inspect the review file itself and the validator output for matrix completeness, accurate evidence,
+   placeholders, links, current paths, and verdict consistency.
+10. Record validator `Result: pass` only from the current zero exit; this validator result confirms
+    document integrity and is independent of whether the Design verdict is `pass` or `blocked`. Return
+    `Design: pass|blocked` with blocking findings, validator evidence, and the smallest next action.
 
 Any later scope or design change invalidates the affected verdict. Rerun this gate before continuing
 affected implementation.
@@ -104,7 +118,8 @@ affected implementation.
 ## Output
 
 Return the `design-review.md` path, candidate matrix, evidence boundary, review mode
-(`main-agent|independent`), blocking findings, smallest next action, and one final field:
+(`main-agent|independent`), validator command/result, blocking findings, smallest next action, and one
+final field:
 
 `Design: pass|blocked`
 

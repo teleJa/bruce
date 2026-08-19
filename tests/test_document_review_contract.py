@@ -36,7 +36,12 @@ class DocumentReviewContractTest(unittest.TestCase):
         self.assertIn("exactly one same-directory `design-review.md`", gate)
         self.assertIn("Candidate Matrix", template)
         self.assertIn("Review mode: <main-agent|independent>", template)
+        self.assertIn("Behavior implementation: <yes|no>", template)
+        self.assertIn("Public/cross-component contract change: <yes|no>", template)
+        self.assertIn("Database/persistence design change: <yes|no>", template)
         self.assertIn("Design: <pass|blocked>", template)
+        self.assertIn("validate_design_review.py", gate)
+        self.assertIn("non-zero result or an unexecuted validator forces", gate)
         self.assertTrue((ROOT / "skills/design-gate/SKILL.md").is_file())
 
     def test_independence_is_a_mode_not_an_extra_verdict(self) -> None:

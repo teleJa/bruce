@@ -17,17 +17,14 @@ Create the smallest plan that makes dependencies and verification unambiguous.
 
 ## Procedure
 
-1. Inspect the files and commands each step will touch. Read the task contract's component boundary
-   and repository evidence; for a `full` profile, also read its named components and propagated
-   contract or independent delivery boundary. Consume synthesized `inspect-parallel` findings when
-   Bruce already produced them. If material planning facts remain missing and at least two scopes can
-   be inspected independently, use bounded native read-only subagents directly, one primary scope per
-   component or concern. Require each scope to report current files, public interfaces and consumers,
-   available verification commands, dependencies, ownership, and dirty-worktree constraints;
-   synthesize cross-scope joins before writing tasks. If scopes share mutable ownership, evidence is
-   already sufficient, or parallel capability is unavailable, inspect the affected scopes directly.
-   Profile and risk alone are neither necessary nor sufficient for parallel planning inspection. Do
-   not plan against invented paths or APIs, and do not invoke another supporting skill automatically.
+1. Inspect the task contract and repository evidence already provided by Bruce. For a `full` profile,
+   require named components plus the propagated contract or independent delivery boundary. Consume
+   synthesized `inspect-parallel` findings when Bruce already produced them. Do not launch subagents,
+   invoke `inspect-parallel`, or own parallel repository inspection. If material facts about files,
+   interfaces and consumers, verification commands, dependencies, ownership, or dirty-worktree
+   boundaries remain missing, do not persist a plan. Return `Missing planning evidence` with the
+   unresolved questions and smallest bounded scopes Bruce must inspect before invoking `write-plan`
+   again. Do not plan against invented paths or APIs.
 2. Split work into feature-bearing tasks with stable ids. For each task record title, dependencies,
    files/scope, consumed/produced interfaces, implementation detail, acceptance, and verification.
    Reference the parent Given/When/Then scenario ids and required evidence layer for behavior tasks.
@@ -49,11 +46,15 @@ Create the smallest plan that makes dependencies and verification unambiguous.
 
 ## Output
 
-Produce one minimal executable plan and summarize its dependency order, high-risk steps, and
-verification anchors. Include the document-check result.
+Return exactly one outcome:
+
+- `Plan: ready`: persist one minimal executable plan and summarize its dependency order, high-risk
+  steps, verification anchors, and `Document check: clear|issues` result.
+- `Missing planning evidence`: do not create or update `plan.md`; return the unresolved questions
+  and smallest bounded inspection scopes to Bruce for evidence collection before retrying this skill.
 
 ## Does not own
 
 Do not generate a test plan, database design, architecture, review, approval, progress ledger, or
-execution automatically. Do not choose Bruce risk/profile, invoke another supporting skill
-automatically, or declare completion.
+execution automatically. Do not choose Bruce risk/profile, launch subagents, own repository
+exploration, invoke another supporting skill automatically, or declare completion.

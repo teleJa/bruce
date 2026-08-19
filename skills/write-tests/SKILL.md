@@ -10,8 +10,9 @@ Turn acceptance into concrete, executable verification scenarios.
 ## Invocation decision
 
 Apply the frontmatter trigger contract before behavior implementation. Do so for any resolved Bruce
-profile; profile alone is neither necessary nor sufficient. When triggered, persist `test-plan.md`; inline
-acceptance or Goal audit text is not a substitute. When no trigger applies, do not invoke this skill.
+profile; profile alone is neither necessary nor sufficient. A required persisted implementation plan
+always triggers this skill. When triggered, persist `test-plan.md`; inline acceptance, plan verification
+bullets, or Goal audit text are not substitutes. When no trigger applies, do not invoke this skill.
 If Design Gate is independently required, it records the repository-backed test-design skip
 in its candidate matrix; otherwise do not create a durable skip record.
 

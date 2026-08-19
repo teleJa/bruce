@@ -37,8 +37,13 @@ class PluginManifestTest(unittest.TestCase):
         self.assertFalse((ROOT / "skills/verify-completion/SKILL.md").exists())
         hooks = read_json("hooks/hooks.json")
         self.assertNotIn("doctor", str(hooks).lower())
-        command = hooks["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
+        post_tool = hooks["hooks"]["PostToolUse"][0]
+        self.assertIn("Bash", post_tool["matcher"])
+        command = post_tool["hooks"][0]["command"]
         self.assertIn("$PLUGIN_ROOT/hooks/post_tool_review_reminder.py", command)
+        self.assertTrue(
+            (ROOT / "skills/design-gate/scripts/validate_design_review.py").is_file()
+        )
         self.assertNotIn(".codex/hooks", command)
 
     def test_marketplace_points_at_this_plugin_root(self) -> None:

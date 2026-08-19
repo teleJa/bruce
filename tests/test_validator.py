@@ -41,6 +41,40 @@ class ValidatorRegressionTest(unittest.TestCase):
             with self.assertRaisesRegex(ValidationError, "PLUGIN_ROOT"):
                 validate_hooks(root, {"hooks": "./hooks/hooks.json"})
 
+    def test_hook_matcher_must_cover_bash(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "bruce"
+            hooks_dir = root / "hooks"
+            validator_dir = root / "skills/design-gate/scripts"
+            hooks_dir.mkdir(parents=True)
+            validator_dir.mkdir(parents=True)
+            config = json.loads((ROOT / "hooks/hooks.json").read_text(encoding="utf-8"))
+            config["hooks"]["PostToolUse"][0]["matcher"] = "^(?:Write|apply_patch)$"
+            (hooks_dir / "hooks.json").write_text(json.dumps(config), encoding="utf-8")
+            (hooks_dir / "post_tool_review_reminder.py").write_text(
+                "raise SystemExit(0)\n", encoding="utf-8"
+            )
+            (validator_dir / "validate_design_review.py").write_text(
+                "raise SystemExit(0)\n", encoding="utf-8"
+            )
+
+            with self.assertRaisesRegex(ValidationError, "cover Bash"):
+                validate_hooks(root, {"hooks": "./hooks/hooks.json"})
+
+    def test_missing_design_review_validator_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "bruce"
+            hooks_dir = root / "hooks"
+            hooks_dir.mkdir(parents=True)
+            shutil.copy(ROOT / "hooks/hooks.json", hooks_dir / "hooks.json")
+            shutil.copy(
+                ROOT / "hooks/post_tool_review_reminder.py",
+                hooks_dir / "post_tool_review_reminder.py",
+            )
+
+            with self.assertRaisesRegex(ValidationError, "missing Design Review validator"):
+                validate_hooks(root, {"hooks": "./hooks/hooks.json"})
+
     def test_folded_yaml_description_is_supported(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "SKILL.md"

@@ -174,6 +174,41 @@ acceptance evidence, design alignment, scope findings, repair-loop results, resi
 smallest next action. Keep the result in the current task; `goal-execution` may record it when Goal
 mode is active.
 
+### Output format example
+
+Use the stable top-level fields in the order shown below. `Completion` is the only terminal verdict;
+all remaining fields are supporting evidence, context, or follow-up action rather than additional
+verdicts. Do not use aliases such as `completion_verdict`. Use `[]` for an empty collection rather
+than omitting the field or returning `null`. `review_mode: main-agent` requires
+`review_mode_reason: none`; `review_mode: independent` requires one of reasons 1-8 from the mandatory
+review-mode selection.
+
+```yaml
+Completion: pass
+review_mode: independent
+review_mode_reason: guarded-multi-component-contract
+review_matrix:
+  - batch_id: batch-1
+    acceptance_id: AC-1
+    path: src/example.ts
+    required_layer: integration
+    basis_revision: abc123
+    evidence_revision: abc123
+    evidence: integration-test
+    result: pass
+    affected_scope:
+      - src/example.ts
+findings: []
+acceptance_evidence:
+  - acceptance_id: AC-1
+    evidence: integration-test
+design_alignment: clear
+scope_findings: []
+repair_loop_results: []
+residual_risks: []
+next_action: none
+```
+
 ## Does not own
 
 Do not modify implementation, fabricate evidence, maintain Goal or audit state, approve host

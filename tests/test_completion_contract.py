@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 import unittest
 
+import yaml
+
 from tests._support import read
 
 
@@ -134,6 +136,55 @@ class CompletionContractTest(unittest.TestCase):
         self.assertIn("related regressions", self.skill)
         self.assertIn("L2-L4", self.skill)
         self.assertIn("delivery actions", self.skill)
+
+    def test_output_example_uses_one_stable_completion_protocol(self) -> None:
+        self.assertIn("### Output format example", self.skill)
+        output_section = self.skill.split("### Output format example", 1)[1].split(
+            "## Does not own", 1
+        )[0]
+        self.assertIn("`Completion` is the only terminal verdict", output_section)
+        self.assertIn("Do not use aliases such as `completion_verdict`", output_section)
+        self.assertNotIn("completion_verdict:", output_section)
+        match = re.search(r"```yaml\n(.*?)\n```", output_section, flags=re.DOTALL)
+        self.assertIsNotNone(match)
+        example_text = match.group(1)
+        example = yaml.safe_load(example_text)
+        expected_fields = [
+            "Completion",
+            "review_mode",
+            "review_mode_reason",
+            "review_matrix",
+            "findings",
+            "acceptance_evidence",
+            "design_alignment",
+            "scope_findings",
+            "repair_loop_results",
+            "residual_risks",
+            "next_action",
+        ]
+        self.assertEqual(expected_fields, list(example))
+        self.assertEqual("pass", example["Completion"])
+        self.assertEqual("independent", example["review_mode"])
+        self.assertEqual("guarded-multi-component-contract", example["review_mode_reason"])
+        self.assertEqual(1, len(re.findall(r"^Completion:", example_text, flags=re.MULTILINE)))
+        for field in (
+            "findings",
+            "scope_findings",
+            "repair_loop_results",
+            "residual_risks",
+        ):
+            self.assertEqual([], example[field])
+
+    def test_output_mode_and_reason_pairing_is_explicit(self) -> None:
+        normalized = " ".join(self.skill.split())
+        self.assertIn(
+            "`review_mode: main-agent` requires `review_mode_reason: none`",
+            normalized,
+        )
+        self.assertIn(
+            "`review_mode: independent` requires one of reasons 1-8",
+            normalized,
+        )
 
     def test_legacy_multi_verdict_fields_are_absent(self) -> None:
         for marker in (

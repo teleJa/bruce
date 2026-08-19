@@ -89,7 +89,12 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("repository-backed evidence", normalized)
         self.assertIn("Design: pass|blocked", body)
         self.assertIn(r"required\|skipped", template)
-        self.assertIn(r"generated\|skipped", template)
+        self.assertIn(r"generated\|missing\|skipped", template)
+        self.assertIn("Behavior implementation: <yes|no>", template)
+        self.assertIn("Public/cross-component contract change: <yes|no>", template)
+        self.assertIn("required/missing", body)
+        self.assertIn("Test design required", normalized)
+        self.assertIn("validate_design_review.py", body)
 
     def test_api_contract_artifact_is_mandatory(self) -> None:
         normalized = " ".join(read("skills/write-architecture/SKILL.md").split())
@@ -127,8 +132,15 @@ class SupportingSkillContractTest(unittest.TestCase):
     def test_write_plan_does_not_cascade_to_parallel_inspection(self) -> None:
         normalized = " ".join(read("skills/write-plan/SKILL.md").split())
         self.assertIn("when Bruce already produced them", normalized)
-        self.assertIn("use bounded native read-only subagents directly", normalized)
-        self.assertIn("do not invoke another supporting skill automatically", normalized)
+        self.assertIn("Do not launch subagents, invoke `inspect-parallel`", normalized)
+        self.assertIn("Return `Missing planning evidence`", normalized)
+        self.assertIn("smallest bounded scopes Bruce must inspect", normalized)
+        self.assertIn("invoke another supporting skill automatically", normalized)
+        for forbidden in (
+            "use bounded native read-only subagents directly",
+            "inspect the affected scopes directly",
+        ):
+            self.assertNotIn(forbidden, normalized)
 
     def test_capabilities_do_not_cascade(self) -> None:
         for name in (

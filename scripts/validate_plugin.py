@@ -171,6 +171,10 @@ def validate_hooks(root: Path, manifest: dict) -> None:
     entry = entries[0]
     if not isinstance(entry, dict) or not isinstance(entry.get("matcher"), str):
         raise ValidationError("PostToolUse matcher entry is invalid")
+    matcher = entry["matcher"]
+    for required_tool in ("Bash", "apply_patch"):
+        if required_tool not in matcher:
+            raise ValidationError(f"PostToolUse matcher must cover {required_tool}")
     commands = entry.get("hooks")
     if not isinstance(commands, list) or len(commands) != 1:
         raise ValidationError("PostToolUse must contain one command hook")
@@ -184,10 +188,12 @@ def validate_hooks(root: Path, manifest: dict) -> None:
     if ".codex/hooks" in command_text:
         raise ValidationError("plugin hook command must not use a project-relative .codex path")
     timeout = command.get("timeout")
-    if not isinstance(timeout, int) or not 1 <= timeout <= 10:
-        raise ValidationError("PostToolUse command timeout must be between 1 and 10 seconds")
+    if not isinstance(timeout, int) or not 1 <= timeout <= 30:
+        raise ValidationError("PostToolUse command timeout must be between 1 and 30 seconds")
     if not (root / "hooks/post_tool_review_reminder.py").is_file():
         raise ValidationError("missing PostToolUse reminder script")
+    if not (root / "skills/design-gate/scripts/validate_design_review.py").is_file():
+        raise ValidationError("missing Design Review validator script")
 
 
 def validate_marketplace(root: Path, manifest: dict) -> None:

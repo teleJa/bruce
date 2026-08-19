@@ -64,11 +64,15 @@ repeatable check. Do not impose TDD on documentation-only, generated, or mechani
 
 For a cross-component batch, use the first failing scenario only to establish the batch boundary.
 Before the next behavior edit, build a batch change map covering the owned entry points, direct call
-sites, allowed paths, material state/error paths, and planned evidence. Implement that declared
-compatible slice before rerunning the batch matrix; do not follow each downstream failure into an
-undeclared component. After the second non-blocking finding in the same batch, stop single-finding
-repair, complete the current batch matrix, and return its findings packet. Only a failure that prevents
-safe evidence collection or continuation of the current batch may be repaired immediately.
+sites, allowed paths, material state/error paths, and planned evidence. The change map also records a
+stop condition. Implement that
+declared compatible slice before rerunning the batch matrix; do not follow each downstream failure into
+an undeclared component. Once the batch has changed behavior and starts planned verification, every new
+inspection must map to a current acceptance id, known failing matrix row, or declared direct call site.
+Classify any unmapped adjacent concern as `deferred`; do not inspect it opportunistically. After the
+second non-blocking finding in the same batch, stop single-finding repair and further nonessential
+inspection, complete the current batch matrix, and return its findings packet. Only a failure that
+prevents safe evidence collection or continuation of the current batch may be repaired immediately.
 
 ## Verification layers
 
@@ -116,7 +120,9 @@ boundary. Build the matrix for the current batch only. Its bounded rows are:
 - one row per batch acceptance id;
 - direct changed entry points and direct call sites needed to prove that acceptance;
 - material state/error paths identified by the acceptance scenario or the changed code; group
-  equivalent paths instead of expanding every transitive caller.
+  equivalent paths instead of expanding every transitive caller;
+- no adjacent path or concern unless it maps to a current acceptance id, known failing matrix row, or
+  declared direct call site; otherwise record it as `deferred`.
 
 Each row records `batch_id`, `acceptance_id`, `path`, `required_layer`, `basis_revision`,
 `evidence_revision`, `evidence`, `result`, and `affected_scope`. Return `Checkpoint:

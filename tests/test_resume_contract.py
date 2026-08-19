@@ -19,6 +19,19 @@ class ResumeContractTest(unittest.TestCase):
         self.assertIn("Optional human-readable snapshot", template)
         self.assertIn("Reinspect", template)
 
+    def test_unfinished_full_cross_turn_resume_requires_goal_and_resume_checkpoint(self) -> None:
+        workflow = read("skills/bruce/SKILL.md")
+        failure = read("skills/bruce/references/failure-recovery.md")
+        goal = read("skills/goal-execution/SKILL.md")
+        for source in (workflow, failure, goal):
+            normalized = " ".join(source.split())
+            self.assertIn("unfinished `full` task", normalized)
+            self.assertIn("user-turn boundary", normalized)
+            self.assertIn("Resume checkpoint", normalized)
+        self.assertIn("enter or resume `goal-execution`", workflow)
+        self.assertIn("does not reset interval counters", goal)
+        self.assertIn("does not authorize\nunmapped inspection", goal)
+
     def test_legacy_artifacts_are_not_resume_truth(self) -> None:
         policy = read("skills/bruce/references/failure-recovery.md")
         self.assertIn("Do not infer completion from old workflow artifacts", policy)

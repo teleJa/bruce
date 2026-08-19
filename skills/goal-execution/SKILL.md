@@ -14,8 +14,9 @@ does not re-check their internal criteria.
 ## Entry
 
 Enter only for explicit Goal intent or when the resolved task contract requires continuous/cross-turn
-persistence or an auditable execution record. Profile, complexity, duration, risk, or subagent use
-alone does not enable this mode.
+persistence or an auditable execution record. An unfinished `full` task that resumes after a user-turn
+boundary is such a continuous/cross-turn persistence need. Profile, complexity, duration, risk, or
+subagent use alone does not enable this mode.
 
 Before creating or resuming a Goal, use `get_goal` and prepare:
 
@@ -23,6 +24,13 @@ Before creating or resuming a Goal, use `get_goal` and prepare:
 - verifiable acceptance criteria and evidence paths;
 - profile and business risk;
 - `Design: pass` when Design Gate is required.
+
+For an unfinished `full` task that resumes after a user-turn boundary, establish the Goal and current
+workspace basis, then return a `Resume checkpoint` before new code inspection, behavior edits, or
+verification. Record the current batch, basis revision or working-tree basis, latest checkpoint or its
+absence, known findings/repair set, allowed paths/direct call sites, deferred concerns, next evidence,
+and stop condition. A continuation request does not reset interval counters and does not authorize
+unmapped inspection.
 
 Do not start Goal-backed implementation while a required Design result is absent or blocked. Do not
 silently replace a conflicting unfinished Goal. Pass a token budget only when the user explicitly

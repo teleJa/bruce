@@ -25,6 +25,19 @@ class ExecutionContractTest(unittest.TestCase):
         self.assertIn("`Completion: blocked`", self.goal)
         self.assertIn("Do not independently inspect artifacts", self.goal)
 
+    def test_goal_resume_records_bounded_resume_checkpoint(self) -> None:
+        normalized = " ".join(self.goal.split())
+        for phrase in (
+            "current workspace basis",
+            "before new code inspection",
+            "known findings/repair set",
+            "allowed paths/direct call sites",
+            "deferred concerns",
+            "next evidence",
+            "stop condition",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_goal_records_preflight_checkpoint_and_interval_rollover(self) -> None:
         normalized = " ".join(self.goal.split())
         for phrase in (

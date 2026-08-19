@@ -59,6 +59,14 @@ For the same Codex task, inspect the current conversation, native plan, tool res
 workspace before continuing. Re-run verification whose preconditions changed, plus every original
 failed scenario and related regression required by an in-progress repair round.
 
+For an unfinished `full` task after a user-turn boundary, first enter or resume `goal-execution` and
+return a `Resume checkpoint`. Establish only the native Goal, current workspace basis, live handles,
+and latest batch evidence before that checkpoint; do not start new code discovery, behavior edits, or
+verification first. The Resume checkpoint records the current batch, basis, latest checkpoint or its
+absence, known findings/repair set, allowed paths/direct call sites, deferred concerns, next evidence,
+and stop condition. A continuation request does not reset the work interval or authorize unmapped
+inspection.
+
 When the previous task context is unavailable, inspect the repository from the user's stated goal
 or an explicit handoff. Do not infer completion from old workflow artifacts. A handoff can list
 facts and decisions, but the receiving task must revalidate workspace and external state.

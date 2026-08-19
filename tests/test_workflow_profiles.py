@@ -57,6 +57,18 @@ class WorkflowProfileContractTest(unittest.TestCase):
         ):
             self.assertIn(phrase, normalized)
 
+    def test_full_batch_contract_requires_executable_stop_boundary(self) -> None:
+        normalized = " ".join(self.workflow.split())
+        for phrase in (
+            "direct call sites",
+            "stop condition",
+            "stop opening new inspection",
+            "current acceptance id",
+            "known failing matrix row",
+            "declared direct call site",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_test_design_route_is_profile_independent(self) -> None:
         normalized = " ".join(self.test_design.split())
         for trigger in (

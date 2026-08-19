@@ -69,8 +69,11 @@ Keep the contract in the current task unless the user requests a persistent plan
 - `batches`: required before implementation for a `full` or `critical` task that spans two or more
   independently delivered components or a propagated cross-component contract. Each batch is a closed,
   verifiable delivery boundary, not a remaining-work bucket. Record its stable `batch_id`, included
-  task/acceptance ids, owned components and allowed paths, excluded work, dependency preconditions,
-  evidence boundary, checkpoint trigger, and repair budget.
+  task/acceptance ids, owned components and allowed paths, excluded work, direct call sites, dependency
+  preconditions, evidence boundary, checkpoint trigger, repair budget, and stop condition. The stop
+  condition states when the batch must stop opening new inspection and return its checkpoint; it must
+  exclude every path and concern not mapped to a current acceptance id, known failing matrix row, or
+  declared direct call site.
 
 For user-visible Web acceptance, resolve `visual_scope` before implementation. A missing scope is
 an unresolved contract field, not permission to assume `none`; record the material visible outcome
@@ -176,7 +179,18 @@ budget, repair only after a real change, and never replay an unknown external si
 
 Resume non-Goal work from the conversation, current plan, tool results, and actual workspace. Resume
 Goal-backed work from native Goal plus those current facts; never derive Goal status from its audit
-record. Use [handoff.md](templates/handoff.md) only when the user explicitly requests durable transfer.
+record. An unfinished `full` task that resumes after a user-turn boundary requires continuous/cross-turn
+persistence: enter or resume `goal-execution` before implementation or verification continues. Use
+[handoff.md](templates/handoff.md) only when the user explicitly requests durable transfer.
+
+For that cross-turn `full` resume, do not treat “继续” or an equivalent continuation request as permission
+to reopen code discovery. First establish the native Goal and current workspace basis, then return a
+`Resume checkpoint` before any new code inspection, behavior edit, or verification. It records the
+current `batch_id`, basis revision or working-tree basis, latest checkpoint or its absence, known
+findings and repair set, allowed paths/direct call sites, deferred concerns, next evidence action, and
+stop condition. New inspection is allowed only when it maps to a current acceptance id, known failing
+matrix row, or declared direct call site; otherwise record it as deferred and proceed to the checkpoint,
+declared repair set, or completion path.
 
 ## 6. Decide completion and report
 
@@ -188,11 +202,15 @@ When the contract declares multiple delivery batches, when Goal execution spans 
 cross-component task, or before crossing an external verification or side-effect boundary, run a
 batch checkpoint after the current batch. The checkpoint reviews only that batch's bounded matrix and
 returns `Checkpoint: clear|issues|blocked`; it never returns `Completion`, starts a per-finding review
-chain, or makes the overall delivery decision. Complete the batch matrix and return one batch findings
-packet before repairing non-blocking failures; classify findings as blocking, compatible, or deferred,
-and repair compatible findings together in one bounded repair set. An `update_plan` progress update
-never substitutes for this checkpoint. Repair the resulting batch repair set before starting dependent
-work. Use the final `completion-gate` once all batches are complete.
+chain, or makes the overall delivery decision. Once a batch has changed behavior and starts its planned
+verification, map every new inspection to a current acceptance id, known failing matrix row, or declared
+direct call site. Do not open an adjacent concern merely because it might be risky; classify an unmapped
+concern as deferred. Complete the batch matrix and return one batch findings packet before repairing
+non-blocking failures or starting further inspection after the second non-blocking finding; classify
+findings as blocking, compatible, or deferred, and repair compatible findings together in one bounded
+repair set. An `update_plan` progress update never substitutes for this checkpoint. Repair the resulting
+batch repair set before starting dependent work. Use the final `completion-gate` once all batches are
+complete.
 
 When a batch has `visual_scope=chrome-smoke|chrome-layout`, include its bounded Chrome evidence in
 that batch checkpoint. The evidence must include a real action against the target, the resulting

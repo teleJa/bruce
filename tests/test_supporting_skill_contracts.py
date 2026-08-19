@@ -96,6 +96,34 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("Test design required", normalized)
         self.assertIn("validate_design_review.py", body)
 
+    def test_cross_repository_artifact_placement_is_bounded_and_configurable(self) -> None:
+        reference = read("skills/bruce/references/artifact-placement.md")
+        normalized = " ".join(reference.split())
+        for phrase in (
+            "compare their direct parent directories",
+            "Do not walk farther up the filesystem",
+            "If the direct parent differs, ask the user",
+            "<shared-direct-parent>/.bruce/config.yaml",
+            "resolved relative to the config file's containing directory",
+            "do not silently fall back to a different repository or ancestor",
+        ):
+            self.assertIn(phrase, normalized)
+        self.assertIn("artifacts:", read("skills/bruce/templates/config.yaml"))
+        self.assertIn("root: docs/change", read("skills/bruce/templates/config.yaml"))
+        self.assertIn("root: docs/change", read(".bruce/config.yaml"))
+        for name in (
+            "write-architecture",
+            "write-plan",
+            "write-db-design",
+            "write-prototype",
+            "write-tests",
+            "design-gate",
+        ):
+            body = read(f"skills/{name}/SKILL.md")
+            with self.subTest(skill=name):
+                self.assertIn("artifact-placement.md", body)
+                self.assertIn("cross-repository", body)
+
     def test_api_contract_artifact_is_mandatory(self) -> None:
         normalized = " ".join(read("skills/write-architecture/SKILL.md").split())
         self.assertIn("must generate or update `api-contracts.md`", normalized)

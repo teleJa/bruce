@@ -7,6 +7,12 @@ description: Use when a task actually needs schema or persistence design. Derive
 
 Derive persistence design from behavior and current repository facts.
 
+## Artifact placement
+
+When persisting `table-design.md`, use [artifact-placement.md](../bruce/references/artifact-placement.md).
+For a cross-repository persistence design, keep the artifact in the one shared change directory while
+deriving schema facts separately from each owning repository.
+
 ## Inputs
 
 - Task objective, scope, acceptance, lifecycle rules, and data-risk constraints.

@@ -7,6 +7,12 @@ description: Use when a software change has multiple dependent steps, cross-comp
 
 Create the smallest plan that makes dependencies and verification unambiguous.
 
+## Artifact placement
+
+Use the shared resolver in [artifact-placement.md](../bruce/references/artifact-placement.md). A
+cross-repository task keeps one `plan.md` in the shared change directory; component ownership and
+repository paths stay inside the task list rather than becoming one plan per repository.
+
 ## Inputs
 
 - Objective, scope, acceptance, constraints, execution profile, and risk.

@@ -1,0 +1,4 @@
+# Bruce workspace artifact configuration.
+version: 1
+artifacts:
+  root: docs/change

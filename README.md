@@ -48,6 +48,10 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Every task that persists downstream-governing design runs `design-gate`. It decides artifact
   completeness and document readiness together, persists one `design-review.md`, and returns only
   `Design: pass|blocked`.
+- Persisted design artifacts use one shared placement resolver. For cross-repository work, only the
+  repositories' direct parent directories are compared; a shared parent may use `.bruce/config.yaml`,
+  while different parents require asking the user for the document path. Bruce never searches higher
+  ancestors or splits one design package across repositories.
 - Every implementation task ends with `completion-gate`. It performs final author-quality, scope,
   evidence, design-alignment, and risk-triggered independent checks internally and returns only
   `Completion: pass|issues|blocked`.

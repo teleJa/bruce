@@ -13,6 +13,12 @@ Keep provider execution optional. Before an external generation run, require the
 Open Design selection because it can consume model capacity and change provider state. Do not select
 a provider only because it is installed.
 
+## Artifact placement
+
+Resolve the current change directory with [artifact-placement.md](../bruce/references/artifact-placement.md).
+Prototype artifacts for a cross-repository task belong in the same shared change directory, not in a
+repository-specific copy.
+
 ## Inputs
 
 - Objective, scope, acceptance scenarios, constraints, profile, and risk from the task contract.
@@ -28,8 +34,9 @@ a provider only because it is installed.
 
 ## Artifact placement
 
-Resolve the current change directory using the repository convention, then an existing task change
-directory, then `docs/change/<YYYYMMDD-HHmmss>-<short-slug>/`.
+Resolve the current change directory with [artifact-placement.md](../bruce/references/artifact-placement.md).
+For cross-repository work, use one shared change directory; if direct parents differ, ask the user for
+its path before creating prototype artifacts.
 
 Create or update:
 

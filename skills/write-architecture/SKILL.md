@@ -7,6 +7,14 @@ description: Use when a software task needs an explicit structural decision, pub
 
 Design only when the task needs a durable structural or contract decision.
 
+## Artifact placement
+
+Use the shared resolver in [artifact-placement.md](../bruce/references/artifact-placement.md). For a
+cross-repository task, compare only the participating repositories' direct parent directories: if they
+match, place the complete change package under that parent (using its `.bruce/config.yaml` when present);
+if they differ, ask the user for the shared document path. Do not search higher ancestors or split one
+design across repositories.
+
 ## Inputs
 
 - Objective, scope, acceptance, constraints, execution profile, and known risk.
@@ -15,17 +23,7 @@ Design only when the task needs a durable structural or contract decision.
 - The repository's documented convention and any existing change directory for the current task.
 - The document language rule in [document-language.md](../bruce/references/document-language.md).
 
-## Artifact placement
-
-Resolve persisted architecture and contract artifacts in this order:
-
-1. Use the repository's documented convention when it defines a location for the current change.
-2. Otherwise, reuse the existing change directory for the current task when one already exists.
-3. Otherwise, create `docs/change/<YYYYMMDD-HHmmss>-<short-slug>/` under the repository root.
-
-Place `api-contracts.md` in the resolved directory. Place `architecture.md` beside it when an
-architecture artifact is required. A user-requested path may override the fallback only when it does
-not conflict with an applicable repository convention. The complete fallback API contract path is
+The complete fallback API contract path is
 `docs/change/<YYYYMMDD-HHmmss>-<short-slug>/api-contracts.md`.
 
 ## Mandatory API contract artifact

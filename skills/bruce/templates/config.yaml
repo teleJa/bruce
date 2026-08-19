@@ -1,0 +1,5 @@
+# Optional Bruce workspace configuration.
+# Store this file at <shared-direct-parent>/.bruce/config.yaml.
+version: 1
+artifacts:
+  root: docs/change

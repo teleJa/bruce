@@ -9,6 +9,13 @@ Make the single implementation-entry decision for persisted downstream design. T
 artifact completeness and document readiness; callers do not run or combine separate author-check,
 readiness, or artifact-gate protocols.
 
+## Artifact placement
+
+Resolve the change directory with [artifact-placement.md](../bruce/references/artifact-placement.md)
+before enumerating candidates. For cross-repository work, the direct-parent comparison is bounded: a
+shared direct parent may provide `.bruce/config.yaml`, while different direct parents require asking the
+user for the document path.
+
 ## Inputs
 
 - The task contract, resolved profile, risk, acceptance, and implementation boundary.
@@ -81,8 +88,9 @@ the check runs, not the output schema.
 
 ## Procedure
 
-1. Reuse the current change directory. When no repository convention or current directory exists,
-   create `docs/change/<YYYYMMDD-HHmmss>-<short-slug>/`.
+1. Resolve or reuse the change directory with [artifact-placement.md](../bruce/references/artifact-placement.md).
+   For cross-repository work, reuse only a task-identified directory; if participating repositories have
+   different direct parents and no user path is available, ask the user before creating artifacts.
 2. Populate the complete candidate matrix. Record a required absent artifact as `required/missing`;
    it cannot be marked skipped.
 3. Verify every generated path exists and every skip cites concrete repository and scope evidence.

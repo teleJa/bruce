@@ -7,6 +7,12 @@ description: Use when acceptance crosses multiple component or contract boundari
 
 Turn acceptance into concrete, executable verification scenarios.
 
+## Artifact placement
+
+When persisting `test-plan.md`, use [artifact-placement.md](../bruce/references/artifact-placement.md).
+A cross-repository test plan remains one shared artifact and records per-repository commands and evidence
+boundaries inside the plan.
+
 ## Invocation decision
 
 Apply the frontmatter trigger contract before behavior implementation. Do so for any resolved Bruce

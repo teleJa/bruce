@@ -124,6 +124,14 @@ class PostToolReviewHookTest(unittest.TestCase):
         }
         self.assertIn("Bruce Design Gate reminder", self.additional_context(payload))
 
+    def test_task_contract_edit_triggers_design_gate_reminder(self) -> None:
+        reminder = self.additional_context(
+            self.patch_payload("docs/change/example/tasks/T-001-bounded-change.md")
+        )
+
+        self.assertIn("Bruce Design Gate reminder", reminder)
+        self.assertIn("task-contract package completeness", reminder)
+
     def test_exec_command_workdir_resolves_design_review_location(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -262,6 +270,54 @@ class PostToolReviewHookTest(unittest.TestCase):
         self.assertIsNotNone(output)
         self.assertEqual("block", output["decision"])
         self.assertIn("missing candidates", output["reason"])
+
+    def test_task_contract_change_invalidates_parent_review(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            change = root / "docs/change/example"
+            (change / "tasks").mkdir(parents=True)
+            (change / "design-review.md").write_text(
+                "# Design Review\n\n## Verdict\n\nDesign: pass\n",
+                encoding="utf-8",
+            )
+            payload = {
+                "tool_name": "apply_patch",
+                "success": True,
+                "cwd": str(root),
+                "tool_input": {
+                    "patch": "*** Update File: docs/change/example/tasks/T-001.md"
+                },
+            }
+            output = self.run_hook(payload)
+
+        self.assertIsNotNone(output)
+        self.assertEqual("block", output["decision"])
+        self.assertIn("same-directory design artifact changed", output["reason"])
+        self.assertIn("Rerun $design-gate", output["reason"])
+
+    def test_task_contract_change_from_change_dir_workdir_invalidates_review(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            change = root / "docs/change/example"
+            (change / "tasks").mkdir(parents=True)
+            (change / "design-review.md").write_text(
+                "# Design Review\n\n## Verdict\n\nDesign: pass\n",
+                encoding="utf-8",
+            )
+            payload = {
+                "tool_name": "exec_command",
+                "success": True,
+                "cwd": str(root),
+                "tool_input": {
+                    "cmd": "touch tasks/T-001.md",
+                    "workdir": "docs/change/example",
+                },
+            }
+            output = self.run_hook(payload)
+
+        self.assertIsNotNone(output)
+        self.assertEqual("block", output["decision"])
+        self.assertIn("same-directory design artifact changed", output["reason"])
 
     def test_api_contract_change_invalidates_existing_review(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

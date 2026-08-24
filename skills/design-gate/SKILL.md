@@ -24,6 +24,7 @@ user for the document path.
 - The implementation boundary that the design will govern.
 - The document language rule in [../bruce/references/document-language.md](../bruce/references/document-language.md).
 - The deterministic [Design Review validator](scripts/validate_design_review.py).
+- The task-contract package rule in [../bruce/references/task-contract.md](../bruce/references/task-contract.md).
 
 ## Candidate set
 
@@ -41,6 +42,14 @@ Repository conventions may map a candidate to an equivalent filename but may not
 For each candidate record applicability (`required|skipped`), delivery
 (`generated|missing|skipped`), the resolved path, and repository-backed evidence. `required/missing`
 is a valid blocked-state record; `required/skipped` and `skipped/generated` are invalid.
+
+When the implementation plan is generated for a multi-step, `full`, guarded, long-running, or
+handoff-worthy change, its delivery also includes one change-level `tasks/` package. The package is
+an execution-contract companion to `plan.md`, not a second design verdict or a separate repository
+plan. Inspect `tasks/index.yaml` and every referenced task file for stable ids, dependency order,
+include/exclude scope, acceptance and verification mapping, and frozen contract revisions. A missing
+or empty required task package blocks readiness; a trivial documentation-only omission must be
+recorded with a concrete reason.
 
 Record the fixed applicability decisions `Behavior implementation: yes|no`,
 `Public/cross-component contract change: yes|no`, `Database/persistence design change: yes|no`, and
@@ -116,9 +125,11 @@ the check runs, not the output schema.
    `Design: blocked`; never write or report `Design: pass` from prose inspection alone.
 9. Inspect the review file itself and the validator output for matrix completeness, accurate evidence,
    placeholders, links, current paths, and verdict consistency.
-10. Record validator `Result: pass` only from the current zero exit; this validator result confirms
-    document integrity and is independent of whether the Design verdict is `pass` or `blocked`. Return
-    `Design: pass|blocked` with blocking findings, validator evidence, and the smallest next action.
+10. Record validator `Result: pass` only from the current zero exit; the persisted result line is a
+    trace field, not authority. The hook or direct validator subprocess exit code is authoritative;
+    this validator result confirms document integrity and is independent of whether the Design verdict
+    is `pass` or `blocked`. Return `Design: pass|blocked` with blocking findings, validator evidence,
+    and the smallest next action.
 
 Any later scope or design change invalidates the affected verdict. Rerun this gate before continuing
 affected implementation.

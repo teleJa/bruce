@@ -51,8 +51,10 @@ Goal id is returned, use a stable timestamp slug and record the native objective
 - blocking facts and exact unlock condition;
 - final conclusion.
 
-Update it at creation, material decisions, verification, confirmed blocking, and closure. Do not
-mirror every Goal transition or infer native status from the Markdown file.
+Update it at creation, material decisions, verification, confirmed blocking, and closure. A
+change-level checkpoint may be referenced as task-progress evidence, but it never overrides native
+Goal state or either Gate result. Do not mirror every Goal transition or infer native status from the
+Markdown file.
 
 ## Execute and synchronize
 

@@ -1,0 +1,12 @@
+version: 1
+execution: sequential
+tasks:
+  - task_id: T-001
+    title: <short title>
+    contract_revision: 1
+    path: tasks/T-001-<short-slug>.md
+    depends_on: []
+    acceptance_ids: []
+    allowed_paths: []
+    excluded_paths: []
+    parallel_safe: false

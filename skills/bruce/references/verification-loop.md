@@ -111,11 +111,20 @@ repair reruns only affected matrix rows plus the unchanged original failure and 
 it does not create a per-finding review chain or a fresh independent reviewer unless the repair changes
 an independence-triggering concern or risk trigger.
 
-## Batch checkpoint
+## Task package and checkpoint
 
-Use a checkpoint only when the task contract declares multiple delivery batches, Goal execution is
-long-running or cross-component, or work is about to cross an external verification or side-effect
-boundary. Build the matrix for the current batch only. Its bounded rows are:
+A persisted implementation plan may define a change-level `tasks/` package. Each task file is a
+frozen contract; the current task status belongs in the requirement-level checkpoint. Tasks execute
+sequentially by default. A long-running task may span multiple checkpoints; the checkpoint does not split, restart, or shorten the task.
+
+Use a checkpoint when a task changes state, a task boundary is reached, a material finding appears,
+the environment or risk boundary changes, work resumes after a user-turn boundary, or a long-running
+interval needs a progress snapshot. A checkpoint is progress feedback only, not a third decision, a
+Goal ledger, or a second evidence store. It records evidence references rather than copying logs.
+
+For a multi-batch change:
+
+Build the matrix for the current batch only before reviewing its bounded rows:
 
 - one row per batch acceptance id;
 - direct changed entry points and direct call sites needed to prove that acceptance;
@@ -124,23 +133,44 @@ boundary. Build the matrix for the current batch only. Its bounded rows are:
 - no adjacent path or concern unless it maps to a current acceptance id, known failing matrix row, or
   declared direct call site; otherwise record it as `deferred`.
 
-Each row records `batch_id`, `acceptance_id`, `path`, `required_layer`, `basis_revision`,
-`evidence_revision`, `evidence`, `result`, and `affected_scope`. Return `Checkpoint:
-clear|issues|blocked` as progress feedback only; do not use a checkpoint as the overall completion
-verdict. Every checkpoint uses this machine-readable summary, with `[]` when a collection is empty:
+Each formal batch row records `batch_id` (for example `batch_id: B1-example`), `acceptance_id`,
+`path`, `required_layer`, `basis_revision`, `evidence_revision`, `evidence`, `result`, and
+`affected_scope`. The requirement-level checkpoint also
+records every task's `task_id`, `status`, `contract_revision`, `evidence_refs`, and `blockers`.
+Return `Checkpoint: clear|issues|blocked` as progress feedback only; do not use it as the overall
+completion verdict. Every checkpoint uses this machine-readable summary, with `[]` when a collection
+is empty:
 
 ```yaml
+version: 1
 Checkpoint: clear|issues|blocked
-batch_id: B1-example
+checkpoint_id: CP-0001
+checkpoint_kind: progress|batch|resume
+requirement_id: <requirement-or-change-id>
 basis_revision: <working-tree-or-commit>
+environment: {}
+active_task: T-001
+execution_mode: sequential
+batch_id: <batch-or-null>
+matrix: []
+tasks:
+  - task_id: T-001
+    status: pending|in_progress|implemented|verifying|verified|blocked|superseded
+    contract_revision: 1
+    evidence_refs: []
+    blockers: []
 acceptance:
   passed: []
   failed: []
   unexecuted: []
 findings: []
 repair_sets: []
-next_action: <repair-set|next-batch|blocked-unlock|return-control>
+next_action: <continue-task|next-task|blocked-unlock|return-control>
 ```
+
+A task contract is frozen before execution. If its scope, acceptance, dependency, authorization, or
+required verification changes, create a new contract revision or superseding task before continuing.
+Do not rewrite a task file merely to record progress.
 
 Before repairing a non-blocking batch failure, complete the current batch matrix and return all
 currently observable failures in one batch findings packet. Classify every finding as:
@@ -149,16 +179,16 @@ currently observable failures in one batch findings packet. Classify every findi
   repair remains inside the current batch boundary;
 - `compatible`: can be repaired together without conflicting file ownership, dependency order, or
   acceptance scope; group these findings into one bounded repair set;
-- `deferred`: belongs to another declared batch or needs a scope, authority, or design decision;
-  record its owning batch and do not implement it opportunistically.
+- `deferred`: belongs to another declared task or batch, or needs a scope, authority, or design
+  decision; record its owner and do not implement it opportunistically.
 
 Do not repair each newly observed non-blocking finding while the batch matrix remains incomplete, and
-do not use an `update_plan` progress update as a substitute for the batch findings packet. After the
-packet, repair compatible findings together, then rerun only affected matrix rows, each unchanged
-original failure, and related regressions. A row is `stale` when its evidence revision differs from the
-current review basis, a changed path intersects its affected scope, or impact cannot be determined.
-Rerun stale rows, the unchanged original failure, and related regressions before dependent batches
-continue.
+do not use an `update_plan` progress update as a substitute for the checkpoint or findings packet.
+After the packet, repair compatible findings together, then rerun only affected matrix rows, each
+unchanged original failure, and related regressions. A row is `stale` when its evidence revision
+differs from the current review basis, a changed path intersects its affected scope, or impact cannot
+be determined. Rerun stale rows, the unchanged original failure, and related regressions before
+dependent tasks continue.
 
 ## Independent review
 

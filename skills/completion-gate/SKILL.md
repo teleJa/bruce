@@ -15,6 +15,8 @@ callers do not rerun its checks or combine separate author, verification, and re
 - Current test, lint, build, integration, page, database, and external-tool evidence.
 - Given/When/Then acceptance scenarios when behavior changed.
 - Current `design-review.md` when Design Gate was required.
+- Current change-level `tasks/index.yaml`, frozen task contracts, and `checkpoint.yaml` when a task
+  package exists.
 - Current `prototype-manifest.md` and confirmed snapshot when a prototype governed UI implementation.
 - L0-L4 failures, repair history, open decisions, residual risks, and requested delivery actions.
 
@@ -82,6 +84,19 @@ create a per-finding review chain.
 Map every acceptance condition to current, reproducible evidence at the required layer. A unit test
 does not prove required integration, persistence, deployment, or user-visible behavior. Treat stale,
 missing, mocked-only, or natural-language evidence as a gap when stronger evidence is required.
+
+### Task package and checkpoint state
+
+When the plan declares a `tasks/` package, read `tasks/index.yaml`, every indexed frozen task contract,
+and the current change-level `checkpoint.yaml` or checkpoint message before deciding completion. Treat
+`tasks/index.yaml` as the required task set and the checkpoint as the current progress/evidence
+snapshot; neither creates another verdict. Every required task that is not `superseded` must be
+`verified`, its task-local acceptance and required verification must have passed, and its
+`contract_revision` and evidence revision must match the current review basis. `pending`,
+`in_progress`, `implemented`, or `verifying` tasks keep the result at `Completion: issues`; a
+`blocked` task keeps it at `Completion: blocked` when the blocker prevents a valid decision. Do not
+infer a verified task from a passing parent scenario alone, and do not infer Goal state from a
+checkpoint. Record the task coverage and any revision mismatch in the final evidence.
 
 ### Proportional visual completeness
 
@@ -158,9 +173,10 @@ second externally combined verdict.
 
 Return exactly one terminal field:
 
-- `Completion: pass` when scope matches, every acceptance item has sufficient current evidence,
-  author-quality checks are clear, required design remains aligned, required independent review
-  found no blocking issue, and no required work remains.
+- `Completion: pass` when scope matches, every required task is `verified` or `superseded`, every
+  acceptance item has sufficient current evidence, task contract and evidence revisions match the
+  current basis, author-quality checks are clear, required design remains aligned, required
+  independent review found no blocking issue, and no required work remains.
 - `Completion: issues` when in-scope implementation, documentation, design alignment, or evidence
   gaps are repairable.
 - `Completion: blocked` when authority, unavailable required independent review, external state, or

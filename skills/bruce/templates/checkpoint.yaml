@@ -1,0 +1,24 @@
+version: 1
+Checkpoint: clear|issues|blocked
+checkpoint_id: CP-0001
+checkpoint_kind: progress|batch|resume
+requirement_id: <requirement-or-change-id>
+basis_revision: <commit-or-working-tree-basis>
+environment: {}
+active_task: T-001
+execution_mode: sequential
+batch_id: <batch-or-null>
+matrix: []
+tasks:
+  - task_id: T-001
+    status: pending
+    contract_revision: 1
+    evidence_refs: []
+    blockers: []
+acceptance:
+  passed: []
+  failed: []
+  unexecuted: []
+findings: []
+repair_sets: []
+next_action: <continue-task|next-task|blocked-unlock|return-control>

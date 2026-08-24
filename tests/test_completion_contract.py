@@ -68,6 +68,19 @@ class CompletionContractTest(unittest.TestCase):
         self.assertIn("A unit test\ndoes not prove", self.skill)
         self.assertIn("scenario-level\nacceptance evidence", self.skill)
 
+    def test_task_package_state_is_required_for_completion(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for phrase in (
+            "tasks/index.yaml",
+            "frozen task contracts",
+            "checkpoint.yaml",
+            "Every required task that is not `superseded` must be `verified`",
+            "`Completion: issues`",
+            "`Completion: blocked`",
+            "do not infer Goal state from a checkpoint",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_web_acceptance_requires_current_chrome(self) -> None:
         self.assertIn("current Codex App Chrome evidence", self.skill)
         self.assertIn("keep the scenario\nincomplete or blocked", self.skill)

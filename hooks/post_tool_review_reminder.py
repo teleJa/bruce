@@ -72,7 +72,8 @@ REMINDER = (
     "Bruce Design Gate reminder: a planning/design document was modified. If this document will "
     "govern downstream implementation, run $design-gate before implementation and require "
     "`Design: pass`. The gate checks artifact completeness, factual grounding, consistency, "
-    "acceptance coverage, omissions, placeholders, links, and blocking readiness issues together. "
+    "acceptance coverage, task-contract package completeness, omissions, placeholders, links, and "
+    "blocking readiness issues together. "
     "This hook is advisory: it makes neither a design-readiness nor completion decision."
 )
 
@@ -172,6 +173,21 @@ def _is_design_review_path(path: str) -> bool:
     )
 
 
+def _parent_design_review_path(path: str, cwd: Path) -> str | None:
+    candidate = PurePosixPath(path)
+    current = candidate.parent
+    while True:
+        review_relative = (current / "design-review.md").as_posix()
+        if (cwd / review_relative).is_file():
+            return review_relative
+        if current == PurePosixPath(".") or current in {
+            PurePosixPath("docs"),
+            PurePosixPath(".trellis"),
+        }:
+            break
+        current = current.parent
+    return None
+
 def _design_reviews_to_validate(
     payload: dict[str, Any], paths: set[str]
 ) -> list[str]:
@@ -185,11 +201,16 @@ def _design_reviews_to_validate(
         candidate = PurePosixPath(normalized)
         if candidate.is_absolute() or normalized == ".." or normalized.startswith("../"):
             continue
-        review_relative = (candidate.parent / "design-review.md").as_posix()
         if _is_design_review_path(normalized):
-            reviews.add(review_relative)
-        elif _is_gate_artifact_path(normalized) and (cwd / review_relative).is_file():
-            reviews.add(review_relative)
+            reviews.add(normalized)
+        elif _is_task_contract_path(normalized):
+            review_relative = _parent_design_review_path(normalized, cwd)
+            if review_relative is not None:
+                reviews.add(review_relative)
+        elif _is_gate_artifact_path(normalized):
+            review_relative = (candidate.parent / "design-review.md").as_posix()
+            if (cwd / review_relative).is_file():
+                reviews.add(review_relative)
     return sorted(reviews)
 
 
@@ -483,6 +504,16 @@ def _classify_paths(paths: set[str]) -> set[str]:
     return categories
 
 
+def _is_task_contract_path(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    pure_path = PurePosixPath(normalized)
+    if pure_path.is_absolute() or normalized == ".." or normalized.startswith("../"):
+        return False
+    if "/tasks/" not in f"/{normalized}/":
+        return False
+    return pure_path.suffix.lower() in {".md", ".yaml", ".yml"}
+
+
 def _is_gate_artifact_path(path: str) -> bool:
     normalized = path.replace("\\", "/")
     pure_path = PurePosixPath(normalized)
@@ -490,7 +521,8 @@ def _is_gate_artifact_path(path: str) -> bool:
         return False
     name = pure_path.name
     return (
-        name in PLANNING_FILENAMES
+        _is_task_contract_path(normalized)
+        or name in PLANNING_FILENAMES
         or name.endswith("评审结果.md")
         or any(keyword in name for keyword in PLANNING_NAME_KEYWORDS)
     )
@@ -504,11 +536,12 @@ def _is_planning_design_path(path: str) -> bool:
 
     name = normalized.rsplit("/", 1)[-1]
     if normalized.startswith(".trellis/tasks/"):
-        return name in PLANNING_FILENAMES or name.endswith("评审结果.md")
+        return name in PLANNING_FILENAMES or name.endswith("评审结果.md") or _is_task_contract_path(normalized)
     if not normalized.startswith("docs/"):
         return False
     return (
-        name in PLANNING_FILENAMES
+        _is_task_contract_path(normalized)
+        or name in PLANNING_FILENAMES
         or name.endswith("评审结果.md")
         or any(keyword in name for keyword in PLANNING_NAME_KEYWORDS)
     )

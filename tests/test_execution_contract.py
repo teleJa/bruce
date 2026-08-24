@@ -23,6 +23,9 @@ class ExecutionContractTest(unittest.TestCase):
         self.assertIn("`Completion: pass`", self.goal)
         self.assertIn("`Completion: issues`", self.goal)
         self.assertIn("`Completion: blocked`", self.goal)
+        normalized = " ".join(self.goal.split())
+        self.assertIn("checkpoint may be referenced as task-progress evidence", normalized)
+        self.assertIn("never overrides native Goal state or either Gate result", normalized)
         self.assertIn("Do not independently inspect artifacts", self.goal)
 
     def test_goal_resume_records_bounded_resume_checkpoint(self) -> None:
@@ -75,6 +78,49 @@ class ExecutionContractTest(unittest.TestCase):
             self.assertNotIn(forbidden, self.spawn.lower())
         self.assertIn("second ledger", self.spawn)
         self.assertIn("global\nstop-on-first-failure", self.spawn)
+
+    def test_task_contract_package_is_frozen_and_sequential_by_default(self) -> None:
+        contract = read("skills/bruce/references/task-contract.md")
+        plan = read("skills/write-plan/SKILL.md")
+        template = read("skills/write-plan/templates/task.md")
+        index = read("skills/write-plan/templates/tasks-index.yaml")
+        policy = read("skills/bruce/references/verification-loop.md")
+        for phrase in (
+            "frozen before execution",
+            "include/exclude",
+            "contract_revision",
+            "checkpoint.yaml",
+            "sequential by default",
+        ):
+            self.assertIn(phrase, contract)
+        self.assertIn("does not split, restart, or shorten the task", policy)
+        self.assertIn("one change-level `tasks/` package", plan)
+        self.assertIn("tasks/index.yaml", plan)
+        for phrase in (
+            "## Included scope",
+            "## Excluded scope",
+            "## Acceptance",
+            "## Verification",
+            "## Contract change rule",
+        ):
+            self.assertIn(phrase, template)
+        self.assertIn("execution: sequential", index)
+
+    def test_checkpoint_tracks_task_state_without_becoming_a_second_evidence_store(self) -> None:
+        workflow = read("skills/bruce/SKILL.md")
+        policy = read("skills/bruce/references/verification-loop.md")
+        checkpoint = read("skills/bruce/templates/checkpoint.yaml")
+        for body in (policy, checkpoint):
+            self.assertIn("Checkpoint: clear|issues|blocked", body)
+            self.assertIn("active_task", body)
+            self.assertIn("contract_revision", body)
+            self.assertIn("evidence_refs", body)
+        self.assertIn("pending|in_progress|implemented|verifying|verified|blocked|superseded", policy)
+        self.assertIn("environment: {}", checkpoint)
+        self.assertIn("matrix: []", checkpoint)
+        self.assertIn("not a third decision", policy)
+        self.assertIn("second evidence store", policy)
+        self.assertIn("long-running task may span multiple checkpoints", workflow)
 
 
 if __name__ == "__main__":

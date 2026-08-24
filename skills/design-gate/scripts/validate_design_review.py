@@ -9,6 +9,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import yaml
+
 
 CANDIDATES = (
     "Requirement or clarification",
@@ -129,6 +131,12 @@ def _resolve_artifact(change_dir: Path, raw_path: str) -> Path | None:
 
 def _contains_blocked(value: str) -> bool:
     normalized = value.lower()
+    normalized = re.sub(
+        r"\b(?:no|without)\s+(?:blocking\s+)?(?:issues?|findings?)\b|"
+        r"无(?:阻塞项|阻塞问题|阻塞发现|问题)",
+        "",
+        normalized,
+    )
     return bool(re.search(r"\bblocked\b|\bissues?\b|阻塞|未通过|不通过", normalized))
 
 
@@ -136,7 +144,190 @@ def _blocking_findings_clear(value: str) -> bool:
     normalized = value.strip().strip("`").lower()
     if re.search(r"\b(?:except|however)\b|但是|但仍|除外", normalized):
         return False
-    return bool(re.match(r"^(?:none|无)(?:\s|[。.;；，,]|$)", normalized))
+    return bool(
+        re.match(
+            r"^(?:none|no\s+(?:blocking\s+)?(?:findings?|issues?)|无(?:阻塞项|阻塞问题|阻塞发现|问题))"
+            r"(?:\s|[。.;；，,]|$)",
+            normalized,
+        )
+    )
+
+
+def _validate_task_package(change_dir: Path, plan_artifact: Path) -> list[str]:
+    plan_text = plan_artifact.read_text(encoding="utf-8")
+    declares_tasks = re.search(r"(?m)^- Path: `tasks/`\s*$", plan_text)
+    has_task_section = re.search(r"(?m)^## Task package\s*$", plan_text)
+    if not declares_tasks:
+        if not has_task_section:
+            return [
+                "generated implementation plan must include a Task package section and declare "
+                "tasks/ or record a concrete trivial documentation-only omission reason"
+            ]
+        omission_reason = _field(plan_text, "Omission reason") or ""
+        if (
+            not omission_reason
+            or PLACEHOLDER.search(omission_reason)
+            or not re.search(r"trivial|documentation-only|文档|简单", omission_reason, re.IGNORECASE)
+        ):
+            return [
+                "implementation plan must declare tasks/ or record a concrete "
+                "trivial documentation-only omission reason"
+            ]
+        return []
+
+    errors: list[str] = []
+    tasks_dir = change_dir / "tasks"
+    index_path = tasks_dir / "index.yaml"
+    if not tasks_dir.is_dir():
+        return ["task package declares tasks/ but the directory is missing"]
+    if not index_path.is_file():
+        return ["task package declares tasks/ but tasks/index.yaml is missing"]
+
+    try:
+        index = yaml.safe_load(index_path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as error:
+        return [f"task package index is invalid YAML: {error}"]
+    if not isinstance(index, dict):
+        return ["task package index must be a YAML object"]
+    if index.get("version") != 1:
+        errors.append("task package index version must be 1")
+    if index.get("execution") != "sequential":
+        errors.append("task package execution must be sequential")
+
+    entries = index.get("tasks")
+    if not isinstance(entries, list) or not entries:
+        return errors + ["task package index must contain a non-empty tasks list"]
+
+    required_fields = (
+        "task_id",
+        "title",
+        "contract_revision",
+        "path",
+        "depends_on",
+        "acceptance_ids",
+        "allowed_paths",
+        "excluded_paths",
+        "parallel_safe",
+    )
+    ids: set[str] = set()
+    paths: set[str] = set()
+    indexed_contract_paths: set[Path] = set()
+    dependencies: dict[str, list[str]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            errors.append("task package index entries must be objects")
+            continue
+        missing = [field for field in required_fields if field not in entry]
+        if missing:
+            errors.append("task package entry is missing: " + ", ".join(missing))
+            continue
+
+        raw_task_id = entry["task_id"]
+        task_id = str(raw_task_id)
+        if not isinstance(raw_task_id, str):
+            errors.append(f"task id must be a string: {task_id}")
+        if not re.fullmatch(r"T-[A-Za-z0-9][A-Za-z0-9_-]*", task_id):
+            errors.append(f"invalid task id: {task_id}")
+        if task_id in ids:
+            errors.append(f"duplicate task id: {task_id}")
+        ids.add(task_id)
+
+        title = entry["title"]
+        if not isinstance(title, str) or not title.strip():
+            errors.append(f"task title must be a non-empty string: {task_id}")
+        contract_revision = entry["contract_revision"]
+        if (
+            not isinstance(contract_revision, int)
+            or isinstance(contract_revision, bool)
+            or contract_revision < 1
+        ):
+            errors.append(f"contract_revision must be a positive integer: {task_id}")
+        for field in ("acceptance_ids", "allowed_paths", "excluded_paths"):
+            if not isinstance(entry[field], list):
+                errors.append(f"{field} must be a list: {task_id}")
+        if not isinstance(entry["parallel_safe"], bool):
+            errors.append(f"parallel_safe must be a boolean: {task_id}")
+
+        raw_path = entry["path"]
+        if not isinstance(raw_path, str):
+            errors.append(f"task path must be a string: {task_id}")
+            continue
+        path = Path(raw_path)
+        resolved = (change_dir / path).resolve()
+        try:
+            resolved.relative_to(tasks_dir.resolve())
+        except ValueError:
+            errors.append(f"task path must stay under tasks/: {raw_path}")
+            continue
+        if path.as_posix() in paths:
+            errors.append(f"duplicate task path: {raw_path}")
+        paths.add(path.as_posix())
+        if not resolved.is_file():
+            errors.append(f"task contract does not exist: {raw_path}")
+        else:
+            indexed_contract_paths.add(resolved)
+            task_text = resolved.read_text(encoding="utf-8")
+            if not task_text.strip():
+                errors.append(f"task contract is empty: {raw_path}")
+            elif PLACEHOLDER.search(task_text):
+                errors.append(f"task contract contains unresolved placeholders: {raw_path}")
+            revision_match = re.search(
+                r"(?m)^- Contract revision:\s*(\d+)\s*$", task_text
+            )
+            if revision_match is None:
+                errors.append(f"task contract is missing Contract revision: {raw_path}")
+            elif isinstance(contract_revision, int) and not isinstance(contract_revision, bool):
+                if int(revision_match.group(1)) != contract_revision:
+                    errors.append(f"task contract revision does not match index: {raw_path}")
+            for heading in (
+                "## Objective",
+                "## Included scope",
+                "## Excluded scope",
+                "## Dependencies",
+                "## Acceptance",
+                "## Verification",
+                "## Authorization and risks",
+                "## Contract change rule",
+            ):
+                if heading not in task_text:
+                    errors.append(f"task contract is missing {heading}: {raw_path}")
+
+        depends_on = entry["depends_on"]
+        if not isinstance(depends_on, list):
+            errors.append(f"depends_on must be a list: {task_id}")
+            dependencies[task_id] = []
+        else:
+            dependencies[task_id] = [str(value) for value in depends_on]
+
+    for task_file in tasks_dir.rglob("T-*.md"):
+        if task_file.resolve() not in indexed_contract_paths:
+            relative = task_file.resolve().relative_to(tasks_dir.resolve())
+            errors.append(f"task contract is not indexed: tasks/{relative.as_posix()}")
+
+    for task_id, depends_on in dependencies.items():
+        for dependency in depends_on:
+            if dependency not in ids:
+                errors.append(f"task {task_id} depends on unknown task: {dependency}")
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(task_id: str) -> None:
+        if task_id in visiting:
+            errors.append(f"task dependency cycle includes: {task_id}")
+            return
+        if task_id in visited:
+            return
+        visiting.add(task_id)
+        for dependency in dependencies.get(task_id, []):
+            if dependency in ids:
+                visit(dependency)
+        visiting.remove(task_id)
+        visited.add(task_id)
+
+    for task_id in ids:
+        visit(task_id)
+    return errors
 
 
 def validate_change_dir(change_dir: Path) -> list[str]:
@@ -246,6 +437,10 @@ def validate_change_dir(change_dir: Path) -> list[str]:
     if plan and plan.applicability.lower() == "required":
         if not tests or tests.applicability.lower() != "required":
             errors.append("a required persisted Implementation plan requires Test design")
+        elif plan.delivery.lower() == "generated":
+            plan_artifact = _resolve_artifact(change_dir, plan.path)
+            if plan_artifact is not None and plan_artifact.is_file():
+                errors.extend(_validate_task_package(change_dir, plan_artifact))
 
     decision_requirements = {
         "Public/cross-component contract change": "API/file contracts",

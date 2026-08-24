@@ -10,8 +10,9 @@ Create the smallest plan that makes dependencies and verification unambiguous.
 ## Artifact placement
 
 Use the shared resolver in [artifact-placement.md](../bruce/references/artifact-placement.md). A
-cross-repository task keeps one `plan.md` in the shared change directory; component ownership and
-repository paths stay inside the task list rather than becoming one plan per repository.
+cross-repository task keeps one `plan.md` and one `tasks/` package in the shared change directory;
+component ownership and repository paths stay inside the task contracts rather than becoming one plan
+or task package per repository. Read [task-contract.md](../bruce/references/task-contract.md).
 
 ## Inputs
 
@@ -34,28 +35,33 @@ repository paths stay inside the task list rather than becoming one plan per rep
 2. Split work into feature-bearing tasks with stable ids. For each task record title, dependencies,
    files/scope, consumed/produced interfaces, implementation detail, acceptance, and verification.
    Reference the parent Given/When/Then scenario ids and required evidence layer for behavior tasks.
-3. Keep a single `plan.md` unless the repository or user explicitly requires another structure.
-   For the full profile, tag component ownership and contract dependencies inside the task list rather
-   than automatically creating one plan per component.
-4. Mark parallel safety only when dependencies and file ownership prove it. Do not select a model,
-   process, isolation mechanism, or scheduler.
-5. Ensure every acceptance item maps to work and verification, dependencies exist and are acyclic,
-   and no task depends on unstated context.
-6. Persist the result using [plan.md](templates/plan.md). Keep status and approval outside the plan
-   unless the target repository has an explicit, user-authorized convention requiring them.
-7. Write natural-language fields in the user's language, using Simplified Chinese for a Chinese
+3. When persisting an implementation plan, create one change-level `tasks/` package by default. Write
+   `tasks/index.yaml` for stable order, dependencies, acceptance ids, and path ownership, and write
+   one `T-<id>-<slug>.md` from [task.md](templates/task.md) for each frozen task contract. A trivial
+   documentation-only change may omit the package only with a concrete recorded reason.
+4. Keep a single `plan.md` in the shared change directory. It summarizes the task package; task-local
+   contract detail belongs in `tasks/`, not in one oversized plan or one plan per repository.
+5. Mark `parallel_safe` only when dependencies and file ownership prove it. Bruce executes tasks
+   sequentially by default; do not select a model, process, isolation mechanism, or scheduler.
+6. Ensure every acceptance item maps to a task and verification, dependencies exist and are acyclic,
+   every task has explicit included and excluded scope, and no task depends on unstated context.
+7. Persist the result using [plan.md](templates/plan.md), [tasks-index.yaml](templates/tasks-index.yaml),
+   and [task.md](templates/task.md). Keep live status, checkpoint state, and approval outside the
+   frozen task contracts; use the change-level `checkpoint.yaml` during execution.
+8. Write natural-language fields in the user's language, using Simplified Chinese for a Chinese
    request; keep stable machine-facing tokens unchanged as specified by the language rule.
-8. Inspect the plan diff and check requirement/acceptance coverage, task boundaries,
+9. Inspect the plan and task-package diff and check requirement/acceptance coverage, task boundaries,
    dependencies, file/interface joins, Given/When/Then evidence anchors, omissions, placeholders,
-   and links. Repair issues and return `Document check: clear|issues`. When the plan will govern
-   implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.
+   links, and path ownership. Repair issues and return `Document check: clear|issues`. When the plan
+   will govern implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.
 
 ## Output
 
 Return exactly one outcome:
 
-- `Plan: ready`: persist one minimal executable plan and summarize its dependency order, high-risk
-  steps, verification anchors, and `Document check: clear|issues` result.
+- `Plan: ready`: persist one minimal executable plan plus its frozen `tasks/` package and summarize
+  the dependency order, high-risk steps, verification anchors, task-package path, and
+  `Document check: clear|issues` result.
 - `Missing planning evidence`: do not create or update `plan.md`; return the unresolved questions
   and smallest bounded inspection scopes to Bruce for evidence collection before retrying this skill.
 

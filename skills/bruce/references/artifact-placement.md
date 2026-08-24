@@ -1,8 +1,8 @@
 # Artifact placement
 
 Use one resolver for every persisted Bruce design artifact (`requirements.md`, `architecture.md`,
-`api-contracts.md`, `table-design.md`, `plan.md`, `test-plan.md`, `design-review.md`, and prototype
-artifacts).
+`api-contracts.md`, `table-design.md`, `plan.md`, `test-plan.md`, `design-review.md`, the `tasks/`
+task-contract package, `checkpoint.yaml`, and prototype artifacts).
 
 ## Resolution order
 
@@ -48,3 +48,10 @@ fall back to a different repository or ancestor.
 A cross-repository change package must identify its participating repositories, paths, ownership, and
 verification boundaries in `architecture.md` and `plan.md`. A separate manifest is optional and should
 only be added when the repository or user requests machine-readable discovery.
+
+## Task package placement
+
+A persisted implementation plan may add exactly one change-level `tasks/` directory beside `plan.md`
+and one current `checkpoint.yaml` beside it. The task package is derived from the shared change
+package; it is not copied into each participating repository. Task files hold frozen contracts, while
+checkpoint state holds current progress and references evidence without copying evidence content.

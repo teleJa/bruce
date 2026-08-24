@@ -6,7 +6,15 @@ Bruce Workflow defines the language for a proportional Codex-native software del
 
 **Task Contract**:
 The current task's objective, scope, acceptance, constraints, execution profile, business risk, and only the planning detail needed to make delivery verifiable.
-_Avoid_: Prompt summary, fixed checklist, workflow state file
+_Avoid_: Prompt summary, fixed checklist, live workflow state
+
+**Task Contract Package**:
+For a persisted implementation plan, handoff, or multi-step requirement, one change-level `tasks/`
+directory containing frozen `T-<id>-<slug>.md` contracts plus `tasks/index.yaml`. Task files define
+objective, include/exclude scope, dependencies, acceptance, verification, authorization, and stop
+conditions. Live task status belongs in `checkpoint.yaml` or the current checkpoint message; the package
+is not a scheduler, parallel executor, or second evidence store.
+_Avoid_: One task package per repository, silent scope widening, status edits inside frozen contracts
 
 **Execution Profile**:
 A delivery-topology classification that starts as `unresolved` during bounded inspection and resolves to `standard` or `full` from component and contract evidence.
@@ -64,6 +72,7 @@ _Avoid_: Bruce permission layer, host adapter, workflow-owned scheduler
 
 - **Verified**: the workflow has two decisions and one optional execution mode (`skills/bruce/SKILL.md:15-20`).
 - **Verified**: task contract, profile resolution, and profile/risk independence are defined in `skills/bruce/SKILL.md:38-63`.
+- **Verified**: persisted plans derive one sequential `tasks/` contract package while live status remains in the change-level checkpoint (`skills/bruce/references/task-contract.md`, `skills/write-plan/SKILL.md`).
 - **Verified**: capabilities are predicate-driven and do not cascade from profile selection (`skills/bruce/SKILL.md:69-93`).
 - **Verified**: `write-prototype` keeps provider execution host-owned and returns change-scoped brief, manifest, and snapshot evidence (`skills/write-prototype/SKILL.md`).
 - **Verified**: `explore-prototype` separates logic/UI exploration from formal prototype readiness and bounds optional generation delegation (`skills/explore-prototype/SKILL.md`).

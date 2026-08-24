@@ -58,10 +58,13 @@ class DesignGateValidatorTest(unittest.TestCase):
                 f"| {candidate} | {applicability} | {delivery} | `{path}` | {evidence} |"
             )
             if delivery == "generated":
-                (change / path).write_text(
-                    f"# {candidate}\n\n当前工件内容已完成并可验证。\n",
-                    encoding="utf-8",
-                )
+                content = f"# {candidate}\n\n当前工件内容已完成并可验证。\n"
+                if candidate == "Implementation plan":
+                    content = (
+                        "# Implementation plan\n\n## Task package\n\n"
+                        "- Omission reason: trivial documentation-only test fixture.\n"
+                    )
+                (change / path).write_text(content, encoding="utf-8")
 
         review = "\n".join(
             [
@@ -122,6 +125,172 @@ class DesignGateValidatorTest(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("validation passed", result.stdout)
 
+    def test_plan_declared_task_package_is_validated(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            change = self.make_change(Path(directory))
+            (change / "tasks").mkdir()
+            (change / "plan.md").write_text(
+                "# Plan\n\n## Task package\n\n- Path: `tasks/`\n",
+                encoding="utf-8",
+            )
+            (change / "tasks/index.yaml").write_text(
+                """version: 1
+execution: sequential
+tasks:
+  - task_id: T-001
+    title: Implement bounded change
+    contract_revision: 1
+    path: tasks/T-001-bounded-change.md
+    depends_on: []
+    acceptance_ids: [AC-01]
+    allowed_paths: [src/example.py]
+    excluded_paths: [deploy/]
+    parallel_safe: false
+""",
+                encoding="utf-8",
+            )
+            (change / "tasks/T-001-bounded-change.md").write_text(
+                """# Task T-001: Implement bounded change
+
+- Contract revision: 1
+
+## Objective
+
+Implement the bounded change.
+
+## Included scope
+
+- `src/example.py`
+
+## Excluded scope
+
+- `deploy/`
+
+## Dependencies
+
+- Depends on: none
+
+## Acceptance
+
+- Parent scenario ids: AC-01
+- Given: a valid repository
+- When: the task is implemented
+- Then: the bounded change works
+- Evidence: unit-test-01
+
+## Verification
+
+- Required layer: unit
+- Commands/checks: `python -m unittest`
+- Environment: none
+
+## Authorization and risks
+
+- Authorization: normal
+- Risk trigger: low
+- Stop condition: return the task checkpoint
+
+## Contract change rule
+
+Create a new revision when scope or acceptance changes.
+""",
+                encoding="utf-8",
+            )
+            result = self.run_validator(change)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_task_package_rejects_wrong_index_field_types(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            change = self.make_change(Path(directory))
+            (change / "tasks").mkdir()
+            (change / "plan.md").write_text(
+                "# Plan\n\n## Task package\n\n- Path: `tasks/`\n",
+                encoding="utf-8",
+            )
+            (change / "tasks/index.yaml").write_text(
+                """version: 1
+execution: sequential
+tasks:
+  - task_id: T-001
+    title: Bounded change
+    contract_revision: 1
+    path: tasks/T-001.md
+    depends_on: []
+    acceptance_ids: AC-01
+    allowed_paths: src/
+    excluded_paths: deploy/
+    parallel_safe: false
+""",
+                encoding="utf-8",
+            )
+            (change / "tasks/T-001.md").write_text(
+                """# Task T-001: Bounded change
+
+## Objective
+Implement the bounded change.
+
+## Included scope
+- `src/`
+
+## Excluded scope
+- `deploy/`
+
+## Dependencies
+- Depends on: none
+
+## Acceptance
+- Then: the change works
+
+## Verification
+- Required layer: unit
+
+## Authorization and risks
+- Authorization: normal
+
+## Contract change rule
+Create a new revision when scope changes.
+""",
+                encoding="utf-8",
+            )
+            result = self.run_validator(change)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("acceptance_ids must be a list", result.stderr)
+        self.assertIn("allowed_paths must be a list", result.stderr)
+        self.assertIn("excluded_paths must be a list", result.stderr)
+
+    def test_implementation_plan_requires_task_package_section(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            change = self.make_change(Path(directory))
+            (change / "plan.md").write_text(
+                "# Plan\n\nA plan without the canonical task package section.\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(change)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("must include a Task package section", result.stderr)
+
+    def test_task_package_section_requires_declaration_or_omission_reason(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            change = self.make_change(Path(directory))
+            (change / "plan.md").write_text(
+                "# Plan\n\n## Task package\n\n- Status source: `checkpoint.yaml`\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(change)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("must declare tasks/", result.stderr)
+
+    def test_plan_declared_task_package_requires_index_and_contracts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            change = self.make_change(Path(directory))
+            (change / "plan.md").write_text(
+                "# Plan\n\n## Task package\n\n- Path: `tasks/`\n",
+                encoding="utf-8",
+            )
+            result = self.run_validator(change)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("task package declares tasks/", result.stderr)
+
     def test_missing_candidate_rejects_false_pass(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             result = self.run_validator(
@@ -166,6 +335,17 @@ class DesignGateValidatorTest(unittest.TestCase):
             result = self.run_validator(change)
         self.assertNotEqual(0, result.returncode)
         self.assertIn("yes requires API/file contracts", result.stderr)
+
+    def test_clear_english_issue_phrasing_does_not_block_a_pass(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            result = self.run_validator(
+                self.make_change(
+                    Path(directory),
+                    facts="pass. no issues found.",
+                    blockers="No blocking findings.",
+                )
+            )
+        self.assertEqual(0, result.returncode, result.stderr)
 
     def test_blocked_review_may_record_missing_required_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

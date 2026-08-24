@@ -65,7 +65,9 @@ Keep the contract in the current task unless the user requests a persistent plan
   Chrome capability; Playwright is prohibited as an acceptance runner or fallback. A frontend
   path alone does not force Chrome, but a visible Web outcome always requires one real Chrome
   interaction and visual-evidence pass before completion.
-- `tasks`: only when dependent work benefits from an explicit plan.
+- `tasks`: for a persisted implementation plan, handoff, or multi-step requirement, create one
+  change-level `tasks/` package containing frozen task contracts. A trivial documentation-only change
+  may omit it only with a recorded reason. Read [task-contract.md](references/task-contract.md).
 - `batches`: required before implementation for a `full` or `critical` task that spans two or more
   independently delivered components or a propagated cross-component contract. Each batch is a closed,
   verifiable delivery boundary, not a remaining-work bucket. Record its stable `batch_id`, included
@@ -107,6 +109,28 @@ For any persisted design, plan, test, handoff, or review document, read
 [document-language.md](references/document-language.md) and apply its language rule. The user's
 language controls natural-language prose; stable machine-facing contract tokens remain unchanged.
 
+### Task package and checkpoint
+
+When a change package persists an implementation plan, derive one change-level `tasks/` directory
+before implementation. `tasks/index.yaml` records stable ids, dependency order, acceptance ids, and
+path ownership; each `T-<id>-<slug>.md` freezes one task contract. Do not create one plan or task
+package per repository, and do not silently widen a frozen task. A contract change creates a new
+revision or superseding task.
+
+The current task state belongs in the change-level `checkpoint.yaml` or the current checkpoint
+message, not in the frozen task file. The checkpoint aggregates every task's status, the active task,
+contract revisions, basis revision, environment, evidence references, blockers, findings, and next
+action. It is progress feedback only: it is not a third decision, a Goal ledger, or a second evidence
+store. Native Goal state remains authoritative for Goal lifecycle; the checkpoint is authoritative only
+for change/task progress, and `.goal/<goal-id>/execute_record.md` is an audit record that may reference
+it. Recovery never infers Goal state from a checkpoint, and checkpoint state never overrides either
+Gate. Tasks execute sequentially by default; `depends_on` prepares future scheduling but does not
+activate parallel execution.
+
+A long-running task may span multiple checkpoints without being split or restarted. Use a progress
+checkpoint at a meaningful milestone, task transition, environment/risk change, or work-interval
+boundary. Resume the same `task_id` and contract revision when the task remains in scope.
+
 ## 3. Select only necessary capabilities
 
 Continue directly when Codex can implement and verify the task without another artifact. Invoke a
@@ -145,6 +169,13 @@ Do not chain supporting skills merely because one was selected.
 Use the current Codex task and available tools. Use native subagents directly for incidental
 delegation and only for boundary-clear, low-coupling tasks. Keep the main agent responsible for
 scope, file ownership, dependency order, integration, and conflict resolution.
+
+When a task package exists, execute one frozen task contract at a time by default. Before changing a
+file, confirm it is allowed by the active task's `include`/`exclude` scope and acceptance ids. At a
+task boundary, update the requirement-level checkpoint with the task status and current evidence;
+do not rewrite the task contract merely to record progress. If scope, acceptance, dependency,
+authorization, or verification changes, stop and create a contract revision or a superseding task
+before continuing.
 
 For `explore-prototype`, a native subagent may generate the bounded prototype only after the main
 agent freezes the question, mode, exclusive allowed paths, repository facts, scenarios or variants,

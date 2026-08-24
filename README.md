@@ -48,6 +48,10 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Every task that persists downstream-governing design runs `design-gate`. It decides artifact
   completeness and document readiness together, persists one `design-review.md`, and returns only
   `Design: pass|blocked`.
+- A persisted implementation plan, handoff, or multi-step requirement derives one change-level
+  `tasks/` package: `tasks/index.yaml` plus frozen `T-<id>-<slug>.md` contracts. Task state is tracked
+  in `checkpoint.yaml` or the current checkpoint message; sequential execution is the default and
+  the package is not a scheduler or second evidence store.
 - Persisted design artifacts use one shared placement resolver. For cross-repository work, only the
   repositories' direct parent directories are compared; a shared parent may use `.bruce/config.yaml`,
   while different parents require asking the user for the document path. Bruce never searches higher
@@ -61,8 +65,9 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Multi-batch, long-running, cross-component, or pre-side-effect work uses a bounded batch checkpoint
   with `Checkpoint: clear|issues|blocked` as progress feedback; the final `Completion Gate` remains
   the only overall completion decision.
-- Runtime-dependent batches perform one read-only capability preflight. Long-running work checkpoints
-  after at most 40 tool calls or 45 minutes, and closed or invalid async handles are never polled again.
+- Runtime-dependent batches perform one read-only capability preflight. Long-running work records a
+  progress checkpoint after at most 40 tool calls or 45 minutes; the interval does not split or stop a
+  declared current task, and closed or invalid async handles are never polled again.
 - Independent review is a mode inside one of those gates, not another verdict that callers combine.
 
 The canonical entry is [`skills/bruce/SKILL.md`](skills/bruce/SKILL.md). Other directories under
@@ -77,13 +82,15 @@ helper under an active Goal.
 
 ## Planning document review hook
 
-The bundled `PostToolUse` hook recognizes planning and design documents under `docs/` plus Trellis
-task documents, including writes performed through Bash. Ordinary planning edits receive an advisory
+The bundled `PostToolUse` hook recognizes planning and design documents under `docs/`, change-level
+`tasks/` contracts, plus Trellis task documents, including writes performed through Bash. Ordinary
+planning edits receive an advisory
 Design Gate reminder. A written `design-review.md` is instead checked by the bundled deterministic
 validator; an invalid review blocks normal tool-result processing until the current files are repaired.
 Code, ordinary documentation, failed tools, read-only Bash calls, and absolute paths outside the active
 task `cwd` stay quiet. The validator checks candidate completeness, required artifact delivery, real
-paths, placeholders, readiness/verdict consistency, and the behavior-plan-to-test-plan invariant.
+paths, placeholders, readiness/verdict consistency, the behavior-plan-to-test-plan invariant, and any
+new plan-declared `tasks/` contract package.
 
 The hook does not itself author or approve a review: it only validates the persisted gate artifact.
 Plugin hooks run whenever the Bruce plugin is enabled,

@@ -40,7 +40,7 @@ trigger this requirement.
 
 ## Procedure
 
-1. Inspect the current repository with available Codex tools. Use a native subagent only when the
+1. Inspect the current repository with available Codex tools. If a bounded read-only shard is delegated, use the shared `inspector` Functional Agent Profile and its v1 Task Packet; never select a provider-specific model or Runtime here. Use a native subagent only when the
    exploration boundary is clear; otherwise inspect sequentially.
 2. Identify architecture decisions and every public or cross-component API, event, or file-contract
    change. A single-component task may still require a contract artifact.

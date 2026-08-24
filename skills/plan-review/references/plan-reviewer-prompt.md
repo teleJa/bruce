@@ -1,6 +1,6 @@
 # Plan reviewer prompt
 
-Use this prompt with a fresh Codex-native subagent started with `fork_turns="none"` or equivalent
+Use this prompt with a fresh Codex-native subagent started with `fork_turns="none"` or equivalent. The worker is the shared `reviewer` Functional Agent Profile and must return a `review_packet` with findings only.
 clean context when independent review is required. Provide the objective, acceptance, raw plan
 final diff or immutable snapshot, raw repository evidence, necessary constraints, and only the
 artifacts the plan explicitly references. Do not provide the author's rationale, confidence, or

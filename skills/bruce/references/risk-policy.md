@@ -28,7 +28,7 @@ completion verdicts:
   repeated author repair, or carries broad security/data impact;
 - critical work and explicitly requested independent review always use independent mode.
 
-Independent mode uses a fresh Codex-native subagent with no inherited author conversation. If clean
+Independent mode uses a fresh Codex-native subagent with no inherited author conversation. The worker uses the shared `reviewer` Functional Agent Profile, a clean-context v1 Task Packet, and returns a `review_packet` with findings only; it never emits a Gate verdict. If clean
 context is unavailable, `completion-gate` returns `Completion: blocked`. Independent review is an
 internal mode, not a separate result that callers combine with completion.
 

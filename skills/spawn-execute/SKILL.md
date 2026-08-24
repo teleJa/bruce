@@ -37,6 +37,10 @@ Return task evidence to `goal-execution` for audit recording and to Bruce for in
 return a Design or Completion verdict; the owning gates make those decisions against the integrated
 state.
 
+## Functional Agent routing
+
+This Skill is the `implementer` Profile consumer. Each bounded task must carry a v1 Task Packet with `task_kind=implement`, `output=task_evidence_packet`, exact `allowed_paths`, excluded paths, verification commands, and a stop condition. The implementer may write only within `allowed_paths`; it returns changed files, commands, evidence gaps, and `model_resolution`, never a Gate verdict. `explore-prototype` generation workers reuse this Profile with `task_kind=throwaway_prototype`.
+
 ## Does not own
 
 Do not create or close native Goals, decide design readiness or completion, implement a scheduler,

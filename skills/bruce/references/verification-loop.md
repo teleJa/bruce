@@ -193,7 +193,7 @@ dependent tasks continue.
 ## Independent review
 
 Independence is a review mode inside `design-gate` or `completion-gate`, never a third verdict.
-When required, use a fresh native subagent with no inherited author conversation. Supply objective,
+When required, use a fresh native subagent with no inherited author conversation. Use the shared `reviewer` Functional Agent Profile and a clean-context v1 Task Packet; supply objective,
 acceptance, the final review target diff or immutable snapshot, raw evidence, and only necessary
 constraints. Exclude author rationale, confidence, and proposed conclusion.
 

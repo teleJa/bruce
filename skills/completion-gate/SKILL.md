@@ -48,6 +48,10 @@ changes the final scope, risk trigger, review basis, or independence-triggering 
 silently downgrade a required independent review; if a clean-context native reviewer is unavailable,
 return `Completion: blocked`.
 
+## Functional Agent routing
+
+Completion Gate consumes two role-specific packets without creating parallel authority. `verifier` uses a v1 Task Packet with clean task context and returns only a reproducible `verification_packet`; `reviewer` uses a clean context with `context.inherit=none` and returns only a `review_packet` containing findings and matrix rows. Both packets must carry `model_resolution`, and neither may contain `Design`, `Completion`, `verdict`, or `approval`. The Gate alone still returns the single `Completion: pass|issues|blocked` field.
+
 ## Internal checks
 
 ### Author quality

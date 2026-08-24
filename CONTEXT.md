@@ -68,6 +68,10 @@ _Avoid_: Task priority, execution lane, global failure hold
 Codex ownership of tools, files, commands, permissions, native plans and Goals, and subagent lifecycle; Bruce consumes host results without creating a second permission or execution runtime.
 _Avoid_: Bruce permission layer, host adapter, workflow-owned scheduler
 
+## Functional Agent routing
+
+Native Subagent delegation is contract-driven rather than personality-driven. Select one of the four internal Profiles, construct the v1 Task Packet, resolve model override/fallback through the shared resolver, and attach `model_resolution` to the role-specific evidence Packet. `inspector` is read-only, `implementer` is limited to Task Packet paths, `verifier` returns reproducible `verification_packet`, and `reviewer` returns clean-context `review_packet` findings only. Neither worker emits a Design or Completion verdict.
+
 ## Evidence Index
 
 - **Verified**: the workflow has two decisions and one optional execution mode (`skills/bruce/SKILL.md:15-20`).

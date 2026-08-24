@@ -51,6 +51,10 @@ Return:
 - conflicts, inferences, confidence limits, and unresolved questions;
 - profile-relevant structural evidence for the caller to evaluate.
 
+## Functional Agent routing
+
+This Skill is the `inspector` Profile consumer. Before dispatch, build a v1 Task Packet with `task_kind=inspect`, `output=task_evidence_packet`, `allowed_paths=[]`, while the `inspector` Profile declares `write_scope=none`; include repository evidence sources, allowed/denied tools, acceptance ids, and explicit stop conditions. Resolve the Profile through the shared Bruce resolver; do not select a provider-specific model or Runtime here. The inspector must return only repository-backed evidence and a `model_resolution` record.
+
 ## Does not own
 
 Do not modify files, run external side effects, decide profile or risk, form the task contract, create

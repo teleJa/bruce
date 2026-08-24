@@ -40,7 +40,7 @@ question cannot be resolved from the request or repository facts, ask at most on
 
 ## Generation delegation
 
-Use one native subagent as a generation worker only when all of these facts are frozen:
+Use one native subagent as a generation worker only when all of these facts are frozen. The worker uses the shared `implementer` Functional Agent Profile with `task_kind=throwaway_prototype`; its input is a v1 Task Packet and its Functional Agent result is a `task_evidence_packet`. The outer exploration Skill may wrap that evidence as its separate `prototype_evidence_packet`; this wrapper is not a fifth Functional Agent output. Do not reintroduce the legacy `generation_packet` as a separate Functional Agent output. It must not choose a model, create a Runtime, or return a Gate verdict.
 
 - the exact question and selected mode;
 - exclusive allowed paths and explicit excluded paths;
@@ -48,12 +48,12 @@ Use one native subagent as a generation worker only when all of these facts are 
 - complete scenarios or variant requirements;
 - run instructions, observable checks, and prohibited side effects.
 
-Give the worker a `generation_packet` containing those fields. Do not delegate product decisions,
+Build the worker Task Packet from those fields. Do not delegate product decisions,
 scope changes, user confirmation, shared-file integration, production promotion, Design Gate, or
 Completion Gate. Do not choose a provider-specific agent name, model, token budget, scheduler, worker
 registry, or persistent execution mode.
 
-Require a `prototype_evidence_packet` with:
+After the worker returns, the outer exploration Skill may wrap its task evidence as a `prototype_evidence_packet` with:
 
 - `status: generated|needs-input|failed`;
 - changed files;

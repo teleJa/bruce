@@ -1,0 +1,137 @@
+version: 1
+Checkpoint: issues
+checkpoint_id: CP-0001
+checkpoint_kind: progress
+requirement_id: 20260824-104200-functional-agent-profiles
+basis_revision: workspace-2026-08-24-functional-agent-profiles
+environment:
+  python: "3.x"
+  host_model_override: unexecuted
+  native_subagent_smoke: reviewer-readonly-smoke-executed; inspector-implementer-unexecuted
+  plugin_refresh: unexecuted
+  chrome: unexecuted
+  deployment: unexecuted
+active_task: T-005
+execution_mode: sequential
+batch_id: null
+matrix:
+  - batch_id: B-functional-agent-contracts
+    acceptance_id: FA-01
+    path: scripts/functional_agent_profiles.py
+    required_layer: unit/contract
+    basis_revision: workspace-2026-08-24-functional-agent-profiles
+    evidence_revision: tests-203-pass
+    evidence: "定向 schema 与权限负例测试通过"
+    result: pass
+    affected_scope: [scripts/functional_agent_profiles.py, tests/test_functional_agent_profiles.py]
+  - batch_id: B-functional-agent-contracts
+    acceptance_id: FA-02
+    path: scripts/validate_functional_agents.py
+    required_layer: static/contract
+    basis_revision: workspace-2026-08-24-functional-agent-profiles
+    evidence_revision: validator-pass
+    evidence: "四类 Profile 与路由矩阵通过"
+    result: pass
+    affected_scope: [skills, scripts/validate_functional_agents.py]
+  - batch_id: B-functional-agent-contracts
+    acceptance_id: FA-03
+    path: skills/completion-gate/SKILL.md
+    required_layer: host smoke
+    basis_revision: workspace-2026-08-24-functional-agent-profiles
+    evidence_revision: external-unexecuted
+    evidence: "clean context、override、fallback 合同与非 gpt-5.6-sol Reviewer read-only smoke 已验证；真实宿主 model resolution/effective model 未确认"
+    result: incomplete
+    affected_scope: [skills/completion-gate/SKILL.md, scripts/functional_agent_profiles.py]
+  - batch_id: B-functional-agent-contracts
+    acceptance_id: FA-04
+    path: scripts/functional_agent_profiles.py
+    required_layer: unit/contract
+    basis_revision: workspace-2026-08-24-functional-agent-profiles
+    evidence_revision: tests-203-pass
+    evidence: "Verifier/Reviewer Packet 完整 schema 与 Gate terminal 字段拒绝测试通过"
+    result: pass
+    affected_scope: [scripts/functional_agent_profiles.py, skills/completion-gate/SKILL.md, skills/design-gate/SKILL.md]
+  - batch_id: B-functional-agent-contracts
+    acceptance_id: FA-05
+    path: scripts/functional_agent_profiles.py
+    required_layer: unit/contract + controlled smoke
+    basis_revision: workspace-2026-08-24-functional-agent-profiles
+    evidence_revision: tests-203-pass
+    evidence: "只读与 allowed_paths 负例通过；受控 native smoke 未执行"
+    result: incomplete
+    affected_scope: [scripts/functional_agent_profiles.py, skills/inspect-parallel/SKILL.md, skills/spawn-execute/SKILL.md]
+  - batch_id: B-functional-agent-contracts
+    acceptance_id: FA-06
+    path: scripts/functional_agent_profiles.py
+    required_layer: resolver/fallback tests
+    basis_revision: workspace-2026-08-24-functional-agent-profiles
+    evidence_revision: tests-203-pass
+    evidence: "覆盖层、invalid config、model/context/tool unavailable 矩阵通过"
+    result: pass
+    affected_scope: [scripts/functional_agent_profiles.py, tests/test_functional_agent_profiles.py]
+  - batch_id: B-functional-agent-contracts
+    acceptance_id: FA-07
+    path: docs/change/20260824-104200-functional-agent-profiles/checkpoint.yaml
+    required_layer: repository/full + host evidence
+    basis_revision: workspace-2026-08-24-functional-agent-profiles
+    evidence_revision: static-validators-pass
+    evidence: "unittest 203/203、plugin validator、Profile validator、Design validator、diff check 通过；宿主与外部交付证据未执行"
+    result: incomplete
+    affected_scope: [docs/change/20260824-104200-functional-agent-profiles, README.md, CONTEXT.md, .codex-plugin/plugin.json]
+tasks:
+  - task_id: T-001
+    status: verified
+    contract_revision: 1
+    evidence_refs: [design-review.md, architecture.md, api-contracts.md]
+    blockers: []
+  - task_id: T-002
+    status: verified
+    contract_revision: 1
+    evidence_refs: [scripts/validate_functional_agents.py, tests/test_functional_agent_profiles.py]
+    blockers: []
+  - task_id: T-003
+    status: verifying
+    contract_revision: 1
+    evidence_refs: [tests/test_functional_agent_profiles.py]
+    blockers: [native-subagent-smoke-unexecuted]
+  - task_id: T-004
+    status: verifying
+    contract_revision: 1
+    evidence_refs: [tests/test_completion_contract.py, tests/test_functional_agent_profiles.py, reviewer-smoke-20260824]
+    blockers: [host-model-resolution-unverified, independent-completion-smoke-unexecuted]
+  - task_id: T-005
+    status: verifying
+    contract_revision: 1
+    evidence_refs: [tests/test_functional_agent_profiles.py, scripts/functional_agent_profiles.py]
+    blockers: [host-model-resolution-smoke-unexecuted]
+  - task_id: T-006
+    status: verified
+    contract_revision: 1
+    evidence_refs: [README.md, CONTEXT.md, .codex-plugin/plugin.json, full-regression]
+    blockers: []
+acceptance:
+  passed: [FA-01, FA-02, FA-04, FA-06]
+  failed: []
+  unexecuted: [FA-03, FA-05, FA-07]
+findings:
+  - severity: medium
+    scope: external-evidence
+    issue: "真实 Codex Native Subagent、host model override/fallback、Chrome、插件刷新、部署、commit、push 未执行。"
+    evidence: "本 checkpoint environment 与 matrix 已显式记录。"
+  - severity: low
+    scope: contract-repair
+    issue: "上一轮独立审查发现的 Packet schema、模型解析一致性、模型名安全、统一 ContractError、路由字段归属、nested Packet 和角色绑定问题已修复。"
+    evidence: "独立 Reviewer 反馈已逐项复现并修复；定向 11/11、全量 203/203、Profile validator、plugin validator、Design validator、diff check。"
+repair_sets:
+  - repair_id: R-001
+    source: independent-review-2026-08-24
+    findings: [reviewer-context-independence, task-evidence-profile-binding, task-evidence-schema-doc, registry-drift-guard]
+    files:
+      - scripts/functional_agent_profiles.py
+      - scripts/validate_functional_agents.py
+      - tests/test_functional_agent_profiles.py
+      - skills/bruce/references/functional-agent-contracts.md
+      - docs/change/20260824-104200-functional-agent-profiles/api-contracts.md
+    evidence_refs: [tests-203-pass, validator-pass, design-validator-pass]
+    result: repaired
+next_action: await-host-smoke-or-close-static-scope

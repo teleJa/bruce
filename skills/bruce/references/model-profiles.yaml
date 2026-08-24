@@ -1,0 +1,82 @@
+version: 1
+profiles:
+  inspector:
+    role: inspector
+    capability: "只读仓库事实、边界、调用关系和风险证据"
+    default_model: gpt-5.6-sol
+    reasoning_effort: medium
+    context:
+      inherit: task
+      clean: false
+    tools:
+      allow: [search_graph, trace_path, get_code_snippet, query_graph, search_code, read]
+      deny: [write, edit, delete, deploy, browser]
+    write_scope: none
+    model_capabilities:
+      required: [repository-inspection]
+      preferred: [code-graph, bounded-evidence]
+      independence: none
+    fallback: current
+    max_calls: 5
+    output: task_evidence_packet
+    authority: evidence-only
+  implementer:
+    role: implementer
+    capability: "按 Task Packet 在限定路径内实施并返回实际变更与验证证据"
+    default_model: gpt-5.6-luna
+    reasoning_effort: max
+    context:
+      inherit: task
+      clean: false
+    tools:
+      allow: [read, write, edit, test]
+      deny: [deploy, push, force, credential, unrestricted-path]
+    write_scope: task_packet.allowed_paths
+    model_capabilities:
+      required: [bounded-editing, test-execution]
+      preferred: [repository-context]
+      independence: none
+    fallback: current
+    max_calls: 1
+    output: task_evidence_packet
+    authority: implementation-evidence
+  verifier:
+    role: verifier
+    capability: "复现验收场景并核对测试、运行和工作区证据"
+    default_model: gpt-5.6-luna
+    reasoning_effort: max
+    context:
+      inherit: task
+      clean: true
+    tools:
+      allow: [read, test, inspect]
+      deny: [write, edit, delete, deploy, verdict]
+    write_scope: none
+    model_capabilities:
+      required: [reproducible-verification]
+      preferred: [test-analysis]
+      independence: preferred
+    fallback: current
+    max_calls: 1
+    output: verification_packet
+    authority: evidence-only
+  reviewer:
+    role: reviewer
+    capability: "使用 clean context 独立检查实现或计划中的问题"
+    default_model: gpt-5.6-terra
+    reasoning_effort: high
+    context:
+      inherit: none
+      clean: true
+    tools:
+      allow: [read, test, inspect]
+      deny: [write, edit, delete, deploy, verdict]
+    write_scope: none
+    model_capabilities:
+      required: [clean-context-review]
+      preferred: [model-diversity]
+      independence: required
+    fallback: current
+    max_calls: 1
+    output: review_packet
+    authority: findings-only

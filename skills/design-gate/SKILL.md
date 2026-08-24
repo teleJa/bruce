@@ -95,6 +95,10 @@ The reviewer receives objective, acceptance, the final document snapshot/diff, r
 necessary constraints without the author's rationale or proposed verdict. Independence changes how
 the check runs, not the output schema.
 
+## Functional Agent routing
+
+An independent design review uses the `reviewer` Profile with a clean-context Task Packet and returns a `review_packet`; any evidence reproduction used by the gate uses the `verifier` Profile and returns a `verification_packet`. Neither Packet may contain a terminal verdict. Design Gate remains the only owner of `Design: pass|blocked`.
+
 ## Procedure
 
 1. Resolve or reuse the change directory with [artifact-placement.md](../bruce/references/artifact-placement.md).

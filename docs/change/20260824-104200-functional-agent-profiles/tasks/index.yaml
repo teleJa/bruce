@@ -1,0 +1,82 @@
+version: 1
+execution: sequential
+tasks:
+  - task_id: T-001
+    title: 冻结 Functional Agent 与 Model Profile 公共合同
+    contract_revision: 1
+    path: tasks/T-001-freeze-functional-agent-contract.md
+    depends_on: []
+    acceptance_ids: [FA-01, FA-02, FA-03, FA-04, FA-06]
+    allowed_paths:
+      - docs/change/20260824-104200-functional-agent-profiles/**
+      - skills/bruce/references/model-profiles.yaml
+      - skills/bruce/references/functional-agent-contracts.md
+    excluded_paths: [".bruce/config.yaml", "~/.codex/bruce/**"]
+    parallel_safe: false
+  - task_id: T-002
+    title: 增加 Profile、Packet schema 与静态校验
+    contract_revision: 1
+    path: tasks/T-002-add-profile-packet-validator.md
+    depends_on: [T-001]
+    acceptance_ids: [FA-01, FA-02, FA-04, FA-06]
+    allowed_paths:
+      - scripts/functional_agent_profiles.py
+      - scripts/validate_functional_agents.py
+      - skills/bruce/references/**
+      - tests/test_functional_agent_profiles.py
+    excluded_paths: ["skills/*/agents/openai.yaml", "hooks/**", ".bruce/config.yaml"]
+    parallel_safe: false
+  - task_id: T-003
+    title: 接入 Inspector 与 Implementer 路由
+    contract_revision: 1
+    path: tasks/T-003-route-inspector-implementer.md
+    depends_on: [T-002]
+    acceptance_ids: [FA-02, FA-05, FA-06]
+    allowed_paths:
+      - skills/bruce/SKILL.md
+      - skills/inspect-parallel/**
+      - skills/spawn-execute/**
+      - skills/explore-prototype/**
+      - tests/test_functional_agent_profiles.py
+    excluded_paths: ["skills/completion-gate/**", "skills/design-gate/**", "skills/plan-review/**"]
+    parallel_safe: false
+  - task_id: T-004
+    title: 分离 Verifier 与 Reviewer 证据边界
+    contract_revision: 1
+    path: tasks/T-004-separate-verifier-reviewer-packets.md
+    depends_on: [T-002]
+    acceptance_ids: [FA-02, FA-03, FA-04, FA-06]
+    allowed_paths:
+      - skills/completion-gate/**
+      - skills/plan-review/**
+      - skills/design-gate/**
+      - skills/bruce/references/**
+      - tests/test_functional_agent_profiles.py
+    excluded_paths: ["scripts/functional_agent_profiles.py", "skills/inspect-parallel/**"]
+    parallel_safe: false
+  - task_id: T-005
+    title: 接入 Profile 覆盖、显式 override 与当前模型 fallback
+    contract_revision: 1
+    path: tasks/T-005-add-model-resolution-fallback.md
+    depends_on: [T-002, T-003, T-004]
+    acceptance_ids: [FA-03, FA-06, FA-07]
+    allowed_paths:
+      - scripts/functional_agent_profiles.py
+      - skills/bruce/references/**
+      - skills/*/SKILL.md
+      - tests/test_functional_agent_profiles.py
+    excluded_paths: ["~/.codex/bruce/**", ".bruce/config.yaml", "hooks/**"]
+    parallel_safe: false
+  - task_id: T-006
+    title: 更新插件文档、元数据与全量回归
+    contract_revision: 1
+    path: tasks/T-006-update-plugin-docs-and-regression.md
+    depends_on: [T-003, T-004, T-005]
+    acceptance_ids: [FA-07]
+    allowed_paths:
+      - README.md
+      - CONTEXT.md
+      - .codex-plugin/plugin.json
+      - tests/**
+    excluded_paths: [".agents/plugins/marketplace.json", ".serena/**", "todo.md"]
+    parallel_safe: false

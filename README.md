@@ -7,6 +7,14 @@ design readiness, and test design are selected independently. A low-noise plugin
 when changed planning or design documents may require Design Gate before implementation and
 deterministically validates any written `design-review.md`.
 
+## Functional Agent contracts
+
+Bruce routes native Subagents through four internal Profiles: `inspector`, `implementer`, `verifier`, and `reviewer`. The shared v1 Task/Verification/Review Packet contract lives in `skills/bruce/references/functional-agent-contracts.md`, and the built-in registry lives in `skills/bruce/references/model-profiles.yaml`.
+
+Profile resolution is `task override > project override > user override > built-in Profile > current model fallback`. The resolver passes `model` to the Codex host only when the target model is confirmed available; otherwise it omits `model`, inherits the current model, and records `fallback_used`, `effective_model`, `capability_status=degraded`, and `resolution_result=fallback`. A fallback never proves model heterogeneity. Inspector remains read-only, Implementer is path-bounded, Verifier emits only `verification_packet`, and Reviewer emits only `review_packet`; Design/Completion remain the only terminal decisions.
+
+Validate the contract with `python3 scripts/validate_functional_agents.py`.
+
 ## Workflow
 
 ```text

@@ -14,6 +14,10 @@ Review readiness, not writing style.
 - Only the architecture, contracts, schema design, or test plan explicitly referenced by that plan.
 - Current repository facts needed to verify high-risk claims.
 
+## Functional Agent routing
+
+Independent plan review uses the `reviewer` Functional Agent Profile and a v1 Task Packet with `task_kind=review`, clean context, no author conversation inheritance, read-only tools, and `output=review_packet`; carry `review_subject=plan` in the resulting `review_packet`, not in the Task Packet. The reviewer returns findings only; it does not approve the plan or emit a Design/Completion verdict.
+
 ## Procedure
 
 1. Check objective/scope/acceptance coverage and identify work that changes behavior without a

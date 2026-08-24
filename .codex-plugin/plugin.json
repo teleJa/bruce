@@ -1,7 +1,7 @@
 {
   "name": "bruce",
   "version": "0.1.0+codex.20260823141031",
-  "description": "A proportional software delivery workflow with evidence-backed decisions and optional native Goal persistence.",
+  "description": "A proportional software delivery workflow with evidence-backed decisions, functional Agent contracts, Model Profile routing, and optional native Goal persistence.",
   "author": {
     "name": "teleJa"
   },
@@ -18,7 +18,7 @@
   "interface": {
     "displayName": "Bruce",
     "shortDescription": "Run a risk-driven software delivery workflow",
-    "longDescription": "Bruce keeps software delivery proportional in the current Codex task, with evidence-driven standard/full profiles, one conditional Design Gate, one Completion Gate, verifiable Given/When/Then scenarios, layered real-use validation, bounded repair loops, and optional native Goal persistence with one human-auditable execute_record.md.",
+    "longDescription": "Bruce keeps software delivery proportional in the current Codex task, with evidence-driven standard/full profiles, four internal Functional Agent contracts, explicit Model Profile override/fallback resolution, one conditional Design Gate, one Completion Gate, verifiable Given/When/Then scenarios, layered real-use validation, bounded repair loops, and optional native Goal persistence with one human-auditable execute_record.md.",
     "developerName": "teleJa",
     "category": "Developer Tools",
     "brandColor": "#4F46E5",

@@ -25,6 +25,17 @@ native Goal state, and subagent lifecycle. Read
 [plugin-boundary.md](references/plugin-boundary.md) before handling a permission denial, external
 side effect, or request to add execution infrastructure.
 
+Before creating any native Subagent, select exactly one Functional Agent Profile from
+[model-profiles.yaml](references/model-profiles.yaml) and construct the v1 Task Packet defined in
+[functional-agent-contracts.md](references/functional-agent-contracts.md). Resolve task override >
+project override > user override > built-in Profile > current-model fallback through the shared
+resolver; do not let an individual Skill create a model selector or Runtime. Pass `model` to the
+Codex host only when the host has confirmed the configured model. Otherwise omit `model` to inherit
+the current model and record `resolution_result=fallback`, `fallback_used=true`,
+`capability_status=degraded`, and the effective model. A fallback is not model heterogeneity.
+Every delegated result must include `model_resolution` and the role-specific Packet; the main Agent
+and the existing Design/Completion Gates retain all terminal authority.
+
 ## 1. Inspect
 
 Read the user request, applicable `AGENTS.md`, relevant code, and repository facts. Preserve

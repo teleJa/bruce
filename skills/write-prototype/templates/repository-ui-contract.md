@@ -25,6 +25,24 @@ to the provider; do not copy unrelated source or CSS.
 - Close or completion transition: <result and restored/next state>
 - Size and placement: <evidenced dimensions and responsive behavior>
 
+## UI Surface Contract
+
+- Contract path: <structured YAML/JSON path or `not-applicable` for greenfield>
+- Schema version: <integer>
+- Surface IDs: <unique `SURFACE-...` ids and their parent/child relationship>
+- Regions and hierarchy: <surface regions, parent/child order, and purpose>
+- Required states: <default, loading, success, empty, failure, disabled, and blocking coverage>
+- Required viewports: <viewport names and width/height>
+- Interaction transitions: <trigger, precondition, state transition, success, and failure>
+- Observable fields: <user-visible fields, relationships, and empty/error semantics>
+- Evidence methods: <contract, unit, chrome-smoke, chrome-layout, screenshot, or other feasible evidence>
+- Evidence freshness: <current/planned/stale/unavailable with impact>
+- Implementation mapping: <optional `file`, `route`, `template`, `view`, or `source-entry`; no framework AST>
+
+The Surface Contract is the product-surface authority. A repository locator is evidence for mapping,
+not a requirement to model React, Vue, DOM, or any component tree. Validate this contract with
+`scripts/validate_surface_contract.py` independently from `visual-assertions.json`.
+
 ## Layout invariants
 
 | Id | Required invariant | Evidence | Verification |

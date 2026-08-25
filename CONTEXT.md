@@ -52,6 +52,10 @@ _Avoid_: Runtime state, component ledger, second evidence store
 A stable behavior contract expressed as concrete `Given`, `When`, `Then`, and `Evidence`, with every material outcome mapped to a feasible verification layer.
 _Avoid_: Natural-language completion claim, mocked-only proof, reduced passing check
 
+**UI Surface Contract**:
+A technology-neutral product-surface contract keyed by stable `surface_id`, recording region hierarchy, required states, interaction transitions, observable fields, layout invariants, viewports, evidence methods, and generic implementation mappings. It is a design/evidence contract, not a React/Vue/DOM tree or a second verdict authority.
+_Avoid_: Framework AST contract, visual-token validator replacement, prototype screenshot or DOM text as runtime proof
+
 **Completion Gate**:
 The `completion-gate` skill makes the only completion decision for an implementation task, based on final scope, author quality, current acceptance evidence, design alignment, failures, and delivery boundaries. It returns `Completion: pass|issues|blocked`.
 _Avoid_: Self-report, separate review verdict, completion-review artifact

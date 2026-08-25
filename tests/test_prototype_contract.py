@@ -34,6 +34,9 @@ class PrototypeContractTest(unittest.TestCase):
         cls.ui_contract = read(
             "skills/write-prototype/templates/repository-ui-contract.md"
         )
+        cls.surface_contract = read(
+            "skills/write-prototype/references/ui-surface-contract.md"
+        )
         cls.manifest = read("skills/write-prototype/templates/prototype-manifest.md")
         cls.design_gate = read("skills/design-gate/SKILL.md")
         cls.design_review = read("skills/design-gate/templates/design-review.md")
@@ -199,6 +202,53 @@ class PrototypeContractTest(unittest.TestCase):
             with self.subTest(field=field):
                 self.assertIn(field, self.ui_contract)
         self.assertIn("source-grounded wireframe", normalized)
+
+    def test_surface_contract_reference_is_stack_neutral_and_separate(self) -> None:
+        for marker in (
+            "Surface Contract",
+            "surface_id",
+            "region hierarchy",
+            "required states",
+            "interaction transitions",
+            "observable fields",
+            "layout invariants",
+            "viewports",
+            "evidence methods",
+            "implementation mappings",
+            "file",
+            "route",
+            "template",
+            "view",
+            "source-entry",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.surface_contract)
+        self.assertIn("must not require a React/Vue component tree", self.surface_contract)
+        self.assertIn("visual-assertions.json", self.surface_contract)
+        self.assertIn("surface_contract_path", self.manifest)
+        self.assertIn("Surface Contract", self.ui_contract)
+
+    def test_surface_contract_fields_are_present_in_existing_product_templates(self) -> None:
+        normalized_brief = " ".join(self.brief.split()).lower()
+        normalized_contract = " ".join(self.ui_contract.split()).lower()
+        for marker in (
+            "surface id",
+            "regions and hierarchy",
+            "required states",
+            "interaction transitions",
+            "observable fields",
+            "layout invariants",
+            "visual anchors",
+            "required viewports",
+            "evidence methods",
+            "implementation mapping",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, normalized_brief)
+                self.assertIn(marker, normalized_contract)
+        for forbidden in ("must require a react", "must require a vue", "framework ast as a required"):
+            self.assertNotIn(forbidden, normalized_brief)
+            self.assertNotIn(forbidden, normalized_contract)
 
     def test_changed_and_unchanged_evidence_authority_is_explicit(self) -> None:
         for rule in (

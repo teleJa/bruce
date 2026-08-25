@@ -87,6 +87,23 @@ class CompletionContractTest(unittest.TestCase):
         self.assertIn("Playwright is prohibited", self.skill)
         self.assertIn("Playwright-only evidence is invalid", self.skill)
 
+    def test_surface_contract_rows_require_mapping_and_fresh_runtime_evidence(self) -> None:
+        for marker in (
+            "Surface review matrix",
+            "review-matrix row per required `surface_id`",
+            "implementation locator",
+            "runtime evidence",
+            "layout evidence",
+            "evidence revision/freshness",
+            "Missing mappings, stale",
+            "static Surface validator",
+            "never create a second UI verdict",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.skill)
+        self.assertIn("chrome-layout", self.skill)
+        self.assertIn("geometry/overflow", self.skill)
+
     def test_visual_scope_is_risk_proportional_and_fresh(self) -> None:
         normalized = " ".join(self.skill.split())
         for scope in ("`none`", "`chrome-smoke`", "`chrome-layout`"):

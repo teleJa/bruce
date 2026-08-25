@@ -1,0 +1,68 @@
+version: 1
+execution: sequential
+tasks:
+  - task_id: T-001
+    title: 定义技术无关 UI Surface Contract
+    contract_revision: 1
+    path: tasks/T-001-define-ui-surface-contract.md
+    depends_on: []
+    acceptance_ids: [UI-SURFACE-01]
+    allowed_paths:
+      - skills/write-prototype/SKILL.md
+      - skills/write-prototype/templates/prototype-brief.md
+      - skills/write-prototype/templates/repository-ui-contract.md
+      - skills/write-prototype/templates/prototype-manifest.md
+      - skills/write-prototype/references/ui-surface-contract.md
+    excluded_paths:
+      - scripts/validate_surface_contract.py
+      - skills/design-gate/**
+      - skills/completion-gate/**
+      - /Users/tele/xjjk/joytime-studio/**
+    parallel_safe: false
+  - task_id: T-002
+    title: 实现 Surface Contract 校验与跨栈 fixtures
+    contract_revision: 1
+    path: tasks/T-002-validate-surface-contract.md
+    depends_on: [T-001]
+    acceptance_ids: [UI-SURFACE-02, UI-SURFACE-03, UI-SURFACE-06]
+    allowed_paths:
+      - scripts/validate_surface_contract.py
+      - tests/test_surface_contract.py
+      - tests/test_prototype_contract.py
+      - tests/fixtures/surface-contract/**
+    excluded_paths:
+      - skills/design-gate/**
+      - skills/completion-gate/**
+      - /Users/tele/xjjk/joytime-studio/**
+    parallel_safe: false
+  - task_id: T-003
+    title: 接入 Design Gate 与 Completion Gate
+    contract_revision: 1
+    path: tasks/T-003-integrate-gates.md
+    depends_on: [T-001, T-002]
+    acceptance_ids: [UI-SURFACE-04, UI-SURFACE-05]
+    allowed_paths:
+      - skills/design-gate/SKILL.md
+      - skills/completion-gate/SKILL.md
+      - skills/bruce/references/verification-loop.md
+      - tests/test_design_gate_validator.py
+      - tests/test_completion_contract.py
+      - tests/test_prototype_contract.py
+    excluded_paths:
+      - scripts/validate_prototype_artifact.py
+      - /Users/tele/xjjk/joytime-studio/**
+    parallel_safe: false
+  - task_id: T-004
+    title: 完成回归与范围收口
+    contract_revision: 1
+    path: tasks/T-004-regression-and-scope-close.md
+    depends_on: [T-003]
+    acceptance_ids: [UI-SURFACE-07]
+    allowed_paths:
+      - README.md
+      - CONTEXT.md
+      - tests/**
+    excluded_paths:
+      - /Users/tele/xjjk/joytime-studio/**
+      - .git/**
+    parallel_safe: false

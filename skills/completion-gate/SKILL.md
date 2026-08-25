@@ -149,6 +149,20 @@ manual-only confirmation. A provider score, prototype source, preview URL, proto
 not prove the implementation matches it; require current Codex App Chrome evidence for every
 material visible outcome.
 
+### Surface review matrix
+
+When a governing prototype or existing-product extension declares a UI Surface Contract, add one
+review-matrix row per required `surface_id`. Each row records the generic implementation locator
+(`file`, `route`, `template`, `view`, or `source-entry`), current runtime evidence, required layout
+evidence when the outcome is material, and the evidence revision/freshness. Missing mappings, stale
+evidence, missing layout evidence, or placeholder region/state/observable fields make that row `issues`
+or `blocked` according to the existing external-state rules; they cannot be promoted to `pass` by a
+static Surface validator, prototype screenshot, DOM text, or provider score. Surface findings remain
+findings inside the single Completion verdict and never create a second UI verdict.
+
+For `chrome-smoke`, prove one real interaction and its visible result. For `chrome-layout`, prove the
+interaction, screenshot, viewport, geometry/overflow, and region evidence for each affected Surface ID.
+
 ### Design alignment
 
 When Design Gate was required, compare the final diff and scope with `design-review.md`. Return

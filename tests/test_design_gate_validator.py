@@ -440,6 +440,26 @@ Create a new revision when scope changes.
         self.assertNotEqual(0, result.returncode)
         self.assertIn("unresolved placeholders", result.stderr)
 
+    def test_surface_contract_completeness_is_a_design_blocker(self) -> None:
+        skill = (ROOT / "skills/design-gate/SKILL.md").read_text(encoding="utf-8")
+        for marker in (
+            "UI Surface Contract",
+            "surface_id",
+            "region hierarchy",
+            "required states",
+            "interaction transitions",
+            "observable fields",
+            "layout invariants",
+            "evidence methods",
+            "generic implementation mapping",
+            "Design blocker",
+            "Do not require React/Vue",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, skill)
+        self.assertIn("visual-token", skill)
+        self.assertIn("prototype existence", skill)
+
 
 if __name__ == "__main__":
     unittest.main()

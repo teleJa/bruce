@@ -65,14 +65,24 @@ the user explicitly authorizes an exploratory fidelity boundary.
 
 ### <surface name>
 
+- Surface ID: <stable `SURFACE-...` id>
 - Entry and precondition: <exact entry, host relationship, and prior state>
 - Actors and permissions: <confirmed roles and permissions>
 - User goal: <observable goal>
-- Information structure: <regions and hierarchy>
-- Key actions: <action, success result, and failure response>
-- Required states: <default, loading, success, failure, empty, disabled, or blocking>
+- Information structure: <regions and hierarchy; each region has a stable region ID>
+- Required states: <default/loading/success/failure/empty/disabled/blocking states and observable result>
+- Interaction transitions: <trigger, precondition, transition, success result, and failure response>
+- Observable fields: <field/value/state that a user or evidence check can observe, including empty/error semantics>
+- Layout invariants: <stable topology, relationship, sizing, wrapping, overflow, and responsive rules>
+- Visual anchors: <evidenced hierarchy, brand, palette, typography, spacing, and geometry>
+- Required viewports: <viewport names and width/height>
+- Evidence methods: <contract, unit, chrome-smoke, chrome-layout, screenshot, or other feasible evidence>
+- Implementation mapping: <optional generic file/route/template/view/source-entry locator; never a framework requirement>
 - Navigation: <source and destination>
 - Explicit non-goals: <excluded pages, fields, actions, roles, states, and rules>
+
+Use one row per surface when the target has multiple views or overlays. Keep child regions in the
+hierarchy rather than inventing a framework-specific component tree.
 
 ## Regression assertions
 

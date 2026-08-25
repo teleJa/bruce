@@ -30,6 +30,10 @@
 - parent_run_id: <none or parent run id>
 - baseline_sha256: <none or refinement target digest>
 - source_evidence: <brief, UI contract, baseline, and design/source evidence paths>
+- surface_contract_path: <structured Surface Contract path or none>
+- surface_contract_schema_version: <integer or none>
+- surface_ids: <comma-separated stable Surface IDs or none>
+- surface_evidence_summary: <mapping/evidence freshness summary; static completeness is not runtime proof>
 - generated_snapshot: <pending, none, removed, or `prototype/versions/<run-id>/generated/`>
 - confirmed_snapshot: <pending, none, removed, or `prototype/versions/<run-id>/confirmed/`>
 - confirmation_state: <pending, confirmed, or rejected>

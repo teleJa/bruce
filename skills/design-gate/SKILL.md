@@ -86,6 +86,12 @@ For every generated document:
      filled visual anchors, and deterministic exact-token result. Reject template placeholders,
      empty evidence/verification cells, or a high-fidelity claim whose applicable shell/layout,
      palette, typography, brand, and geometry dimensions are not governed by baseline or anchors.
+   - UI Surface Contract: for every governing `surface_id`, verify the target surface, region hierarchy,
+     required states, interaction transitions, observable fields, layout invariants, visual anchors,
+     required viewports, evidence methods, and generic implementation mapping. A missing, duplicate,
+     placeholder, or incomplete surface/region/field is a Design blocker with the concrete ID/path in
+     the finding. Do not require React/Vue, a DOM tree, or framework AST; do not treat visual-token
+     clearance or prototype existence as Surface Contract completeness.
 5. Record only evidence-backed blockers that can cause wrong implementation, unsafe execution, or
    unverifiable acceptance. Wording preferences and optional polish do not block.
 

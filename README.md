@@ -36,6 +36,10 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - UI prototype generation is an optional `write-prototype` capability. It can drive a host-configured
   Open Design MCP run, preserve generated and user-confirmed snapshots, and feed the existing Design
   and Completion Gates without adding a third gate or copying product-delivery lanes.
+- `write-prototype` may also carry a technology-neutral UI Surface Contract: stable Surface IDs,
+  region/state/interaction/observable/layout semantics, generic implementation locators, and current
+  evidence. Surface completeness is validated separately from exact visual-token assertions; Design and
+  Completion remain the only verdict owners, and a Surface Contract never replaces real Chrome evidence.
 - Question-driven prototype exploration is an optional `explore-prototype` capability. It builds a
   throwaway logic demo or structurally different UI variants to answer one uncertainty. A bounded
   native subagent may generate the code after the main agent freezes the question, paths, scenarios,

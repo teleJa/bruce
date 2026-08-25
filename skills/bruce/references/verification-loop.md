@@ -135,7 +135,11 @@ Build the matrix for the current batch only before reviewing its bounded rows:
 
 Each formal batch row records `batch_id` (for example `batch_id: B1-example`), `acceptance_id`,
 `path`, `required_layer`, `basis_revision`, `evidence_revision`, `evidence`, `result`, and
-`affected_scope`. The requirement-level checkpoint also
+`affected_scope`. When a UI Surface Contract governs the acceptance, the row also records `surface_id`,
+`implementation_locator`, `runtime_evidence`, and `layout_evidence` when the visible outcome is material.
+The locator is implementation evidence and accepts `file`, `route`, `template`, `view`, or
+`source-entry`; it does not impose a framework. Missing or stale surface evidence keeps the row
+incomplete, issues, or blocked under the existing rules. The requirement-level checkpoint also
 records every task's `task_id`, `status`, `contract_revision`, `evidence_refs`, and `blockers`.
 Return `Checkpoint: clear|issues|blocked` as progress feedback only; do not use it as the overall
 completion verdict. Every checkpoint uses this machine-readable summary, with `[]` when a collection

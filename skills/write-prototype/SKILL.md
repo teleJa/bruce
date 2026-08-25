@@ -96,6 +96,21 @@ Before generation, inspect the filled UI contract: placeholders, empty evidence/
 or visual anchors that omit applicable shell/layout, palette, typography, brand, and geometry block a
 high-fidelity claim. A template heading alone is not grounded evidence.
 
+### UI Surface Contract
+
+For every governing surface, use [ui-surface-contract.md](references/ui-surface-contract.md) to record a
+stable `surface_id`, region hierarchy, required default/error/empty states, interaction transitions,
+observable fields, layout invariants, visual anchors, viewports, evidence methods, and implementation
+mappings. The contract is product-surface first and must not require a React/Vue component tree, DOM tree,
+or framework AST. `file`, `route`, `template`, `view`, and `source-entry` are valid implementation
+locator types; a locator is optional design evidence and never the visual authority.
+
+Keep Surface Contract completeness separate from `visual-assertions.json`: the former validates product
+semantics, state/interaction coverage, generic implementation mapping, and evidence freshness; the latter
+continues to own exact colors, dimensions, required brand text, and forbidden tokens. Missing or duplicate
+Surface IDs, placeholder fields, empty evidence, or incomplete mappings must fail closed before a
+high-fidelity claim.
+
 Use these evidence rules in the brief, UI contract, and provider prompt:
 
 - Confirmed requirements govern changed behavior.

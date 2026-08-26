@@ -97,13 +97,18 @@ class ExecutionContractTest(unittest.TestCase):
         self.assertIn("one change-level `tasks/` package", plan)
         self.assertIn("tasks/index.yaml", plan)
         for phrase in (
-            "## Included scope",
-            "## Excluded scope",
-            "## Acceptance",
-            "## Verification",
-            "## Contract change rule",
+            "# 任务 <task-id>：<title>",
+            "## 包含范围",
+            "## 排除范围",
+            "## 验收标准",
+            "## 验证",
+            "## 契约变更规则",
         ):
             self.assertIn(phrase, template)
+        self.assertIn("Given", template)
+        self.assertIn("When", template)
+        self.assertIn("Then", template)
+        self.assertIn("Evidence", template)
         self.assertIn("execution: sequential", index)
 
     def test_checkpoint_tracks_task_state_without_becoming_a_second_evidence_store(self) -> None:

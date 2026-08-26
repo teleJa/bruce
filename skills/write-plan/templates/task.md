@@ -1,50 +1,48 @@
-# Task <task-id>: <title>
+# 任务 <task-id>：<title>
 
-- Contract revision: 1
-- Contract state: frozen before execution
-- Status source: `../checkpoint.yaml`
-- Parent plan: `../plan.md`
+- 契约修订：1
+- 契约状态：执行前冻结
+- 状态来源：`../checkpoint.yaml`
+- 父计划：`../plan.md`
 
-## Objective
+## 目标
 
-<observable task-local result>
+<可观察的任务局部结果>
 
-## Included scope
+## 包含范围
 
-- <repository path, component, or direct call site>
+- <仓库路径、组件或直接调用点>
 
-## Excluded scope
+## 排除范围
 
-- <path, component, contract, or action that this task must not change>
+- <本任务不得修改的路径、组件、契约或操作>
 
-## Dependencies
+## 依赖关系
 
-- Depends on: <task ids or none>
-- Consumes: <interfaces, artifacts, or none>
-- Produces: <interfaces, artifacts, or none>
+- 依赖任务：<任务 ID 或无>
+- 使用：<接口、工件或无>
+- 产出：<接口、工件或无>
 
-## Acceptance
+## 验收标准
 
-- Parent scenario ids: <stable acceptance ids>
-- Given: <starting state>
-- When: <task action or change>
-- Then: <observable task-local result>
-- Evidence: <required evidence ids, paths, or commands>
+- 父级场景 ID：<稳定验收 ID>
+- Given：<起始状态>
+- When：<任务动作或变更>
+- Then：<可观察的任务局部结果>
+- Evidence：<所需证据 ID、路径或命令>
 
-## Verification
+## 验证
 
-- Required layer: <unit|integration|API|database|build|real-use|Chrome>
-- Commands/checks: <concrete checks>
-- Environment: <required runtime/database/browser environment or none>
+- 必需层级：<unit|integration|API|database|build|real-use|Chrome>
+- 命令/检查：<具体检查>
+- 环境：<所需运行时、数据库、浏览器环境或无>
 
-## Authorization and risks
+## 授权与风险
 
-- Authorization: <normal|explicit capability|user confirmation>
-- Risk trigger: <low|guarded|critical and reason>
-- Stop condition: <when to return the task checkpoint>
+- 授权：<normal|explicit capability|user confirmation>
+- 风险触发：<low|guarded|critical 及原因>
+- 停止条件：<何时返回任务检查点>
 
-## Contract change rule
+## 契约变更规则
 
-Do not silently widen this task. If scope, acceptance, dependency, authorization, or required
-verification changes, create a new contract revision or a superseding task and record the reason in
-the next checkpoint.
+不得静默扩大本任务范围。如果范围、验收、依赖、授权或所需验证层级发生变化，必须创建新的契约修订或替代任务，并在下一个检查点中记录原因。

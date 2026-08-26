@@ -272,25 +272,25 @@ def _validate_task_package(change_dir: Path, plan_artifact: Path) -> list[str]:
             elif PLACEHOLDER.search(task_text):
                 errors.append(f"task contract contains unresolved placeholders: {raw_path}")
             revision_match = re.search(
-                r"(?m)^- Contract revision:\s*(\d+)\s*$", task_text
+                r"(?m)^- (?:Contract revision|契约修订)[:：]\s*(\d+)\s*$", task_text
             )
             if revision_match is None:
-                errors.append(f"task contract is missing Contract revision: {raw_path}")
+                errors.append(f"task contract is missing contract revision: {raw_path}")
             elif isinstance(contract_revision, int) and not isinstance(contract_revision, bool):
                 if int(revision_match.group(1)) != contract_revision:
                     errors.append(f"task contract revision does not match index: {raw_path}")
-            for heading in (
-                "## Objective",
-                "## Included scope",
-                "## Excluded scope",
-                "## Dependencies",
-                "## Acceptance",
-                "## Verification",
-                "## Authorization and risks",
-                "## Contract change rule",
+            for headings in (
+                ("## Objective", "## 目标"),
+                ("## Included scope", "## 包含范围"),
+                ("## Excluded scope", "## 排除范围"),
+                ("## Dependencies", "## 依赖关系"),
+                ("## Acceptance", "## 验收标准"),
+                ("## Verification", "## 验证"),
+                ("## Authorization and risks", "## 授权与风险"),
+                ("## Contract change rule", "## 契约变更规则"),
             ):
-                if heading not in task_text:
-                    errors.append(f"task contract is missing {heading}: {raw_path}")
+                if not any(heading in task_text for heading in headings):
+                    errors.append(f"task contract is missing {headings[0]} or {headings[1]}: {raw_path}")
 
         depends_on = entry["depends_on"]
         if not isinstance(depends_on, list):

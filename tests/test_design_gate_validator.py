@@ -125,6 +125,79 @@ class DesignGateValidatorTest(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn("validation passed", result.stdout)
 
+    def test_chinese_task_contract_is_validated(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            change = self.make_change(Path(directory))
+            (change / "tasks").mkdir()
+            (change / "plan.md").write_text(
+                "# Plan\n\n## Task package\n\n- Path: `tasks/`\n",
+                encoding="utf-8",
+            )
+            (change / "tasks/index.yaml").write_text(
+                """version: 1
+execution: sequential
+tasks:
+  - task_id: T-001
+    title: 中文任务
+    contract_revision: 1
+    path: tasks/T-001-chinese-task.md
+    depends_on: []
+    acceptance_ids: [AC-01]
+    allowed_paths: [src/example.py]
+    excluded_paths: [deploy/]
+    parallel_safe: false
+""",
+                encoding="utf-8",
+            )
+            (change / "tasks/T-001-chinese-task.md").write_text(
+                """# 任务 T-001：中文任务
+
+- 契约修订：1
+
+## 目标
+
+完成中文任务。
+
+## 包含范围
+
+- `src/example.py`
+
+## 排除范围
+
+- `deploy/`
+
+## 依赖关系
+
+- 依赖任务：无
+
+## 验收标准
+
+- Given：仓库有效
+- When：执行任务
+- Then：任务完成
+- Evidence：unit-test-01
+
+## 验证
+
+- 必需层级：unit
+- 命令/检查：`python -m unittest`
+- 环境：无
+
+## 授权与风险
+
+- 授权：normal
+- 风险触发：low
+- 停止条件：返回任务检查点
+
+## 契约变更规则
+
+范围或验收变化时创建新的契约修订。
+""",
+                encoding="utf-8",
+            )
+            result = self.run_validator(change)
+        self.assertEqual(0, result.returncode, result.stderr)
+
     def test_plan_declared_task_package_is_validated(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             change = self.make_change(Path(directory))

@@ -20,6 +20,18 @@ class WorkflowProfileContractTest(unittest.TestCase):
         self.assertIn("does not create a Goal, design review, test design, or change directory", normalized)
         self.assertIn("Do not begin behavior implementation while the profile is `unresolved`", normalized)
 
+    def test_bruce_exposes_analysis_and_design_only_boundaries(self) -> None:
+        normalized = " ".join(self.workflow.split())
+        for phrase in (
+            "`bruce` is the total workflow orchestrator",
+            "analysis-only",
+            "route the request to `solution-analysis`",
+            "`design-only` scope",
+            "it must not implement behavior",
+            "it is not permission to implement",
+        ):
+            self.assertIn(phrase, normalized)
+
     def test_unresolved_inspection_can_use_bounded_parallel_exploration(self) -> None:
         normalized = " ".join(self.workflow.split())
         for phrase in (

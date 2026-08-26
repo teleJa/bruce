@@ -21,7 +21,8 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
         validator = (ROOT / "scripts/validate_functional_agents.py").read_text(encoding="utf-8")
         self.assertEqual({"inspector", "implementer", "verifier", "reviewer"}, set(PROFILE_IDS))
         profiles = load_builtin_profiles()
-        self.assertEqual("gpt-5.6-sol", profiles["inspector"]["default_model"])
+        self.assertEqual("gpt-5.6-luna", profiles["inspector"]["default_model"])
+        self.assertEqual("max", profiles["inspector"]["reasoning_effort"])
         self.assertEqual("gpt-5.6-luna", profiles["implementer"]["default_model"])
         self.assertEqual("max", profiles["implementer"]["reasoning_effort"])
         self.assertEqual("gpt-5.6-luna", profiles["verifier"]["default_model"])
@@ -32,6 +33,7 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
             self.assertIn(profile_id, validator)
         for relative in (
             "skills/inspect-parallel/SKILL.md",
+            "skills/solution-analysis/SKILL.md",
             "skills/spawn-execute/SKILL.md",
             "skills/explore-prototype/SKILL.md",
             "skills/completion-gate/SKILL.md",

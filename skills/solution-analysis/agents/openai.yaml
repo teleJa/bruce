@@ -1,0 +1,4 @@
+interface:
+  display_name: "Solution Analysis"
+  short_description: "Inspect existing solutions and analyze feasibility before design"
+  default_prompt: "Use $solution-analysis to inspect the current implementation and existing project solutions, analyze feasibility, then wait for my direction."

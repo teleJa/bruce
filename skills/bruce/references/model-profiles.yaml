@@ -3,8 +3,8 @@ profiles:
   inspector:
     role: inspector
     capability: "只读仓库事实、边界、调用关系和风险证据"
-    default_model: gpt-5.6-sol
-    reasoning_effort: medium
+    default_model: gpt-5.6-luna
+    reasoning_effort: max
     context:
       inherit: task
       clean: false

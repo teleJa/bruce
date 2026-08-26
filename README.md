@@ -11,9 +11,19 @@ deterministically validates any written `design-review.md`.
 
 Bruce routes native Subagents through four internal Profiles: `inspector`, `implementer`, `verifier`, and `reviewer`. The shared v1 Task/Verification/Review Packet contract lives in `skills/bruce/references/functional-agent-contracts.md`, and the built-in registry lives in `skills/bruce/references/model-profiles.yaml`.
 
-Profile resolution is `task override > project override > user override > built-in Profile > current model fallback`. The resolver passes `model` to the Codex host only when the target model is confirmed available; otherwise it omits `model`, inherits the current model, and records `fallback_used`, `effective_model`, `capability_status=degraded`, and `resolution_result=fallback`. A fallback never proves model heterogeneity. Inspector remains read-only, Implementer is path-bounded, Verifier emits only `verification_packet`, and Reviewer emits only `review_packet`; Design/Completion remain the only terminal decisions.
+Profile resolution is `task override > project override > user override > built-in Profile > current model fallback`. The resolver passes `model` to the Codex host only when the target model is confirmed available; otherwise it omits `model`, inherits the current model, and records `fallback_used`, `effective_model`, `capability_status=degraded`, and `resolution_result=fallback`. A fallback never proves model heterogeneity. Inspector remains read-only (the built-in inspection route is `gpt-5.6-luna` + `max`), Implementer is path-bounded, Verifier emits only `verification_packet`, and Reviewer emits only `review_packet`; Design/Completion remain the only terminal decisions.
 
 Validate the contract with `python3 scripts/validate_functional_agents.py`.
+
+## Pre-design solution analysis
+
+`$solution-analysis` is the read-only pre-design analysis layer. It inspects the current implementation and existing project solutions, analyzes feasibility and alternatives, reports evidence gaps and unresolved decisions, and then waits for explicit user direction. The main Agent decides whether to inspect directly or delegate bounded shards through `inspect-parallel`; delegated code research uses the `inspector` Profile (`gpt-5.6-luna` + `max`), while a delegated read-only feasibility challenge may use the `reviewer` Profile (`gpt-5.6-terra` + `high`). It does not create `docs/change`, write design artifacts, invoke downstream Skills automatically, or authorize implementation.
+
+`$bruce` remains the total workflow orchestrator. Analysis-only intent is routed to `$solution-analysis`;
+it is not run as a hidden pre-step inside the implementation workflow. After the user confirms the
+analysis, `$bruce` can be re-entered with an explicit `design-only` scope to persist the necessary design
+artifacts and run Design Gate without implementing behavior or invoking Completion Gate. A separate user
+instruction is required before implementation begins.
 
 ## Workflow
 

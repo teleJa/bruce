@@ -7,6 +7,7 @@ from tests._support import ROOT, frontmatter, markdown_links, read
 
 SUPPORTING_SKILLS = (
     "inspect-parallel",
+    "solution-analysis",
     "design-gate",
     "goal-execution",
     "grill-with-docs",
@@ -144,6 +145,26 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertNotIn("When a `full` task", read("skills/design-gate/SKILL.md"))
         tests = read("skills/write-tests/SKILL.md")
         self.assertIn("profile alone is neither necessary nor sufficient", tests)
+
+
+    def test_solution_analysis_is_read_only_and_stops_before_design(self) -> None:
+        body = read("skills/solution-analysis/SKILL.md")
+        normalized = " ".join(body.split())
+        for phrase in (
+            "由主 Agent 决定是否委托 Subagent",
+            "`inspector` Profile",
+            "`task_kind=inspect`",
+            "`output=task_evidence_packet`",
+            "`allowed_paths=[]`",
+            "gpt-5.6-luna",
+            "gpt-5.6-terra",
+            "Analysis: complete",
+            "Awaiting user direction: yes",
+        ):
+            self.assertIn(phrase, normalized)
+        self.assertIn("不得自动调用后续 Skill", body)
+        self.assertIn("Do not modify files", body)
+        self.assertIn("Do not treat `Analysis: complete` as `Design: pass`", body)
 
     def test_parallel_inspection_is_read_only_and_advisory(self) -> None:
         body = read("skills/inspect-parallel/SKILL.md")

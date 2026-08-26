@@ -15,6 +15,24 @@ class WorkflowRoutingContractTest(unittest.TestCase):
         for name in ("`design-gate`", "`completion-gate`", "`goal-execution`"):
             self.assertIn(name, skill)
 
+    def test_analysis_only_intent_routes_to_standalone_solution_analysis(self) -> None:
+        skill = read("skills/bruce/SKILL.md")
+        normalized = " ".join(skill.split())
+        self.assertIn("`bruce` is the total workflow orchestrator", normalized)
+        self.assertIn("route the request to `solution-analysis` as the entry Skill", normalized)
+        self.assertIn("Do not start the implementation-oriented Bruce workflow", normalized)
+        self.assertIn("does not automatically invoke `solution-analysis`", normalized)
+        self.assertIn("Analysis: complete", normalized)
+        self.assertIn("Awaiting user direction: yes", normalized)
+
+    def test_design_only_handoff_stops_before_completion(self) -> None:
+        skill = read("skills/bruce/SKILL.md")
+        normalized = " ".join(skill.split())
+        self.assertIn("A `design-only` scope is a valid Bruce handoff", normalized)
+        self.assertIn("stop after the design artifacts and Design Gate result", normalized)
+        self.assertIn("must not implement behavior, invoke `completion-gate`", normalized)
+        self.assertIn("Do not invoke `completion-gate`", normalized)
+
     def test_profile_and_risk_remain_independent(self) -> None:
         skill = read("skills/bruce/SKILL.md")
         self.assertIn("`standard`", skill)

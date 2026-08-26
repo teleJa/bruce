@@ -36,6 +36,23 @@ the current model and record `resolution_result=fallback`, `fallback_used=true`,
 Every delegated result must include `model_resolution` and the role-specific Packet; the main Agent
 and the existing Design/Completion Gates retain all terminal authority.
 
+## Entry routing
+
+`bruce` is the total workflow orchestrator. It owns task-contract formation, capability selection,
+subagent lifecycle, implementation sequencing, verification, Design Gate, Completion Gate, and
+authorized delivery boundaries. It is not the default entry for every request that mentions Bruce.
+
+When the user's intent is explicitly analysis-only — for example, “先调研”“分析方案”“分析可行性”
+or “暂不改代码并等待我确认” — route the request to `solution-analysis` as the entry Skill. Do not
+start the implementation-oriented Bruce workflow and then silently continue past the analysis stop.
+`solution-analysis` performs read-only inspection and feasibility analysis, then returns
+`Analysis: complete` and `Awaiting user direction: yes`.
+
+When the user asks to implement, fix, refactor, deliver, or otherwise authorizes execution, remain in
+this `bruce` workflow. If the user first completed `solution-analysis` and later explicitly asks to
+persist the confirmed design, re-enter Bruce with a `design-only` scope when implementation is not yet
+authorized; if implementation is authorized, use the normal implementation workflow.
+
 ## 1. Inspect
 
 Read the user request, applicable `AGENTS.md`, relevant code, and repository facts. Preserve
@@ -147,6 +164,8 @@ boundary. Resume the same `task_id` and contract revision when the task remains 
 Continue directly when Codex can implement and verify the task without another artifact. Invoke a
 supporting skill only for a present need:
 
+- pre-design read-only inspection and feasibility analysis that must stop for user direction:
+  `solution-analysis`;
 - parallel read-only discovery of unresolved component, contract, or repository-pattern facts:
   `inspect-parallel`;
 - connected domain decisions or durable domain documentation: `grill-with-docs`;
@@ -173,9 +192,20 @@ completeness and document readiness and returns one implementation-entry result:
 Every public or cross-component API, event, or file-contract change uses `write-architecture` and
 must generate or update `api-contracts.md` before behavior implementation.
 
-Do not chain supporting skills merely because one was selected.
+Do not chain supporting skills merely because one was selected. In particular, Bruce does not
+automatically invoke `solution-analysis`; explicit analysis-only intent is routed to that standalone
+entry Skill before this workflow begins.
 
 ## 4. Implement with Codex
+
+A `design-only` scope is a valid Bruce handoff after the user has confirmed the analysis result but
+has not authorized behavior implementation. In this mode, Bruce may form the task contract, invoke
+only the necessary `write-architecture`, `write-db-design`, `write-plan`, and `write-tests` skills,
+and run `design-gate` when the resulting artifacts will govern downstream implementation. It must
+stop after the design artifacts and Design Gate result; it must not implement behavior, invoke
+`completion-gate`, or perform delivery actions. `Design: pass` in this mode means the artifacts are
+ready to govern a later implementation; it is not permission to implement without a separate user
+instruction.
 
 Use the current Codex task and available tools. Use native subagents directly for incidental
 delegation and only for boundary-clear, low-coupling tasks. Keep the main agent responsible for
@@ -235,6 +265,10 @@ matrix row, or declared direct call site; otherwise record it as deferred and pr
 declared repair set, or completion path.
 
 ## 6. Decide completion and report
+
+For a `design-only` handoff, report the generated design artifacts, Design Gate result, unresolved
+risks, and the explicit implementation boundary, then stop. Do not invoke `completion-gate`, because
+no behavior implementation or completion evidence is being claimed.
 
 After implementation and targeted verification, invoke `completion-gate`. It performs all required
 author checks, evidence checks, scope checks, design-to-diff checks, and any risk-triggered independent

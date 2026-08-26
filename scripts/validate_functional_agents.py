@@ -10,7 +10,7 @@ from functional_agent_profiles import ContractError, PROFILE_IDS, load_builtin_p
 
 ROOT = Path(__file__).resolve().parents[1]
 ROUTING_FILES = {
-    "inspector": ["skills/inspect-parallel/SKILL.md", "skills/write-architecture/SKILL.md"],
+    "inspector": ["skills/inspect-parallel/SKILL.md", "skills/solution-analysis/SKILL.md", "skills/write-architecture/SKILL.md"],
     "implementer": ["skills/spawn-execute/SKILL.md", "skills/explore-prototype/SKILL.md"],
     "verifier": ["skills/completion-gate/SKILL.md", "skills/design-gate/SKILL.md"],
     "reviewer": ["skills/completion-gate/SKILL.md", "skills/plan-review/SKILL.md", "skills/design-gate/SKILL.md", "skills/bruce/references/risk-policy.md", "skills/bruce/references/verification-loop.md", "skills/plan-review/references/plan-reviewer-prompt.md"],

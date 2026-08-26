@@ -83,6 +83,23 @@ independent reviewer. Start one only when the repair changes an independence-tri
 risk trigger, or when critical risk or the user explicitly requires it. This repair path does not
 create a per-finding review chain.
 
+The initial matrix scan is repair round 0. Read `workflow.repair_loop.max_rounds` from the resolved
+`.bruce/config.yaml` (default: 5) and allow at most that many subsequent repair rounds. Each round
+scans the current affected matrix as broadly as practical, reports all currently observable findings,
+then repairs the resulting bounded repair set one by one or in compatible groups. A repair may expose
+a new finding; carry it into the next round rather than pretending the initial scan was exhaustive.
+After the configured limit, stop and return `Completion: issues` for repairable residuals or
+`Completion: blocked` when the remaining evidence or authority prevents a valid decision.
+
+The progress state is separate from the terminal verdict: task states are `implemented`, `verifying`,
+and `verified`; completion progress is `not_started`, `reviewing`, `repairing`, `ready`, or `decided`.
+Only `Completion: pass|issues|blocked` is terminal.
+
+Reviewer waits are bounded by `workflow.review.max_wait_seconds` (default: 60) and
+`workflow.review.max_no_progress_polls` (default: 2). After that limit, stop polling the handle. If
+required independent review is unavailable, return `Completion: blocked`; do not start an unbounded
+second review chain.
+
 ### Acceptance evidence
 
 Map every acceptance condition to current, reproducible evidence at the required layer. A unit test
@@ -205,8 +222,10 @@ Return exactly one terminal field:
 Return `Completion: pass|issues|blocked`, `review_mode: main-agent|independent`,
 `review_mode_reason`, the completed review matrix, consolidated findings packet, scenario-level
 acceptance evidence, design alignment, scope findings, repair-loop results, residual risks, and the
-smallest next action. Keep the result in the current task; `goal-execution` may record it when Goal
-mode is active.
+smallest next action. Include the non-terminal `completion_state` (`reviewing`, `repairing`, `ready`,
+or `decided`) and `repair_round` in supporting evidence when applicable; never use them as aliases for
+`Completion`. Keep the result in the current task; `goal-execution` may record it when Goal mode is
+active.
 
 ### Output format example
 

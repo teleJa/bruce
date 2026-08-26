@@ -2,3 +2,12 @@
 version: 1
 artifacts:
   root: docs/change
+
+workflow:
+  # Completion Gate repair loop. The initial review scan is round 0; repairs may use up to five rounds.
+  repair_loop:
+    max_rounds: 5
+  # Async reviewer lifecycle. Stop polling after bounded no-progress waits.
+  review:
+    max_wait_seconds: 60
+    max_no_progress_polls: 2

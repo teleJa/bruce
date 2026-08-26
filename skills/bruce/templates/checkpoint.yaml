@@ -20,5 +20,12 @@ acceptance:
   failed: []
   unexecuted: []
 findings: []
+repair_loop:
+  max_rounds: 5
+  current_round: 0
+  status: not_started|scanning|repairing|verifying|exhausted|complete
+completion:
+  state: not_started|reviewing|repairing|ready|decided
+  result: null|pass|issues|blocked
 repair_sets: []
 next_action: <continue-task|next-task|blocked-unlock|return-control>

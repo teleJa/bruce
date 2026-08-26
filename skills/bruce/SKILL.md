@@ -62,6 +62,12 @@ Read the user request, applicable `AGENTS.md`, relevant code, and repository fac
 unrelated working-tree changes. Ask at most one blocking question only when evidence cannot resolve
 an ambiguity that changes scope, acceptance, or business consequences.
 
+When the resolved artifact parent contains `.bruce/config.yaml`, read its `workflow` limits before
+implementation. `workflow.repair_loop.max_rounds` defaults to 5 and applies only to Completion Gate
+repair rounds after the initial review scan. `workflow.review.max_wait_seconds` defaults to 60 and
+`workflow.review.max_no_progress_polls` defaults to 2. Invalid values are configuration issues, not
+permission to silently use a larger budget.
+
 Start with `profile: unresolved` when component or contract-boundary facts are incomplete. Continue
 bounded read-only inspection until the profile is resolved. Inspection alone does not create a
 Goal, design review, test design, or change directory. Do not begin behavior implementation while
@@ -151,12 +157,16 @@ revision or superseding task.
 The current task state belongs in the change-level `checkpoint.yaml` or the current checkpoint
 message, not in the frozen task file. The checkpoint aggregates every task's status, the active task,
 contract revisions, basis revision, environment, evidence references, blockers, findings, and next
-action. It is progress feedback only: it is not a third decision, a Goal ledger, or a second evidence
-store. Native Goal state remains authoritative for Goal lifecycle; the checkpoint is authoritative only
-for change/task progress, and `.goal/<goal-id>/execute_record.md` is an audit record that may reference
-it. Recovery never infers Goal state from a checkpoint, and checkpoint state never overrides either
-Gate. Tasks execute sequentially by default; `depends_on` prepares future scheduling but does not
-activate parallel execution.
+action. Distinguish task progress from completion progress: `implemented` means code exists but
+task-local verification is incomplete; `verified` means task-local acceptance passed;
+`completion.state` may be `not_started`, `reviewing`, `repairing`, `ready`, or `decided`;
+`completion.result` remains empty until the single Completion Gate returns `pass`, `issues`, or
+`blocked`. It is progress feedback only: it is not a third decision, a Goal ledger, or a second
+evidence store. Native Goal state remains authoritative for Goal lifecycle; the checkpoint is
+authoritative only for change/task progress, and `.goal/<goal-id>/execute_record.md` is an audit record
+that may reference it. Recovery never infers Goal state from a checkpoint, and checkpoint state never
+overrides either Gate. Tasks execute sequentially by default; `depends_on` prepares future scheduling
+but does not activate parallel execution.
 
 A long-running task may span multiple checkpoints without being split or restarted. Use a progress
 checkpoint at a meaningful milestone, task transition, environment/risk change, or work-interval
@@ -312,6 +322,8 @@ risk trigger materially changes.
 
 Completion is allowed only when it returns `Completion: pass`. Repairable findings return `issues`;
 missing authority, unsafe external state, or unresolved L2-L4 conditions return `blocked`.
+Do not use `implemented`, `verified`, `reviewing`, or `repairing` as completion verdicts: those are
+progress states recorded in the checkpoint and never replace the single terminal Completion field.
 
 For Goal-backed work, pass the single completion result and evidence summary to `goal-execution`.
 Goal execution records the result and synchronizes native Goal status without re-evaluating it.

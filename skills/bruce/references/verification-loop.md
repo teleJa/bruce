@@ -168,6 +168,13 @@ acceptance:
   failed: []
   unexecuted: []
 findings: []
+repair_loop:
+  max_rounds: 5
+  current_round: 0
+  status: not_started|scanning|repairing|verifying|exhausted|complete
+completion:
+  state: not_started|reviewing|repairing|ready|decided
+  result: null|pass|issues|blocked
 repair_sets: []
 next_action: <continue-task|next-task|blocked-unlock|return-control>
 ```
@@ -192,7 +199,9 @@ After the packet, repair compatible findings together, then rerun only affected 
 unchanged original failure, and related regressions. A row is `stale` when its evidence revision
 differs from the current review basis, a changed path intersects its affected scope, or impact cannot
 be determined. Rerun stale rows, the unchanged original failure, and related regressions before
-dependent tasks continue.
+dependent tasks continue. The initial packet is review round 0; subsequent repair rounds read
+`workflow.repair_loop.max_rounds` from `.bruce/config.yaml` (default 5). A repair may reveal a new
+finding, so each round may scan again, but the configured limit still bounds the loop.
 
 ## Independent review
 

@@ -28,6 +28,12 @@ The optional workspace configuration is:
 version: 1
 artifacts:
   root: docs/change
+workflow:
+  repair_loop:
+    max_rounds: 5
+  review:
+    max_wait_seconds: 60
+    max_no_progress_polls: 2
 ```
 
 The config file is always located at:
@@ -55,3 +61,17 @@ A persisted implementation plan may add exactly one change-level `tasks/` direct
 and one current `checkpoint.yaml` beside it. The task package is derived from the shared change
 package; it is not copied into each participating repository. Task files hold frozen contracts, while
 checkpoint state holds current progress and references evidence without copying evidence content.
+
+### Workflow limits
+
+`workflow.repair_loop.max_rounds` controls the Completion Gate repair loop only. The initial review
+scan is round 0; a repair loop may run at most this many subsequent repair rounds. It must be an integer from 1 through 5. Generic L0/L1 failure-recovery retry budgets remain governed by
+`references/failure-recovery.md` and are not silently widened by this setting.
+
+`workflow.review.max_wait_seconds` and `workflow.review.max_no_progress_polls` bound asynchronous
+reviewer polling. They must be bounded integers: `max_wait_seconds` is 1 through 60 and `max_no_progress_polls` is 1 through 2. After the configured number of no-progress polls,
+stop polling the handle; if independent review is required and unavailable, the Completion Gate returns
+`Completion: blocked`.
+
+If `workflow` is absent, use the documented defaults (`5`, `60`, and `2`). Invalid values must be
+reported rather than silently widened or ignored.

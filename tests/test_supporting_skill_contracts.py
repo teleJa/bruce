@@ -124,6 +124,15 @@ class SupportingSkillContractTest(unittest.TestCase):
                 self.assertIn("artifact-placement.md", body)
                 self.assertIn("cross-repository", body)
 
+    def test_db_design_prohibits_database_foreign_keys(self) -> None:
+        skill = " ".join(read("skills/write-db-design/SKILL.md").split())
+        template = " ".join(read("skills/write-db-design/templates/table-design.md").split())
+        self.assertIn("Do not add database-level foreign keys", skill)
+        self.assertIn("`FOREIGN KEY` constraints", skill)
+        self.assertIn("`REFERENCES` clauses", skill)
+        self.assertIn("Database-level foreign keys are prohibited", template)
+        self.assertIn("logical references (no database foreign keys)", template)
+
     def test_api_contract_artifact_is_mandatory(self) -> None:
         normalized = " ".join(read("skills/write-architecture/SKILL.md").split())
         self.assertIn("must generate or update `api-contracts.md`", normalized)

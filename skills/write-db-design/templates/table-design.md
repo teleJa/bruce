@@ -4,7 +4,7 @@
 
 - Persistence outcome: <what behavior needs storage>
 - Existing schema/migration evidence: <paths>
-- Conventions followed: <ids, references, types, timestamps, naming, migration tool>
+- Conventions followed: <ids, logical references (no database foreign keys), types, timestamps, naming, migration tool>
 
 ## Scenario derivation
 
@@ -28,6 +28,9 @@ Purpose: <scenario-backed responsibility>
 | `<column>` | `<actual type and constraint>` | <scenario n> |
 
 ## Constraints and indexes
+
+Database-level foreign keys are prohibited. Do not use `FOREIGN KEY` constraints or `REFERENCES` clauses;
+record relationship validation, orphan handling, and deletion behavior in the lifecycle/invariant sections.
 
 | Constraint/index | Columns/predicate | Scenario/read path protected |
 |---|---|---|

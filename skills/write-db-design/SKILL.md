@@ -21,13 +21,19 @@ deriving schema facts separately from each owning repository.
 - A requested output location when the design must be persisted.
 - The document language rule in [document-language.md](../bruce/references/document-language.md).
 
+## Database policy
+
+- Do not add database-level foreign keys: schema designs must not contain `FOREIGN KEY` constraints or
+  `REFERENCES` clauses. Model relationships with typed identifier/reference columns, indexes where needed,
+  and explicit service/transaction validation instead. Document orphan, deletion, and recovery behavior.
+
 ## Procedure
 
 1. Confirm that the task needs schema or persistence design. If it does not, return `not needed`
    with repository-backed evidence. When Design Gate is required, it records that decision in the
    same-directory `design-review.md`.
-2. Inspect repository conventions before choosing identifiers, foreign keys, types, timestamps,
-   migration style, naming, or index patterns. Never import conventions from another project.
+2. Inspect repository conventions before choosing identifiers, types, timestamps, migration style, naming,
+   or index patterns. Apply the database policy above and never import conventions from another project.
 3. For each important scenario, record pre-state, action, post-state, data consequences, read path,
    transaction boundary, idempotency, and failure recovery.
 4. Derive tables, columns, constraints, indexes, and lifecycle invariants from those scenarios. Map

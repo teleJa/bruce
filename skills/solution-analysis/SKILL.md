@@ -87,7 +87,6 @@ inspect current implementation and existing solutions
 
 禁止自动执行：
 
-- `grill-with-docs`；
 - `write-architecture`、`write-db-design`、`write-plan`、`write-tests`；
 - `design-gate`、`completion-gate` 或 `goal-execution`；
 - 源代码、测试、配置或项目文档修改；
@@ -139,7 +138,7 @@ Awaiting user direction: yes
 
 同时报告 `Inspection mode: direct|parallel`、实际调查范围、委托与模型解析记录（如有）以及没有执行的写入/验证动作。
 
-用户后续明确要求继续澄清时，才可转交 `grill-with-docs`；用户明确确认方案并要求落盘时，才可回到 Bruce 主流程，按需要调用架构、数据库、计划、测试设计和 `design-gate`。
+用户可以直接在当前对话中继续讨论或提出异议；用户明确确认方案并要求落盘时，才可回到 Bruce 主流程，按需要调用架构、数据库、计划、测试设计和 `design-gate`。
 
 ## Does not own
 

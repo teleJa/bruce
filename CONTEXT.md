@@ -78,7 +78,7 @@ Native Subagent delegation is contract-driven rather than personality-driven. Se
 
 ## Evidence Index
 
-- **Verified**: the workflow has two decisions and one optional execution mode (`skills/bruce/SKILL.md:15-20`).
+- **Verified**: the workflow has two decisions and one optional execution mode (`skills/bruce/SKILL.md:18-24`).
 - **Verified**: task contract, profile resolution, and profile/risk independence are defined in `skills/bruce/SKILL.md:38-63`.
 - **Verified**: persisted plans derive one sequential `tasks/` contract package while live status remains in the change-level checkpoint (`skills/bruce/references/task-contract.md`, `skills/write-plan/SKILL.md`).
 - **Verified**: capabilities are predicate-driven and do not cascade from profile selection (`skills/bruce/SKILL.md:69-93`).

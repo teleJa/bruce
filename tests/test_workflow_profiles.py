@@ -23,9 +23,9 @@ class WorkflowProfileContractTest(unittest.TestCase):
     def test_bruce_exposes_analysis_and_design_only_boundaries(self) -> None:
         normalized = " ".join(self.workflow.split())
         for phrase in (
-            "`bruce` is the total workflow orchestrator",
-            "analysis-only",
-            "route the request to `solution-analysis`",
+            "user-directed design and implementation capability",
+            "`solution-analysis` is the normal pre-design entry",
+            "does not invoke it automatically",
             "`design-only` scope",
             "it must not implement behavior",
             "it is not permission to implement",

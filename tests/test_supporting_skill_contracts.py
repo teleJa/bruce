@@ -10,7 +10,6 @@ SUPPORTING_SKILLS = (
     "solution-analysis",
     "design-gate",
     "goal-execution",
-    "grill-with-docs",
     "write-architecture",
     "write-db-design",
     "write-plan",
@@ -202,7 +201,6 @@ class SupportingSkillContractTest(unittest.TestCase):
 
     def test_capabilities_do_not_cascade(self) -> None:
         for name in (
-            "grill-with-docs",
             "write-architecture",
             "write-db-design",
             "write-plan",

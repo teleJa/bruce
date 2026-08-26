@@ -6,7 +6,6 @@ from tests._support import ROOT, read
 
 
 DOCUMENT_WRITERS = (
-    "grill-with-docs",
     "write-architecture",
     "write-db-design",
     "write-plan",

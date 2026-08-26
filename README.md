@@ -19,11 +19,12 @@ Validate the contract with `python3 scripts/validate_functional_agents.py`.
 
 `$solution-analysis` is the read-only pre-design analysis layer. It inspects the current implementation and existing project solutions, analyzes feasibility and alternatives, reports evidence gaps and unresolved decisions, and then waits for explicit user direction. The main Agent decides whether to inspect directly or delegate bounded shards through `inspect-parallel`; delegated code research uses the `inspector` Profile (`gpt-5.6-luna` + `max`), while a delegated read-only feasibility challenge may use the `reviewer` Profile (`gpt-5.6-terra` + `high`). It does not create `docs/change`, write design artifacts, invoke downstream Skills automatically, or authorize implementation.
 
-`$bruce` remains the total workflow orchestrator. Analysis-only intent is routed to `$solution-analysis`;
-it is not run as a hidden pre-step inside the implementation workflow. After the user confirms the
-analysis, `$bruce` can be re-entered with an explicit `design-only` scope to persist the necessary design
+`$bruce` is the user-directed design and implementation capability. Analysis-only work starts with
+`$solution-analysis`, not with a hidden pre-step inside `$bruce`. After the user discusses and confirms
+the analysis, `$bruce` can be entered with an explicit `design-only` scope to persist the necessary design
 artifacts and run Design Gate without implementing behavior or invoking Completion Gate. A separate user
-instruction is required before implementation begins.
+instruction is required before implementation begins. Bruce does not infer implementation from a
+prior analysis or design document without an explicit user instruction.
 
 ## Workflow
 

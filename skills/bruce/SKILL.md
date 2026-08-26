@@ -5,17 +5,19 @@ description: Use when the user asks Bruce to implement, fix, refactor, or delive
 
 # Bruce workflow
 
-Run one proportional workflow through the current Codex task:
+Bruce is a user-directed design and implementation capability, not an automatic end-to-end pipeline.
+The user decides when to move from analysis to design and from design to implementation. Bruce executes
+the explicitly selected mode and stops at that mode's boundary.
 
 ```text
-inspect -> task contract -> design when needed -> Design Gate when needed -> implement -> [batch checkpoint when triggered] -> Completion Gate -> summary
-                                      \-> optional Goal execution mode -/
+design-only: confirmed analysis -> task contract -> necessary design artifacts -> Design Gate -> stop
+implementation: confirmed design -> scoped inspect -> implement -> targeted verification -> Completion Gate
 ```
 
 Bruce has two decisions and one optional execution mode:
 
 - `design-gate` is the only implementation-entry decision for persisted downstream design.
-- `completion-gate` is the only completion decision.
+- `completion-gate` is the only completion decision for an implementation task.
 - A batch checkpoint is progress feedback, not a third decision or an overall completion result.
 - `goal-execution` adds persistence and an audit record; it never decides design readiness or
   completion.
@@ -36,22 +38,23 @@ the current model and record `resolution_result=fallback`, `fallback_used=true`,
 Every delegated result must include `model_resolution` and the role-specific Packet; the main Agent
 and the existing Design/Completion Gates retain all terminal authority.
 
-## Entry routing
+## User-directed handoffs
 
-`bruce` is the total workflow orchestrator. It owns task-contract formation, capability selection,
-subagent lifecycle, implementation sequencing, verification, Design Gate, Completion Gate, and
-authorized delivery boundaries. It is not the default entry for every request that mentions Bruce.
+`solution-analysis` is the normal pre-design entry for a requirement that needs investigation or
+feasibility analysis. It returns the evidence, recommendation, assumptions, risks, and unresolved
+decisions, then waits for the user. Bruce does not invoke it automatically and does not assume that a
+previous analysis authorizes design or implementation.
 
-When the user's intent is explicitly analysis-only — for example, “先调研”“分析方案”“分析可行性”
-or “暂不改代码并等待我确认” — route the request to `solution-analysis` as the entry Skill. Do not
-start the implementation-oriented Bruce workflow and then silently continue past the analysis stop.
-`solution-analysis` performs read-only inspection and feasibility analysis, then returns
-`Analysis: complete` and `Awaiting user direction: yes`.
+After the user discusses and confirms the direction, invoke Bruce explicitly with one of these scopes:
 
-When the user asks to implement, fix, refactor, deliver, or otherwise authorizes execution, remain in
-this `bruce` workflow. If the user first completed `solution-analysis` and later explicitly asks to
-persist the confirmed design, re-enter Bruce with a `design-only` scope when implementation is not yet
-authorized; if implementation is authorized, use the normal implementation workflow.
+- `design-only`: persist the confirmed design artifacts and run `design-gate`, then stop without
+  implementation or `completion-gate`;
+- `implementation`: consume the confirmed design and implement only the declared scope, then verify
+  and run `completion-gate`.
+
+A new conversation may start an `implementation` scope from the confirmed design artifacts. Bruce must
+not silently turn a design-only request into implementation, or an implementation request into a new
+broad analysis phase.
 
 ## 1. Inspect
 
@@ -168,7 +171,6 @@ supporting skill only for a present need:
   `solution-analysis`;
 - parallel read-only discovery of unresolved component, contract, or repository-pattern facts:
   `inspect-parallel`;
-- connected domain decisions or durable domain documentation: `grill-with-docs`;
 - architecture or public/cross-component contract design: `write-architecture`;
 - schema or persistence design: `write-db-design`;
 - persistent implementation planning: `write-plan`;
@@ -193,19 +195,24 @@ Every public or cross-component API, event, or file-contract change uses `write-
 must generate or update `api-contracts.md` before behavior implementation.
 
 Do not chain supporting skills merely because one was selected. In particular, Bruce does not
-automatically invoke `solution-analysis`; explicit analysis-only intent is routed to that standalone
-entry Skill before this workflow begins.
+automatically invoke `solution-analysis`; it consumes a user-confirmed analysis only when the user
+explicitly selects a design or implementation scope.
 
 ## 4. Implement with Codex
 
-A `design-only` scope is a valid Bruce handoff after the user has confirmed the analysis result but
-has not authorized behavior implementation. In this mode, Bruce may form the task contract, invoke
+A `design-only` scope is the normal Bruce handoff after the user has confirmed the analysis result
+but has not authorized behavior implementation. In this mode, Bruce may form the task contract, invoke
 only the necessary `write-architecture`, `write-db-design`, `write-plan`, and `write-tests` skills,
 and run `design-gate` when the resulting artifacts will govern downstream implementation. It must
 stop after the design artifacts and Design Gate result; it must not implement behavior, invoke
 `completion-gate`, or perform delivery actions. `Design: pass` in this mode means the artifacts are
 ready to govern a later implementation; it is not permission to implement without a separate user
 instruction.
+
+An `implementation` scope consumes the confirmed design and its acceptance/verification boundary. Do
+not restart broad solution discovery unless a current acceptance id, known conflict, or declared direct
+call site requires it. Re-evaluate only the affected design or implementation predicate when later
+facts change.
 
 Use the current Codex task and available tools. Use native subagents directly for incidental
 delegation and only for boundary-clear, low-coupling tasks. Keep the main agent responsible for

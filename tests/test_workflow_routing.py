@@ -8,27 +8,28 @@ from tests._support import ROOT, read
 class WorkflowRoutingContractTest(unittest.TestCase):
     def test_main_workflow_has_two_decisions_and_one_optional_mode(self) -> None:
         skill = read("skills/bruce/SKILL.md")
-        self.assertIn("Design Gate when needed", skill)
+        self.assertIn("design-only:", skill)
+        self.assertIn("implementation:", skill)
         self.assertIn("Completion Gate", skill)
-        self.assertIn("optional Goal execution mode", skill)
+        self.assertIn("one optional execution mode", skill)
         self.assertIn("two decisions and one optional execution mode", skill)
+        self.assertNotIn("small-scope combined", skill)
         for name in ("`design-gate`", "`completion-gate`", "`goal-execution`"):
             self.assertIn(name, skill)
 
-    def test_analysis_only_intent_routes_to_standalone_solution_analysis(self) -> None:
+    def test_bruce_is_user_directed_and_consumes_confirmed_handoffs(self) -> None:
         skill = read("skills/bruce/SKILL.md")
         normalized = " ".join(skill.split())
-        self.assertIn("`bruce` is the total workflow orchestrator", normalized)
-        self.assertIn("route the request to `solution-analysis` as the entry Skill", normalized)
-        self.assertIn("Do not start the implementation-oriented Bruce workflow", normalized)
-        self.assertIn("does not automatically invoke `solution-analysis`", normalized)
-        self.assertIn("Analysis: complete", normalized)
-        self.assertIn("Awaiting user direction: yes", normalized)
+        self.assertIn("user-directed design and implementation capability", normalized)
+        self.assertIn("The user decides when to move from analysis to design", normalized)
+        self.assertIn("`solution-analysis` is the normal pre-design entry", normalized)
+        self.assertIn("does not invoke it automatically", normalized)
+        self.assertIn("user-confirmed analysis", normalized)
 
     def test_design_only_handoff_stops_before_completion(self) -> None:
         skill = read("skills/bruce/SKILL.md")
         normalized = " ".join(skill.split())
-        self.assertIn("A `design-only` scope is a valid Bruce handoff", normalized)
+        self.assertIn("A `design-only` scope is the normal Bruce handoff", normalized)
         self.assertIn("stop after the design artifacts and Design Gate result", normalized)
         self.assertIn("must not implement behavior, invoke `completion-gate`", normalized)
         self.assertIn("Do not invoke `completion-gate`", normalized)

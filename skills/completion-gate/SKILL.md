@@ -106,6 +106,28 @@ Map every acceptance condition to current, reproducible evidence at the required
 does not prove required integration, persistence, deployment, or user-visible behavior. Treat stale,
 missing, mocked-only, or natural-language evidence as a gap when stronger evidence is required.
 
+### Cross-object consistency and authority
+
+When the task contract or `test-plan.md` declares `consistency_check: required`, consume the
+consistency and authority matrix as input to the existing final review matrix; do not create a second
+Completion matrix or a second verdict. Check every declared business invariant, authoritative state
+source, competing writer/viewer, stale window, conflict/error rule, data-preservation guarantee, and
+UI/API/database reconciliation path.
+
+根据 `behavior_kinds` 检查对应场景族，不要求与当前行为类型无关的冲突路径。对于 resource
+binding、allocation、ownership、sharing 或 state-transfer，按适用性检查：已占用资源、当前主体
+已有关系、读取后关系变化、旧快照提交、并发竞争、冲突时不覆盖既有关系，以及 reload/reopen
+同步。对于 permission-projection 或 availability-derivation，按适用性区分主体可见性、依赖对象
+可见性、依赖对象存在性、权威健康度、当前用户访问权和最终可用性。`hidden`、`denied`、`missing`
+和 `unknown` 不得在没有权威证据时静默报告为 `offline`。
+
+每个重要断言必须在其权威层级取证，所需层级以 task contract、`test-plan.md` 的 Required layer 和
+具体 acceptance 为准：渲染状态需要 UI/Chrome 证据，权威裁决需要 API/service 证据，持久化不变量
+只有在存在持久化状态时需要 database/persistence 证据。不适用层级不构成缺口；已明确记录
+`not_applicable` 及原因的矩阵项不构成缺证据。若缺少适用性判断、必需矩阵、不变量、冲突/视角场景、
+权威状态源或对应层级证据，返回 `Completion: issues`（权威或必需环境不可用时返回
+`Completion: blocked`）；仅正常路径成功不能产生 `Completion: pass`。
+
 ### Task package and checkpoint state
 
 When the plan declares a `tasks/` package, read `tasks/index.yaml`, every indexed frozen task contract,

@@ -68,6 +68,23 @@ class CompletionContractTest(unittest.TestCase):
         self.assertIn("A unit test\ndoes not prove", self.skill)
         self.assertIn("scenario-level\nacceptance evidence", self.skill)
 
+    def test_cross_object_consistency_requires_authority_and_conflict_evidence(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for phrase in (
+            "consistency_check: required",
+            "consistency and authority matrix",
+            "authoritative state",
+            "competing writer/viewer",
+            "stale window",
+            "已占用资源",
+            "旧快照提交",
+            "并发竞争",
+            "`hidden`、`denied`、`missing`",
+            "仅正常路径成功不能产生",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, normalized)
+
     def test_task_package_state_is_required_for_completion(self) -> None:
         normalized = " ".join(self.skill.split())
         for phrase in (

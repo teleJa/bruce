@@ -84,30 +84,65 @@ class WorkflowProfileContractTest(unittest.TestCase):
     def test_test_design_route_is_profile_independent(self) -> None:
         normalized = " ".join(self.test_design.split())
         for trigger in (
-            "multiple component or contract boundaries",
-            "state, repeat use, retry, concurrency, partial failure, recovery, permission, or rollback",
-            "real integration, deployment, runtime evidence, or multiple verification layers",
-            "shares behavior scenarios or regression sources across tasks",
-            "stateful UI with repeat entry, mutable data, or lifecycle-sensitive interaction",
+            "跨越多个组件、API、服务、数据库或其他合同边界",
+            "需要验证 state、repeat use、retry、concurrency、partial failure、recovery、permission、rollback",
+            "需要真实 integration、deployment、runtime、database、browser 证据或多个验证层级",
+            "共享行为场景或回归来源跨越多个任务",
+            "修改有重复进入、可变数据或生命周期语义的 stateful UI",
         ):
             with self.subTest(trigger=trigger):
                 self.assertIn(trigger, normalized)
-        self.assertIn("profile alone is neither necessary nor sufficient", normalized)
-        self.assertIn("for any resolved Bruce profile", normalized)
+        self.assertIn("profile 本身既不是必要条件，也不是充分条件", normalized)
+        self.assertIn("对任何 resolved Bruce profile 都执行判断", normalized)
         self.assertNotIn("For a `full` Bruce task", self.test_design)
 
     def test_ui_changes_route_to_test_design_by_lifecycle_risk(self) -> None:
         normalized = " ".join(self.test_design.split())
         for trigger in (
-            "closed and entered again",
-            "change while the surface is closed",
-            "cache, refresh, reset, re-fetch",
-            "stale state, duplicate interaction, reopening, or recovery",
+            "可以关闭后再次进入",
+            "可能在 surface 关闭期间或两次进入之间变化",
+            "cache、refresh、reset、re-fetch、prefill 或 selection-retention",
+            "stale state、duplicate interaction、reopening 或 recovery",
         ):
             self.assertIn(trigger, normalized)
-        self.assertIn("Do not invoke this skill for a copy, icon, color, or layout-only change", self.test_design)
-        self.assertIn("first entry, close and reopen", normalized)
+        self.assertIn("不要为纯 copy、icon、color 或没有状态、数据、交互和验证边界的 layout-only 变更调用本 Skill", self.test_design)
+        self.assertIn("first entry、close and reopen", normalized)
         self.assertIn("fresh observable result", normalized)
+
+    def test_resource_and_permission_state_consistency_is_mandatory_when_applicable(self) -> None:
+        normalized = " ".join(self.test_design.split())
+        for phrase in (
+            "跨对象一致性触发条件",
+            "一致性与权威状态矩阵",
+            "consistency_check",
+            "业务不变量",
+            "权威状态源",
+            "竞争 actor/viewer",
+            "stale window",
+            "不要把“对象对当前用户不可见”推导为“对象离线”",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, self.test_design)
+        for phrase in (
+            "权限过滤",
+            "关联对象受到独立的权限过滤",
+            "权限投影/可用性推导",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, normalized)
+
+    def test_chinese_request_requires_chinese_test_plan_natural_language(self) -> None:
+        for phrase in (
+            "中文请求时",
+            "全部使用简体中文",
+            "Given",
+            "When",
+            "Then",
+            "Evidence",
+            "稳定 machine-facing tokens",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, self.test_design)
 
     def test_design_gate_depends_on_downstream_design(self) -> None:
         normalized = " ".join(self.workflow.split())

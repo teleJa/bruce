@@ -35,6 +35,11 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
 2. Split work into feature-bearing tasks with stable ids. For each task record title, dependencies,
    files/scope, consumed/produced interfaces, implementation detail, acceptance, and verification.
    Reference the parent Given/When/Then scenario ids and required evidence layer for behavior tasks.
+   When a task creates, replaces, deletes, transfers, or projects a relationship, record a consistency
+   classification, business-invariant and authoritative-state summary, competing writers/viewers,
+   conflict consequence, and the `test-plan.md` matrix/scenario references in the task contract. Keep
+   detailed conflict matrices and per-scenario evidence in `test-plan.md`; do not create two independent
+   detailed sources of truth. Do not leave these semantics implicit in implementation detail.
 3. When persisting an implementation plan, create one change-level `tasks/` package by default. Write
    `tasks/index.yaml` for stable order, dependencies, acceptance ids, and path ownership, and write
    one `T-<id>-<slug>.md` from [task.md](templates/task.md) for each frozen task contract. A trivial
@@ -44,7 +49,10 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
 5. Mark `parallel_safe` only when dependencies and file ownership prove it. Bruce executes tasks
    sequentially by default; do not select a model, process, isolation mechanism, or scheduler.
 6. Ensure every acceptance item maps to a task and verification, dependencies exist and are acyclic,
-   every task has explicit included and excluded scope, and no task depends on unstated context.
+   every task has explicit included and excluded scope, and no task depends on unstated context. For
+   relationship or permission-projected state, also ensure the plan identifies the invariant and
+   authority that govern the state; otherwise return a planning gap instead of allowing the UI to
+   define the business rule implicitly.
 7. Persist the result using [plan.md](templates/plan.md), [tasks-index.yaml](templates/tasks-index.yaml),
    and [task.md](templates/task.md). Keep live status, checkpoint state, and approval outside the
    frozen task contracts; use the change-level `checkpoint.yaml` during execution.

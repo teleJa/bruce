@@ -35,7 +35,11 @@ Each task contract is frozen before execution. Each task file is frozen before i
 - parent acceptance/scenario ids;
 - required verification layers and concrete evidence;
 - authorization, risk, and stop conditions;
-- `contract_revision` and links to the governing design documents.
+- `contract_revision` and links to the governing design documents;
+- when applicable, a consistency summary: business invariant, authoritative state, competing writers/viewers,
+  conflict semantics, data-preservation guarantee, and the referenced `test-plan.md` matrix/scenario ids.
+  Detailed conflict matrices and per-scenario evidence belong to `test-plan.md`, which is the single detailed
+  source for test-design consistency facts.
 
 A task contract records explicit include/exclude scope and may be revised only through an explicit
 contract change or a new superseding task. Do not silently widen `include`, remove an `exclude`,

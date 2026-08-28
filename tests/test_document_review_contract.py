@@ -60,7 +60,10 @@ class DocumentReviewContractTest(unittest.TestCase):
         for name in DOCUMENT_WRITERS[1:]:
             body = read(f"skills/{name}/SKILL.md")
             with self.subTest(skill=name):
-                self.assertIn("`design-gate` is required", body)
+                if name == "write-tests":
+                    self.assertIn("必须运行 `design-gate`", body)
+                else:
+                    self.assertIn("`design-gate` is required", body)
 
     def test_old_document_gate_is_removed(self) -> None:
         self.assertFalse((ROOT / "skills/doc-review-gate/SKILL.md").exists())

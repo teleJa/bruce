@@ -139,11 +139,47 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("`docs/change/<YYYYMMDD-HHmmss>-<short-slug>/api-contracts.md`", normalized)
         self.assertIn("blocking contract gap", normalized)
 
+    def test_write_tests_template_has_chinese_consistency_contract(self) -> None:
+        template = read("skills/write-tests/templates/test-plan.md")
+        for phrase in (
+            "## 一致性与权威状态矩阵",
+            "## 冲突与权限视角场景矩阵",
+            "consistency_check",
+            "预期 UI 状态",
+            "预期 API/结果",
+            "持久化不变量",
+            "中文请求的自然语言字段全部使用简体中文",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, template)
+
+    def test_task_contract_carries_consistency_fields(self) -> None:
+        reference = read("skills/bruce/references/task-contract.md")
+        template = read("skills/write-plan/templates/task.md")
+        for phrase in (
+            "business invariant",
+            "authoritative state",
+            "competing writers/viewers",
+            "conflict semantics",
+            "data-preservation guarantee",
+            "test-plan.md",
+        ):
+            self.assertIn(phrase, reference)
+        for phrase in (
+            "一致性检查",
+            "业务不变量与权威状态摘要",
+            "竞争者/权限视角与冲突后果",
+            "关联测试计划矩阵/场景 ID",
+            "不适用原因",
+        ):
+            self.assertIn(phrase, template)
+        self.assertIn("## 业务不变量与权威状态", template)
+
     def test_profile_does_not_trigger_supporting_modes(self) -> None:
         self.assertNotIn("Bruce routes a `full` task", read("skills/goal-execution/SKILL.md"))
         self.assertNotIn("When a `full` task", read("skills/design-gate/SKILL.md"))
         tests = read("skills/write-tests/SKILL.md")
-        self.assertIn("profile alone is neither necessary nor sufficient", tests)
+        self.assertIn("profile 本身既不是必要条件，也不是充分条件", tests)
 
 
     def test_solution_analysis_is_read_only_and_stops_before_design(self) -> None:

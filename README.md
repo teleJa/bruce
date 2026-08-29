@@ -50,7 +50,7 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - `write-prototype` may also carry a technology-neutral UI Surface Contract: stable Surface IDs,
   region/state/interaction/observable/layout semantics, generic implementation locators, and current
   evidence. Surface completeness is validated separately from exact visual-token assertions; Design and
-  Completion remain the only verdict owners, and a Surface Contract never replaces real Chrome evidence.
+  Completion remain the only verdict owners, and a Surface Contract never replaces configured-provider runtime evidence.
 - Question-driven prototype exploration is an optional `explore-prototype` capability. It builds a
   throwaway logic demo or structurally different UI variants to answer one uncertainty. A bounded
   native subagent may generate the code after the main agent freezes the question, paths, scenarios,
@@ -58,13 +58,15 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
   Exploration becomes implementation-governing only after promotion through `write-prototype`.
 - Behavior acceptance uses stable `Given/When/Then/Evidence` scenarios. Development starts from a
   failing test or reproducible scenario when feasible.
-- User-visible Web work declares proportional `visual_scope=none|chrome-smoke|chrome-layout`;
-  visible acceptance requires a real Codex App Chrome interaction plus visual evidence. Layout-
-  sensitive outcomes additionally require current Chrome screenshots and relevant geometry/overflow
-  evidence. Playwright is prohibited as an acceptance runner or fallback.
+- User-visible Web work declares proportional `visual_scope=none|browser-smoke|browser-layout` and
+  reads `verification.browser_provider` from `.bruce/config.yaml` (default: `ego-lite`; supported:
+  `ego-lite`, `chrome`). Visible acceptance requires a real interaction through the selected Provider
+  plus visual evidence. Layout-sensitive outcomes additionally require the selected Provider's
+  screenshots and relevant geometry/overflow evidence. Provider failure is incomplete/blocked; no
+  silent fallback is allowed.
 - Verification is layered across unit/component, real integration/API/database, and real use. Web
-  acceptance uses the Codex App Chrome capability with the user's current session and real service;
-  Bruce rejects Playwright-only evidence and never uses Playwright as an acceptance fallback.
+  acceptance records the selected Provider, target/session, actions, visible result, capture time,
+  basis revision, and artifact path or hash. See `skills/bruce/references/browser-provider.md`.
 - An L1 failed scenario enters a bounded repair loop: fix, inspect the change, rerun the unchanged scenario,
   then run related regressions. Two unsuccessful complete rounds escalate to L2 replanning; L0,
   L2, L3, and L4 retain their retry, replan, decision, and incident-freeze semantics.

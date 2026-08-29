@@ -44,7 +44,7 @@
 
 ## 验证
 
-- 必需层级：<unit|integration|API|database|build|real-use|Chrome>
+- 必需层级：<unit|integration|API|database|build|real-use|browser>
 - 命令/检查：<具体检查>
 - 环境：<所需运行时、数据库、浏览器环境或无>
 

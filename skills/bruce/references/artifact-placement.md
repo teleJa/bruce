@@ -28,6 +28,8 @@ The optional workspace configuration is:
 version: 1
 artifacts:
   root: docs/change
+verification:
+  browser_provider: ego-lite
 workflow:
   repair_loop:
     max_rounds: 5
@@ -42,7 +44,7 @@ The config file is always located at:
 <shared-direct-parent>/.bruce/config.yaml
 ```
 
-`artifacts.root` may be relative or absolute. A relative value is resolved relative to the config file's
+`verification.browser_provider` accepts `ego-lite` or `chrome` and defaults to `ego-lite`; Invalid values must be reported and must not trigger a silent fallback. `artifacts.root` may be relative or absolute. A relative value is resolved relative to the config file's
 containing directory, never relative to the current working directory. The resolved directory is the
 shared source of truth; participating repositories do not receive copied portions of the same design.
 
@@ -73,5 +75,6 @@ reviewer polling. They must be bounded integers: `max_wait_seconds` is 1 through
 stop polling the handle; if independent review is required and unavailable, the Completion Gate returns
 `Completion: blocked`.
 
-If `workflow` is absent, use the documented defaults (`5`, `60`, and `2`). Invalid values must be
-reported rather than silently widened or ignored.
+If `verification` is absent, use `browser_provider=ego-lite`. If `workflow` is absent, use the documented
+defaults (`5`, `60`, and `2`). Invalid Provider or workflow values must be reported rather than silently
+changed, widened, or ignored.

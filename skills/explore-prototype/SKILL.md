@@ -75,8 +75,9 @@ agent; unavailable delegation alone never blocks the prototype.
    use production credentials, services, mutations, or data.
 4. Make the prototype trivial to run: one self-contained HTML file for `logic`, or one existing
    project command and shareable variant URL for `ui-variants`.
-5. Run the declared checks. For a visible Web result, use the Codex App Chrome capability with the
-   user's current session; do not silently substitute Playwright.
+5. Run the declared checks. For a visible Web result, use the browser Provider selected by
+   `verification.browser_provider`; do not silently substitute another Provider or use undocumented
+   fallback evidence.
 6. Ask the user to exercise the exact question. Record `answered`, `needs-iteration`, or
    `inconclusive`, plus the observation and decision.
 7. Remove the throwaway code from the production change when the question is answered. Preserve it

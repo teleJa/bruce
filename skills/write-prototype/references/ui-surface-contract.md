@@ -50,4 +50,4 @@ The contract explicitly records surface, region hierarchy, required states, inte
 - 缺失或重复 ID、缺少必需字段、占位值、空 evidence 或不完整 mapping 由独立 Surface validator 报告。
 - Surface Contract 完整性是 Design readiness 条件；缺失时必须指出具体 surface、region 或 field。
 - 实现入口、当前 runtime evidence、layout evidence 和 evidence revision 是 Completion review-matrix 的每个 Surface ID 行；缺少或 stale 时 Completion 不能返回 `pass`。
-- `chrome-smoke` 仍需要真实交互后的可见状态和截图；`chrome-layout` 仍需要 viewport、截图、几何/overflow 和交互前后证据。Surface Contract、DOM 文本、原型截图和 provider score 不能替代当前 Chrome。
+- `browser-smoke` 仍需要配置 Provider 执行的真实交互、可见状态和截图；`browser-layout` 仍需要 viewport、截图、几何/overflow 和交互前后证据。Surface Contract、DOM 文本、原型截图和 provider score 不能替代当前 Provider 的运行时证据。

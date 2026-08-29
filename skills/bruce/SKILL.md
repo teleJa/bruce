@@ -62,11 +62,14 @@ Read the user request, applicable `AGENTS.md`, relevant code, and repository fac
 unrelated working-tree changes. Ask at most one blocking question only when evidence cannot resolve
 an ambiguity that changes scope, acceptance, or business consequences.
 
-When the resolved artifact parent contains `.bruce/config.yaml`, read its `workflow` limits before
-implementation. `workflow.repair_loop.max_rounds` defaults to 5 and applies only to Completion Gate
+When the resolved artifact parent contains `.bruce/config.yaml`, read its `verification` and
+`workflow` settings before implementation. `verification.browser_provider` selects the browser
+provider for user-visible Web evidence and defaults to `ego-lite`; supported values are `ego-lite`
+and `chrome`. `workflow.repair_loop.max_rounds` defaults to 5 and applies only to Completion Gate
 repair rounds after the initial review scan. `workflow.review.max_wait_seconds` defaults to 60 and
 `workflow.review.max_no_progress_polls` defaults to 2. Invalid values are configuration issues, not
-permission to silently use a larger budget.
+permission to silently use a different provider or larger budget. Read
+[browser-provider.md](references/browser-provider.md) for provider capabilities and evidence rules.
 
 Start with `profile: unresolved` when component or contract-boundary facts are incomplete. Continue
 bounded read-only inspection until the profile is resolved. Inspection alone does not create a
@@ -97,11 +100,12 @@ Keep the contract in the current task unless the user requests a persistent plan
 - `constraints`: repository rules, user constraints, and known risks.
 - `profile`: `unresolved` during inspection, then `standard` or `full` before implementation.
 - `risk`: `low`, `guarded`, or `critical`, with its trigger.
-- `visual_scope`: `none`, `chrome-smoke`, or `chrome-layout`, selected from the material visible
-  outcome and layout/interaction risk. Any user-visible Web acceptance must use the Codex App
-  Chrome capability; Playwright is prohibited as an acceptance runner or fallback. A frontend
-  path alone does not force Chrome, but a visible Web outcome always requires one real Chrome
-  interaction and visual-evidence pass before completion.
+- `visual_scope`: `none`, `browser-smoke`, or `browser-layout`, selected from the material visible
+  outcome and layout/interaction risk. For `browser-smoke` or `browser-layout`, use the configured
+  `verification.browser_provider` and record the actual Provider in the evidence. A frontend path
+  alone does not force a browser, but a visible Web outcome always requires one real interaction
+  and visual-evidence pass before completion. Provider capability requirements and fail-closed rules
+  are defined in [browser-provider.md](references/browser-provider.md).
 - `tasks`: for a persisted implementation plan, handoff, or multi-step requirement, create one
   change-level `tasks/` package containing frozen task contracts. A trivial documentation-only change
   may omit it only with a recorded reason. Read [task-contract.md](references/task-contract.md).
@@ -305,12 +309,14 @@ repair set. An `update_plan` progress update never substitutes for this checkpoi
 batch repair set before starting dependent work. Use the final `completion-gate` once all batches are
 complete.
 
-When a batch has `visual_scope=chrome-smoke|chrome-layout`, include its bounded Chrome evidence in
-that batch checkpoint. The evidence must include a real action against the target, the resulting
-visible state, and a screenshot or equivalent Chrome visual artifact; `chrome-layout` additionally
-requires geometry/overflow checks. Do not trigger a visual checkpoint for `visual_scope=none`;
-re-evaluate the scope only when the acceptance or changed surface reveals a material visible
-outcome. Playwright output is never valid evidence for these rows.
+When a batch has `visual_scope=browser-smoke|browser-layout`, include bounded evidence from the
+configured browser Provider in that batch checkpoint. The evidence must include a real action against
+the target, the resulting visible state, and a screenshot or equivalent artifact; `browser-layout`
+additionally requires viewport and geometry/overflow checks. The evidence must name the configured
+Provider and must not be silently replaced by another Provider. Do not trigger a visual checkpoint
+for `visual_scope=none`; re-evaluate the scope only when the acceptance or changed surface reveals a
+material visible outcome. Playwright-only output is never valid Bruce evidence; it is not a supported
+Provider and must not be used as an undocumented fallback.
 
 The gate must return one complete findings packet for the current final state. When findings are
 repairable, batch compatible repairs before rerunning verification. A later change invalidates only

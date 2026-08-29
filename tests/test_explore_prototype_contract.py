@@ -45,7 +45,7 @@ class ExplorePrototypeContractTest(unittest.TestCase):
             "Prefer the existing route",
             "`?variant=` URL parameter",
             "cannot render in a production build",
-            "Codex App Chrome capability",
+            "configured browser Provider",
             "remove the switcher and losing variants",
         ):
             self.assertIn(phrase, self.ui)

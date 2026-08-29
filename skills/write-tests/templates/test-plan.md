@@ -4,7 +4,7 @@
 
 | 验收 ID | 场景 ID | 验证层级 | Evidence |
 |---|---|---|---|
-| <验收 ID> | <场景 ID> | <unit/component/integration/API/database/Chrome> | <命令或当前观察> |
+| <验收 ID> | <场景 ID> | <unit/component/integration/API/database/browser> | <命令或当前观察> |
 
 ## 前置条件与真实依赖
 
@@ -12,9 +12,9 @@
 
 ## 按比例确定视觉验证范围
 
-- 范围：<none|chrome-smoke|chrome-layout>
+- 范围：<none|browser-smoke|browser-layout>
 - 判断依据： <为什么该可见结果以及当前渲染风险需要此层级>
-- 对于 `chrome-layout`： <目标 URL/tab、viewport、截图/hash、几何/溢出和交互检查>
+- 对于 `browser-layout`： <Provider、目标 URL/tab 或 task-space、viewport、截图/hash、几何/溢出和交互检查>
 
 ## 一致性分类
 
@@ -39,7 +39,7 @@ reason: <若为 not_applicable，说明不涉及跨对象状态、权限投影�
 
 | 场景 ID | 适用性 | 不适用原因 | 起始状态 | 角色/操作者 | 动作 | 预期 UI 状态 | 预期 API/结果 | 持久化不变量 | Evidence |
 |---|---|---|---|---|---|---|---|---|---|
-| <CONS-S-001> | <applicable|not_applicable> | <不适用原因> | <资源已被其他实体占用或关联对象不可见> | <角色/用户> | <打开、选择、提交或使用> | <页面状态和原因> | <接口结果和错误语义> | <冲突后数据不变或满足共享规则> | <API/database/Chrome 等证据> |
+| <CONS-S-001> | <applicable|not_applicable> | <不适用原因> | <资源已被其他实体占用或关联对象不可见> | <角色/用户> | <打开、选择、提交或使用> | <页面状态和原因> | <接口结果和错误语义> | <冲突后数据不变或满足共享规则> | <API/database/browser 等证据> |
 
 ## 状态与意图矩阵
 
@@ -59,8 +59,8 @@ reason: <若为 not_applicable，说明不涉及跨对象状态、权限投影�
 - 预期 UI 状态： <适用时填写页面、控件、文案、可用性或 loading/error 状态；不适用写 not_applicable 及原因>
 - 预期 API/结果： <适用时填写响应、错误码或服务端裁决；不适用写 not_applicable 及原因>
 - 持久化不变量： <适用时填写关系、数据完整性或不变性；无持久化时写 not_applicable 及原因>
-- Evidence: <每个重要 Then 对应的确切命令、API/database 检查或 Chrome 可见观察>
-- 必需验证层级： <unit/component/integration/API/database/Chrome>
+- Evidence: <每个重要 Then 对应的确切命令、API/database 检查或 配置 Provider 的可见观察>
+- 必需验证层级： <unit/component/integration/API/database/browser>
 
 ## 回归来源
 
@@ -78,5 +78,5 @@ reason: <若为 not_applicable，说明不涉及跨对象状态、权限投影�
 - 若 `consistency_check: required`，已按 `behavior_kinds` 标记场景适用性和不适用原因，仅对适用场景验证 UI、API/result 或持久化后果。
 - Stateful behavior 已按适用性覆盖 repeat use、failure 和 recovery。
 - 命令和环境在目标仓库中真实存在。
-- 用户可见 Web 验收必须使用 Codex App Chrome capability 和当前用户会话；Acceptance row 必须记录真实交互、结果可见状态以及截图或等价 Chrome visual artifact。禁止使用 Playwright 替代该证据。
+- 用户可见 Web 验收必须使用 `verification.browser_provider` 选定的 Provider；Acceptance row 必须记录实际 Provider、真实交互、结果可见状态以及截图或等价 visual artifact。Provider 不可用时保持 incomplete/blocked，不得静默切换。
 - 中文请求的自然语言字段全部使用简体中文；稳定的 `Given`、`When`、`Then`、`Evidence`、scenario id、命令、路径和 API 名称保持原样。

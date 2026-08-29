@@ -74,8 +74,8 @@ description: Use when acceptance crosses multiple component or contract boundari
 ## Procedure
 
 1. 将每个有行为含义的 acceptance 条件映射为稳定的 scenario id，写出具体的 `Given`、`When`、`Then` 和
-   `Evidence`。每个重要 `Then` 都必须有可执行的证据路径。对于 `chrome-smoke` 或 `chrome-layout`，明确可见
-   状态；对于 `chrome-layout`，除 DOM 文本外还要记录 layout invariant and interaction evidence（布局不变量和交互证据）。
+   `Evidence`。每个重要 `Then` 都必须有可执行的证据路径。对于 `browser-smoke` 或 `browser-layout`，明确可见
+   状态；对于 `browser-layout`，除 DOM 文本外还要记录 layout invariant and interaction evidence（布局不变量和交互证据）。
 2. 先判断是否需要 `consistency_check`。若为 `required`，先填写“一致性与权威状态矩阵”，明确业务不变量、
    资源、当前 owner、竞争 actor/viewer、权威状态源、stale window、冲突规则、数据后果和 UI/API 重新同步方式。
 3. 对 `consistency_check: required` 的任务，先按 `behavior_kinds` 判断场景类别的适用性；对每个类别记录

@@ -3,6 +3,11 @@ version: 1
 artifacts:
   root: docs/change
 
+verification:
+  # Browser provider used for user-visible Web interaction and visual evidence.
+  # Supported values: ego-lite, chrome. Default: ego-lite.
+  browser_provider: ego-lite
+
 workflow:
   # Completion Gate repair loop. The initial review scan is round 0; repairs may use up to five rounds.
   repair_loop:

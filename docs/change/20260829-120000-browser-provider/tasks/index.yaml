@@ -1,0 +1,48 @@
+version: 1
+execution: sequential
+tasks:
+  - task_id: T-001
+    title: 增加 Provider 配置与统一契约
+    contract_revision: 1
+    path: tasks/T-001-add-browser-provider-contract.md
+    depends_on: []
+    acceptance_ids: [AC-001, AC-002, AC-003, AC-004, AC-005]
+    allowed_paths:
+      - .bruce/config.yaml
+      - skills/bruce/templates/config.yaml
+      - skills/bruce/SKILL.md
+      - skills/bruce/references/verification-loop.md
+      - skills/bruce/references/browser-provider.md
+      - scripts/browser_provider.py
+      - skills/bruce/references/artifact-placement.md
+      - skills/completion-gate/SKILL.md
+      - skills/explore-prototype/SKILL.md
+      - skills/explore-prototype/references/ui-variants.md
+      - skills/write-prototype/references/ui-surface-contract.md
+      - skills/write-tests/SKILL.md
+      - skills/write-tests/templates/test-plan.md
+      - README.md
+    excluded_paths:
+      - src/**
+      - database/**
+      - deployment/**
+    parallel_safe: false
+  - task_id: T-002
+    title: 更新测试契约与迁移检查
+    contract_revision: 1
+    path: tasks/T-002-update-provider-contract-tests.md
+    depends_on: [T-001]
+    acceptance_ids: [AC-001, AC-002, AC-003, AC-004, AC-005]
+    allowed_paths:
+      - tests/test_bruce_config_contract.py
+      - tests/test_browser_provider.py
+      - tests/test_validation_loop_contract.py
+      - tests/test_completion_contract.py
+      - tests/test_supporting_skill_contracts.py
+      - tests/test_explore_prototype_contract.py
+      - tests/test_prototype_contract.py
+    excluded_paths:
+      - src/**
+      - database/**
+      - deployment/**
+    parallel_safe: false

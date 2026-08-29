@@ -28,9 +28,9 @@ class ValidationLoopContractTest(unittest.TestCase):
 
     def test_visual_scope_is_proportional_not_frontend_path_based(self) -> None:
         normalized = " ".join(self.policy.split())
-        for scope in ("visual_scope=none", "visual_scope=chrome-smoke", "visual_scope=chrome-layout"):
+        for scope in ("visual_scope=none", "visual_scope=browser-smoke", "visual_scope=browser-layout"):
             self.assertIn(scope, normalized)
-        self.assertIn("Do not infer `chrome-layout` from any frontend diff alone", normalized)
+        self.assertIn("Do not infer `browser-layout` from any frontend diff alone", normalized)
         self.assertIn("DOM text presence alone is not visual evidence", normalized)
         self.assertIn("basis revision", normalized)
         self.assertIn("absent `visual_scope` remains an unresolved contract gap", normalized)
@@ -68,12 +68,14 @@ class ValidationLoopContractTest(unittest.TestCase):
         self.assertIn("never substitute a lower layer", self.policy)
         self.assertIn("mocked-only evidence", self.policy)
 
-    def test_web_uses_current_chrome_without_silent_fallback(self) -> None:
-        self.assertIn("Codex App Chrome capability", self.policy)
-        self.assertIn("current Chrome\nsession", self.policy)
-        self.assertIn("real localhost or target service", self.policy)
-        self.assertIn("Playwright is prohibited", self.policy)
-        self.assertIn("Any Playwright-only result is invalid evidence", self.policy)
+    def test_web_uses_configured_provider_without_silent_fallback(self) -> None:
+        self.assertIn("verification.browser_provider", self.policy)
+        self.assertIn("default is `ego-lite`", self.policy)
+        self.assertIn("supported values are `ego-lite` and `chrome`", self.policy)
+        self.assertIn("do not silently switch Provider", self.policy)
+        self.assertIn("browser-provider.md", self.policy)
+        self.assertIn("selected Provider", self.policy)
+        self.assertIn("Provider capability requirements", self.workflow)
 
     def test_failed_scenario_closes_repair_and_regression_loop(self) -> None:
         self.assertIn("preserve the original scenario and evidence", self.policy.lower())

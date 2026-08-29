@@ -23,19 +23,20 @@ Classify user-visible Web verification in the task contract as one of:
 
 - `visual_scope=none`: no material rendered output, layout, responsive behavior, or user-visible
   interaction changes; record a repository-backed reason when the task touches UI code.
-- `visual_scope=chrome-smoke`: a visible label, route, control, or state changes without a material
-  layout invariant; require one real user interaction against the current Chrome target, the
-  resulting visible state, and a screenshot or equivalent Chrome visual artifact.
-- `visual_scope=chrome-layout`: layout, sizing, overflow, wrapping, grid/flex, responsive behavior,
+- `visual_scope=browser-smoke`: a visible label, route, control, or state changes without a material
+  layout invariant; require one real user interaction against the target using the configured
+  browser Provider, the resulting visible state, and a screenshot or equivalent artifact.
+- `visual_scope=browser-layout`: layout, sizing, overflow, wrapping, grid/flex, responsive behavior,
   long content, modal/table geometry, animation, prototype matching, or a reported visual defect is
-  in scope; require current Chrome screenshots plus the relevant geometry and interaction evidence.
+  in scope; require screenshots from the configured Provider plus the relevant geometry and
+  interaction evidence.
 
-Do not infer `chrome-layout` from any frontend diff alone. Infer it from the material acceptance
+Do not infer `browser-layout` from any frontend diff alone. Infer it from the material acceptance
 outcome and changed rendering risk. Completion must upgrade an under-scoped declaration when the
 final diff or acceptance exposes a stronger visible outcome; it must not downgrade a declared
 layout check merely to reduce verification cost.
 
-For `chrome-layout`, the evidence records the target URL/tab, viewport, capture time, basis revision,
+For `browser-layout`, the evidence records the target URL/tab, viewport, capture time, basis revision,
 screenshot path or hash, and the applicable checks (for example card boxes, row heights,
 `scrollWidth <= clientWidth`, and before/after interaction states). DOM text presence alone is not
 visual evidence. For Web acceptance, an absent `visual_scope` remains an unresolved contract gap;
@@ -44,11 +45,17 @@ do not silently treat it as `none`.
 ## Capability preflight
 
 Before the first batch that depends on a browser, database, model, external service, or another
-runtime capability, perform one minimal read-only preflight. Record `capability`, exact `target`,
-`check`, `status=available|unavailable|unknown`, current evidence, and dependent acceptance ids. A
-configured client, installed extension, environment variable, or planned test is not availability
-evidence by itself; verify the actual target and required operation without creating production data
-or triggering a billable/irreversible action.
+runtime capability, perform one minimal read-only preflight. For a browser batch, first resolve
+`verification.browser_provider` from the applicable `.bruce/config.yaml`; the default is `ego-lite`
+and the supported values are `ego-lite` and `chrome`. Record `capability`, selected Provider, exact
+`target`, `check`, `status=available|unavailable|unknown`, current evidence, and dependent acceptance
+ids. A configured client, installed executable, environment variable, or planned test is not
+availability evidence by itself; verify the selected Provider's actual target and required operation
+without creating production data or triggering a billable/irreversible action.
+
+Provider selection is deterministic for the batch. An invalid or unavailable selected Provider is a
+configuration/capability issue and blocks dependent browser evidence; do not silently switch Provider,
+downgrade `visual_scope`, or report the scenario as passed. See [browser-provider.md](browser-provider.md).
 
 When preflight is unavailable or unknown, mark dependent scenarios `blocked` or `unexecuted`, pause
 only their batch, and continue proven-independent work. Do not repeat the same preflight until a
@@ -84,14 +91,16 @@ higher one:
    using real dependencies when acceptance requires them.
 3. Real-use checks prove user-visible workflows and deployed/runtime wiring.
 
-For user-visible Web behavior, use the Codex App Chrome capability with the user's current Chrome
-session, login state, extensions, and real localhost or target service. The required acceptance pass
-is: connect to Chrome, perform the real interaction described by `When`, observe the resulting
-visible state, and capture the visual artifact and supporting evidence. Record the target, tab,
-actions, visible result, capture time, and screenshot/artifact path or hash. If Chrome is
-unavailable, report the missing evidence and keep the acceptance incomplete or blocked; do not
-claim it passed. Playwright is prohibited in Bruce acceptance and cannot be used as a fallback,
-repository-SOP exception, or user-request override. Any Playwright-only result is invalid evidence.
+For user-visible Web behavior, use the Provider selected by `verification.browser_provider` with
+the target's real service and the session semantics of that Provider. The required acceptance pass
+is: connect to the selected Provider, perform the real interaction described by `When`, observe the
+resulting visible state, and capture the visual artifact and supporting evidence. Record the Provider,
+target, session/task-space or current-tab identity, actions, visible result, capture time, basis
+revision, and screenshot/artifact path or hash. For `browser-layout`, also record viewport and
+geometry/overflow checks. If the selected Provider is unavailable, report the missing evidence and
+keep the acceptance incomplete or blocked; do not claim it passed or switch Provider. Playwright-only
+results are invalid in Bruce acceptance and are not a supported Provider. The current supported
+values are `ego-lite` and `chrome`. See [browser-provider.md](browser-provider.md).
 
 ## Continuous author feedback
 

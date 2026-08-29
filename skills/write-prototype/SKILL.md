@@ -168,7 +168,11 @@ context.
 
 After explicit provider selection and before project mutation:
 
-1. Resolve every required logical capability.
+1. Resolve `verification.browser_provider` from the applicable `.bruce/config.yaml` (default `ego-lite`)
+   and normalize any legacy visual scope through [browser-provider.md](../bruce/references/browser-provider.md).
+   Record the selected Provider and its required capabilities in the manifest. This Provider governs
+   visible Web interaction and visual evidence; it must not be silently replaced. Resolve every other
+   required logical capability.
 2. Apply a selection matrix before discovery. If the task contract or user already supplies an
    Agent/model/skill/plugin/design-system id, verify that selection directly and do not enumerate
    the corresponding full catalog. Run `list_agents` only when Agent/model selection is missing or
@@ -196,8 +200,11 @@ After explicit provider selection and before project mutation:
    Do not claim preflight passed. Proceed only within an explicit fidelity and evidence boundary;
    any host-reported failure still blocks.
 
-Screenshot capability may be unavailable without blocking greenfield generation. It limits Visual
-evidence and may block an existing-product fidelity claim when no other sufficient baseline exists.
+Screenshot capability may be unavailable without blocking greenfield generation when no runtime visual
+evidence is being claimed. It limits Visual evidence and blocks an existing-product fidelity claim or
+any `browser-smoke`/`browser-layout` acceptance row when the selected Provider cannot produce the
+required artifact. Record the selected Provider, capability status, and affected acceptance ids; do not
+substitute another Provider.
 
 ## Generation and effective output
 

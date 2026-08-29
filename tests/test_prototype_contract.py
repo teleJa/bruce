@@ -182,7 +182,10 @@ class PrototypeContractTest(unittest.TestCase):
         self.assertIn("`prototype-manifest.md`", self.design_gate)
         self.assertIn("confirmed", self.design_gate)
         self.assertIn("prototype", self.completion_gate.lower())
-        self.assertIn("current Codex App Chrome evidence", self.completion_gate)
+        self.assertIn("Provider\nselected by `verification.browser_provider`", self.completion_gate)
+        self.assertIn("verification.browser_provider", self.skill)
+        self.assertIn("browser-provider.md", self.skill)
+        self.assertIn("must not be silently replaced", self.skill)
         self.assertNotIn("prototype-gate", self.workflow)
 
     def test_existing_product_extension_requires_grounding_bundle(self) -> None:

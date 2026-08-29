@@ -76,7 +76,7 @@ the user explicitly authorizes an exploratory fidelity boundary.
 - Layout invariants: <stable topology, relationship, sizing, wrapping, overflow, and responsive rules>
 - Visual anchors: <evidenced hierarchy, brand, palette, typography, spacing, and geometry>
 - Required viewports: <viewport names and width/height>
-- Evidence methods: <contract, unit, chrome-smoke, chrome-layout, screenshot, or other feasible evidence>
+- Evidence methods: <contract, unit, browser-smoke, browser-layout, screenshot, or other feasible evidence>
 - Implementation mapping: <optional generic file/route/template/view/source-entry locator; never a framework requirement>
 - Navigation: <source and destination>
 - Explicit non-goals: <excluded pages, fields, actions, roles, states, and rules>

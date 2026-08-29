@@ -35,7 +35,7 @@ to the provider; do not copy unrelated source or CSS.
 - Required viewports: <viewport names and width/height>
 - Interaction transitions: <trigger, precondition, state transition, success, and failure>
 - Observable fields: <user-visible fields, relationships, and empty/error semantics>
-- Evidence methods: <contract, unit, chrome-smoke, chrome-layout, screenshot, or other feasible evidence>
+- Evidence methods: <contract, unit, browser-smoke, browser-layout, screenshot, or other feasible evidence>
 - Evidence freshness: <current/planned/stale/unavailable with impact>
 - Implementation mapping: <optional `file`, `route`, `template`, `view`, or `source-entry`; no framework AST>
 

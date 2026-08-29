@@ -48,7 +48,7 @@
 - agent_readiness: <clear, partial, or blocked plus host-reported auth/readiness evidence>
 - cli_compatibility: <clear, partial, or blocked plus CLI version/config evidence>
 - input_readability: <clear or blocked plus every checked path>
-- visual_capability: <available or unavailable plus browser/screenshot mechanism>
+- visual_capability: <available or unavailable plus selected browser_provider and screenshot mechanism>
 
 ## Independent checks
 

@@ -122,7 +122,7 @@ binding、allocation、ownership、sharing 或 state-transfer，按适用性检�
 和 `unknown` 不得在没有权威证据时静默报告为 `offline`。
 
 每个重要断言必须在其权威层级取证，所需层级以 task contract、`test-plan.md` 的 Required layer 和
-具体 acceptance 为准：渲染状态需要 UI/Chrome 证据，权威裁决需要 API/service 证据，持久化不变量
+具体 acceptance 为准：渲染状态需要配置 Provider 的 UI 证据，权威裁决需要 API/service 证据，持久化不变量
 只有在存在持久化状态时需要 database/persistence 证据。不适用层级不构成缺口；已明确记录
 `not_applicable` 及原因的矩阵项不构成缺证据。若缺少适用性判断、必需矩阵、不变量、冲突/视角场景、
 权威状态源或对应层级证据，返回 `Completion: issues`（权威或必需环境不可用时返回
@@ -148,12 +148,12 @@ UI-file diff into a full visual run:
 
 - `none` is valid only when the final diff and acceptance have no material rendered, layout,
   responsive, or user-visible interaction outcome; record the repository-backed reason.
-- `chrome-smoke` requires a current Codex App Chrome pass consisting of a real interaction against
-  the target, the resulting visible state, and a screenshot or equivalent Chrome visual artifact;
-  it does not require layout geometry when no layout invariant changed.
-- `chrome-layout` requires current Chrome evidence plus the relevant screenshot, geometry/overflow,
-  and interaction checks. For layout-sensitive changes, a DOM snapshot or text assertion cannot
-  substitute for these artifacts.
+- `browser-smoke` requires a pass from the configured browser Provider consisting of a real
+  interaction against the target, the resulting visible state, and a screenshot or equivalent
+  artifact; it does not require layout geometry when no layout invariant changed.
+- `browser-layout` requires evidence from the configured Provider plus the relevant screenshot,
+  geometry/overflow, and interaction checks. For layout-sensitive changes, a DOM snapshot or text
+  assertion cannot substitute for these artifacts.
 
 Before returning a verdict, compare `visual_scope` with the final diff. A declaration that is weaker
 than the changed visible risk is an `issues` finding, and its missing visual row is material. Evidence
@@ -165,12 +165,12 @@ Cross-check the declared risk against the changed scope. A `low` task records `t
 the repository evidence that rules out guarded and critical triggers; `guarded` and `critical` tasks
 name the matching risk-policy trigger. A missing or contradictory trigger is an `issues` finding.
 
-For `chrome-smoke` and `chrome-layout` Web acceptance, require current Codex App Chrome evidence
-against the real target and current user session. The evidence must show the action, resulting
-visible state, and visual artifact; `chrome-layout` must also show the relevant geometry/overflow
-checks. When the declared scope is missing or Chrome is required but unavailable, keep the scenario
-incomplete or blocked. Playwright is prohibited and any Playwright-only evidence is invalid; do not
-substitute it for the required Chrome pass under any circumstance.
+For `browser-smoke` and `browser-layout` Web acceptance, require current evidence from the Provider
+selected by `verification.browser_provider` against the real target. The evidence must show the
+Provider, action, resulting visible state, and visual artifact; `browser-layout` must also show the
+relevant geometry/overflow checks. When the declared scope is missing or the selected Provider is
+required but unavailable, keep the scenario incomplete or blocked. Do not substitute another Provider
+or use undocumented fallback evidence.
 
 When a confirmed prototype governed implementation, map its required pages, states, interactions,
 failure feedback, positive and negative assertions, layout invariants, reuse anchors, and visual
@@ -185,8 +185,8 @@ blocked, unavailable, or mismatched Visual combinations are design-alignment iss
 token assertion remains a design-alignment issue even when the provider succeeded or the user supplied
 manual-only confirmation. A provider score, prototype source, preview URL, prototype screenshot, or
 `manual-only` prototype confirmation does
-not prove the implementation matches it; require current Codex App Chrome evidence for every
-material visible outcome.
+not prove the implementation matches it; require current evidence from the configured browser Provider
+for every material visible outcome.
 
 ### Surface review matrix
 
@@ -199,7 +199,7 @@ or `blocked` according to the existing external-state rules; they cannot be prom
 static Surface validator, prototype screenshot, DOM text, or provider score. Surface findings remain
 findings inside the single Completion verdict and never create a second UI verdict.
 
-For `chrome-smoke`, prove one real interaction and its visible result. For `chrome-layout`, prove the
+For `browser-smoke`, prove one real interaction and its visible result. For `browser-layout`, prove the
 interaction, screenshot, viewport, geometry/overflow, and region evidence for each affected Surface ID.
 
 ### Design alignment

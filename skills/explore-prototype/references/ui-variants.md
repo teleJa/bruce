@@ -25,7 +25,8 @@ layout code that the variants can no longer diverge structurally.
 
 ## Evaluation
 
-Open every variant through the Codex App Chrome capability, exercise the primary interaction, inspect
+Open every variant through the configured browser Provider, exercise the primary interaction, inspect
 the visible state and relevant DOM/geometry, and capture screenshots when layout comparison matters.
+Record the Provider and session/task-space or current-tab identity with the evidence.
 Record which parts the user selects and why. A winning variant still requires production-quality
 implementation; remove the switcher and losing variants from the production change.

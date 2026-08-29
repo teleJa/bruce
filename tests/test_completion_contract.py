@@ -98,11 +98,12 @@ class CompletionContractTest(unittest.TestCase):
         ):
             self.assertIn(phrase, normalized)
 
-    def test_web_acceptance_requires_current_chrome(self) -> None:
-        self.assertIn("current Codex App Chrome evidence", self.skill)
-        self.assertIn("keep the scenario\nincomplete or blocked", self.skill)
-        self.assertIn("Playwright is prohibited", self.skill)
-        self.assertIn("Playwright-only evidence is invalid", self.skill)
+    def test_web_acceptance_requires_configured_provider(self) -> None:
+        self.assertIn("Provider\nselected by `verification.browser_provider`", self.skill)
+        self.assertIn("keep the scenario incomplete or blocked", self.skill)
+        self.assertIn("Do not substitute another Provider", self.skill)
+        self.assertIn("browser-layout", self.skill)
+        self.assertIn("configured browser Provider", self.skill)
 
     def test_surface_contract_rows_require_mapping_and_fresh_runtime_evidence(self) -> None:
         for marker in (
@@ -118,12 +119,12 @@ class CompletionContractTest(unittest.TestCase):
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, self.skill)
-        self.assertIn("chrome-layout", self.skill)
+        self.assertIn("browser-layout", self.skill)
         self.assertIn("geometry/overflow", self.skill)
 
     def test_visual_scope_is_risk_proportional_and_fresh(self) -> None:
         normalized = " ".join(self.skill.split())
-        for scope in ("`none`", "`chrome-smoke`", "`chrome-layout`"):
+        for scope in ("`none`", "`browser-smoke`", "`browser-layout`"):
             self.assertIn(scope, normalized)
         for phrase in (
             "Do not turn every frontend or UI-file diff into a full visual run",

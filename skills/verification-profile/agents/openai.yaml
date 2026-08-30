@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verification Profile"
+  short_description: "Generate project-adaptive verification loop profiles"
+  default_prompt: "Use $verification-profile to generate the project's Verification Profile for Bruce; map real stages, evidence, waits, blockers, and resume rules without implementing adapters."

@@ -1,0 +1,60 @@
+version: 1
+execution: sequential
+tasks:
+  - task_id: T-001
+    title: 冻结验证循环状态与事件协议
+    contract_revision: 1
+    path: tasks/T-001-freeze-loop-state-events.md
+    depends_on: []
+    acceptance_ids: [AC-001, AC-003, AC-004, AC-005, AC-007]
+    allowed_paths:
+      - skills/bruce/references/verification-loop.md
+      - skills/bruce/references/failure-recovery.md
+      - skills/bruce/templates/checkpoint.yaml
+      - skills/bruce/templates/handoff.md
+      - skills/bruce/SKILL.md
+      - skills/goal-execution/SKILL.md
+      - skills/completion-gate/SKILL.md
+      - references/verification-loop-contract.md
+    excluded_paths: [projects/**, deployments/**, database/**]
+    parallel_safe: false
+  - task_id: T-002
+    title: 定义项目验证 Profile 与 Adapter 边界
+    contract_revision: 1
+    path: tasks/T-002-define-project-profile-adapter.md
+    depends_on: [T-001]
+    acceptance_ids: [AC-002, AC-003, AC-006]
+    allowed_paths:
+      - skills/bruce/references/verification-profile.md
+      - skills/bruce/references/verification-adapter.md
+      - skills/bruce/templates/verification-profile.yaml
+      - skills/bruce/templates/verification-event.yaml
+      - tests/**
+    excluded_paths: [multica/**, joytime/**, deployment/**]
+    parallel_safe: false
+  - task_id: T-003
+    title: 接入阻塞通知、用户交接与恢复语义
+    contract_revision: 1
+    path: tasks/T-003-blocking-user-handoff-resume.md
+    depends_on: [T-001, T-002]
+    acceptance_ids: [AC-003, AC-004, AC-005, AC-006]
+    allowed_paths:
+      - skills/bruce/templates/handoff.md
+      - skills/bruce/references/failure-recovery.md
+      - skills/goal-execution/SKILL.md
+      - tests/**
+    excluded_paths: [projects/**, external-services/**]
+    parallel_safe: false
+  - task_id: T-004
+    title: 更新文档与 Gate 回归
+    contract_revision: 1
+    path: tasks/T-004-document-and-gate-regression.md
+    depends_on: [T-001, T-002, T-003]
+    acceptance_ids: [AC-001, AC-004, AC-007]
+    allowed_paths:
+      - skills/bruce/SKILL.md
+      - skills/completion-gate/SKILL.md
+      - README.md
+      - tests/**
+    excluded_paths: [projects/**, deployments/**, database/**]
+    parallel_safe: false

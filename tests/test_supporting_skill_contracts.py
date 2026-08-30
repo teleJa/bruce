@@ -20,6 +20,7 @@ SUPPORTING_SKILLS = (
     "spawn-execute",
     "completion-gate",
     "doctor",
+    "verification-profile",
 )
 
 LEGACY_MARKERS = (
@@ -174,6 +175,25 @@ class SupportingSkillContractTest(unittest.TestCase):
         ):
             self.assertIn(phrase, template)
         self.assertIn("## 业务不变量与权威状态", template)
+
+    def test_verification_profile_has_project_adapter_and_blocking_boundaries(self) -> None:
+        body = read("skills/verification-profile/SKILL.md")
+        normalized = " ".join(body.split())
+        for phrase in (
+            "Project Verification Profile",
+            "waiting_external",
+            "waiting_user",
+            "blocked",
+            "explicit resume",
+            "Completion Gate",
+            "Missing verification evidence",
+            "Verification Profile: ready",
+            "Do not use this skill to implement an adapter",
+        ):
+            self.assertIn(phrase, normalized)
+        self.assertIn("profile-schema.md", body)
+        self.assertIn("verification-profile.yaml", body)
+        self.assertIn("declare `Completion: pass|issues|blocked`", body)
 
     def test_profile_does_not_trigger_supporting_modes(self) -> None:
         self.assertNotIn("Bruce routes a `full` task", read("skills/goal-execution/SKILL.md"))

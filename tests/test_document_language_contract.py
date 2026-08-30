@@ -12,6 +12,7 @@ DOCUMENT_WRITERS = (
     "write-prototype",
     "write-tests",
     "design-gate",
+    "verification-profile",
 )
 
 

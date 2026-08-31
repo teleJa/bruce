@@ -38,6 +38,11 @@ specified one.
 
 ## Audit record
 
+Before Goal-backed verification consumes a Profile, record the exact Profile revision and
+confirmation snapshot. A pending or stale Profile keeps the affected work paused and is reported to
+the user; Goal mode does not confirm Profiles or bypass their user confirmation. User resume after a
+Profile update requires explicit confirmation of the new revision before verification resumes.
+
 After Goal creation or resumption, create or reuse `.goal/<goal-id>/execute_record.md`. If no usable
 Goal id is returned, use a stable timestamp slug and record the native objective. Keep one record with:
 

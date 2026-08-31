@@ -1,0 +1,62 @@
+version: 1
+execution: sequential
+tasks:
+  - task_id: T-001
+    title: 冻结 Profile schema、来源与确认生命周期
+    contract_revision: 1
+    path: tasks/T-001-freeze-profile-lifecycle.md
+    depends_on: []
+    acceptance_ids: [AC-001, AC-005, AC-006, AC-008, AC-009]
+    allowed_paths:
+      - skills/bruce/references/profile-lifecycle.md
+      - skills/bruce/references/profile-security.md
+      - skills/bruce/templates/profile-confirmation.yaml
+      - skills/bruce/templates/verification-run.yaml
+      - skills/bruce/SKILL.md
+      - skills/goal-execution/SKILL.md
+      - skills/completion-gate/SKILL.md
+      - tests/**
+    excluded_paths: [projects/**, deployments/**, database/**]
+    parallel_safe: false
+  - task_id: T-002
+    title: 新增 environment-profile skill
+    contract_revision: 1
+    path: tasks/T-002-add-environment-profile-skill.md
+    depends_on: [T-001]
+    acceptance_ids: [AC-001, AC-002, AC-006, AC-008]
+    allowed_paths:
+      - skills/environment-profile/**
+      - tests/test_supporting_skill_contracts.py
+      - tests/test_agents_metadata.py
+      - tests/test_document_language_contract.py
+      - tests/test_environment_profile_contract.py
+    excluded_paths: [projects/**, deployments/**, database/**]
+    parallel_safe: false
+  - task_id: T-003
+    title: 改造 verification-profile 为需求级生成
+    contract_revision: 1
+    path: tasks/T-003-revise-verification-profile.md
+    depends_on: [T-001, T-002]
+    acceptance_ids: [AC-003, AC-004, AC-005, AC-006, AC-007, AC-008]
+    allowed_paths:
+      - skills/verification-profile/**
+      - tests/test_supporting_skill_contracts.py
+      - tests/test_document_language_contract.py
+      - tests/test_verification_profile_contract.py
+    excluded_paths: [projects/**, deployments/**, database/**]
+    parallel_safe: false
+  - task_id: T-004
+    title: 接入 Bruce workflow 文档与回归
+    contract_revision: 1
+    path: tasks/T-004-workflow-and-regression.md
+    depends_on: [T-001, T-002, T-003]
+    acceptance_ids: [AC-007, AC-009]
+    allowed_paths:
+      - skills/bruce/SKILL.md
+      - skills/bruce/references/verification-loop.md
+      - skills/bruce/references/failure-recovery.md
+      - skills/goal-execution/SKILL.md
+      - skills/completion-gate/SKILL.md
+      - tests/**
+    excluded_paths: [projects/**, deployments/**, database/**]
+    parallel_safe: false

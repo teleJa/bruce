@@ -1,0 +1,18 @@
+# Confirmation is user input authorization, not a Bruce Gate or test result.
+profile_id: requirement-specific-id
+profile_revision: 1
+content_hash: sha256:pending
+confirmation:
+  state: pending
+  confirmed_by: null
+  confirmed_at: null
+  confirmed_revision: null
+  confirmed_content_hash: null
+confirmation_summary:
+  requirements: []
+  environments: []
+  accounts: []
+  skills: []
+  evidence: []
+  repair_boundaries: []
+  blockers: []

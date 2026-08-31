@@ -1,0 +1,89 @@
+# Static, reusable Environment Profile. New profiles are unconfirmed by default.
+version: 1
+profile_kind: environment
+profile_id: null
+profile_revision: 1
+content_hash: sha256:pending
+profile_state: draft
+confirmation:
+  state: pending
+  confirmed_by: null
+  confirmed_at: null
+  confirmed_revision: null
+  confirmed_content_hash: null
+
+project:
+  name: null
+  root: null
+
+environment:
+  name: null
+  kind: null
+  production: false
+  shared: false
+  purpose: null
+  allowed_operations: []
+  prohibited_operations: []
+
+source_of_truth: []
+facts: []
+unresolved_facts: []
+
+build:
+  strategy: null
+  executor: null
+  trigger:
+    method: null
+    authorization_required: true
+  terminal_states: [success, failed, canceled, unknown]
+  required_evidence: []
+  invariants:
+    - trigger-accepted-is-not-build-success
+
+deployment:
+  strategy: null
+  executor: null
+  targets: []
+  terminal_states: [deployed, failed, rolled_back, unknown]
+  required_evidence: []
+  invariants:
+    - build-success-is-not-deployment-success
+    - deployment-success-is-not-user-verification
+
+services: []
+databases: []
+clients: []
+account_pools: []
+credentials: []
+skills: []
+preflight: []
+
+freshness:
+  basis: profile-facts-and-source-revisions
+  invalidate_on:
+    - pipeline-change
+    - deployment-target-change
+    - endpoint-change
+    - account-policy-change
+    - credential-source-change
+    - client-artifact-change
+    - selected-skill-change
+  revalidation_required: true
+
+security:
+  persist_secrets: false
+  expose_secrets_to_model: false
+  redact_logs: true
+  credential_values_allowed: false
+  credential_refs_only: true
+
+confirmation_summary:
+  unresolved_questions: []
+  user_must_confirm:
+    - profile-identity-and-revision
+    - environment-scope-and-safety
+    - source-facts-and-user-facts
+    - build-and-deployment-path
+    - accounts-and-credential-references
+    - skills-and-preflight
+    - freshness-and-security-policy

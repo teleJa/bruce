@@ -100,6 +100,14 @@ Reviewer waits are bounded by `workflow.review.max_wait_seconds` (default: 60) a
 required independent review is unavailable, return `Completion: blocked`; do not start an unbounded
 second review chain.
 
+### Profile evidence
+
+When a Requirement Verification Profile or Environment Profile governs the task, require the exact
+Profile revision, content hash, and `confirmation.state=confirmed` before treating its planned
+verification path as an executable acceptance basis. Pending, stale, or unresolved Profiles keep the
+affected acceptance incomplete or blocked according to the external-state rules. Profile confirmation
+is not a Completion result, and a Profile/Adapter/Skill cannot produce `Completion: pass`.
+
 ### Acceptance evidence
 
 Map every acceptance condition to current, reproducible evidence at the required layer. A unit test

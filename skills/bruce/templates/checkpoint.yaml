@@ -5,6 +5,17 @@ checkpoint_kind: progress|batch|resume
 requirement_id: <requirement-or-change-id>
 basis_revision: <commit-or-working-tree-basis>
 environment: {}
+profiles:
+  environment_refs: []
+  verification_profile:
+    profile_id: null
+    profile_revision: null
+    content_hash: null
+    confirmation_state: pending|confirmed|rejected|stale
+    confirmed_revision: null
+    confirmed_content_hash: null
+blockers: []
+resume_event: null
 active_task: T-001
 execution_mode: sequential
 batch_id: <batch-or-null>

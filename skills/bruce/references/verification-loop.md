@@ -42,6 +42,18 @@ screenshot path or hash, and the applicable checks (for example card boxes, row 
 visual evidence. For Web acceptance, an absent `visual_scope` remains an unresolved contract gap;
 do not silently treat it as `none`.
 
+## Profile inputs and confirmation
+
+When a persisted Environment Profile or Requirement Verification Profile governs the current task,
+record its `profile_id`, `profile_revision`, `content_hash`, and confirmation snapshot before entering
+verification. A Profile with `confirmation.state=pending`, a stale referenced revision, or unresolved
+required user facts cannot be consumed for controlled verification. Stop the affected Task/Batch and
+report the missing confirmation or facts; do not infer them from repository defaults. Confirmation is
+an input condition, not a separate Gate. Runtime capability preflight remains required after confirmation.
+
+A Requirement Verification Profile must cite the exact `requirements.md` path and content hash. Its
+Acceptance mappings are requirement-scoped; reusable Environment Profiles must not receive those IDs.
+
 ## Capability preflight
 
 Before the first batch that depends on a browser, database, model, external service, or another

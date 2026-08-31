@@ -15,6 +15,12 @@
 
 - [ ] <observable completion condition>
 
+## Profile inputs
+
+- Environment Profile: <path, revision, content hash, confirmation state>
+- Requirement Verification Profile: <path, revision, content hash, confirmation state>
+- Requirements: <path and content hash>
+
 ## Completed
 
 - <change plus current verification evidence>
@@ -30,6 +36,13 @@
 ## Failures and unknowns
 
 - <L0-L4 classification, affected boundary, attempts, known facts, unknown facts>
+
+## Profile confirmation and resume
+
+- Confirmation required: <yes/no>
+- Exact profile revision/hash confirmed: <details>
+- If blocked: <user action, exact unlock condition, explicit resume requirement>
+- Resume from: <task/batch/stage>
 
 ## Workspace verification for receiver
 

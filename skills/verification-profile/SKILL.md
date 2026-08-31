@@ -1,151 +1,170 @@
 ---
 name: verification-profile
-description: Generate a project-specific Verification Profile for Bruce when build, deployment, runtime, external, or user verification differs by project.
+description: Generate a requirement-scoped verification and repair profile from a user-provided requirements.md and confirmed environment profiles.
 ---
 
 # Verification Profile
 
-Generate a **Project Verification Profile** describing the project-specific verification strategy that Bruce's verification loop will consume.
-See the generated schema and invariants in [profile-schema.md](references/profile-schema.md) when validating or reviewing a profile.
-This skill adapts Bruce to a project's real environment; it does not turn Bruce into that project's
-build, deployment, or runtime executor.
+Generate a **Requirement Verification Profile** for one specific change. It describes how the
+requirements in a user-provided `requirements.md` will be verified and repaired using confirmed
+Environment Profiles, accounts, credentials, tools, and Skills.
 
-## When to use
+This is a supporting capability inside Bruce's workflow. It does not execute project environments,
+modify application code, or decide completion.
 
-Use this skill when a task needs a durable, project-specific description of how to verify changes,
-including different local, CI/CNB, deployment, Web, Desktop, external-service, or user-manual stages.
-Typical examples include a Multica flow that waits for CNB and then requires Desktop testing, or a
-Joytime flow that starts a Web service and performs browser/runtime checks.
+Natural-language document fields follow the user language; for Chinese requests use Simplified Chinese while preserving stable machine-facing tokens.
 
-Do not use this skill to implement an adapter, modify application code, trigger deployment, or decide
-whether a task is complete. If the project environment is not sufficiently evidenced, stop with the
-missing facts instead of inventing commands, endpoints, credentials, or deployment guarantees.
+## Required input
 
-## Inputs
+The user must provide the exact `requirements.md` path for the current requirement. Do not infer it
+from a directory scan, chat history, a similarly named change, or `test-plan.md` alone.
 
-Read the current Bruce Task Contract, acceptance scenarios, required evidence layers, project
-repository rules, existing build/test/deployment documents, and any confirmed architecture or plan.
-For persisted documents, apply [document-language.md](../bruce/references/document-language.md): use the
-user's language for natural-language fields and Simplified Chinese for a Chinese request while keeping
-stable machine-facing tokens unchanged.
-Use actual repository commands and declared external capabilities. Distinguish repository evidence,
-planned capability, live runtime evidence, and user-supplied evidence.
+Example:
 
-Before writing a profile, identify:
+```text
+/Users/tele/xjjk/aiworkbench/multica/docs/change/20260825-154000-sso-xiangjia-default-workspace/requirements.md
+```
 
-- stages and dependency order;
-- executor for each stage: `local`, `project-adapter`, `external`, `browser-provider`, or `user`;
-- synchronous versus asynchronous versus user-waiting behavior;
-- required preconditions and terminal results;
-- artifact, build, deployment, client, or target identity;
-- evidence required for each acceptance id;
-- failure mapping to Bruce `L0`–`L4`;
-- retry/repair budget and hard stop conditions;
-- how an external event or user response resumes the same Task/Batch.
+If the path is absent, return `Missing requirements input` and ask for that one path. If the file is
+unreadable or has no stable Acceptance criteria, return `Missing verification evidence` without
+creating a Requirement Verification Profile.
+
+## Confirmed environment inputs
+
+Consume one or more user-identified Environment Profiles. Each referenced Environment Profile must
+have `confirmation.state=confirmed`, matching `profile_revision` and `content_hash`, unless this
+skill is only producing an incomplete draft that explicitly lists the missing confirmation.
+
+Environment Profiles provide reusable facts such as:
+
+- build and deployment strategy;
+- service, database, browser, Desktop, and client targets;
+- account pools and required initial-state predicates;
+- safe Credential references, not secret values;
+- available Skills/capabilities and their evidence boundaries;
+- preflight, authorization, freshness, and stop rules.
+
+If the project environment is undocumented, report the smallest user questions needed to complete
+an Environment Profile. Do not invent endpoints, commands, account state, credentials, or deployment
+behavior.
 
 ## Procedure
 
-1. Resolve the change directory with [artifact-placement.md](../bruce/references/artifact-placement.md).
-2. Inspect the project-specific build, test, deployment, runtime, and manual-verification sources. Do
-   not infer a Desktop test from a Web E2E command, a deployment from a build trigger, or a client
-   version from an unrelated artifact.
-3. Map each material acceptance id to one or more verification stages. Every stage must state its
-   executor, dependency, required evidence, and next action.
-4. Represent planned external waits as `waiting_external` and planned user testing as `waiting_user`.
-   Represent an unsafe or unresolved condition as `blocked`; when blocked, freeze the affected
-   Task/Batch and record the user notification and exact unlock condition.
-5. Generate one `verification-profile.yaml` in the change directory using the profile schema. Keep
-   project commands, targets, and environment facts in the profile or project adapter boundary, not
-   in Bruce's core workflow documents.
-6. Add a concise human-readable rationale or evidence note only when needed to explain an
-   environment-specific decision. Do not copy logs into the profile.
-7. Check that no stage can report Bruce completion, that evidence is revision-bound, that external
-   actions are idempotent or explicitly bounded, and that a blocked run requires an explicit resume
-   event before continuing.
-8. Return the generated path, project facts, stage graph, external/user waits, failure mapping,
-   unresolved evidence gaps, and the next implementation or verification action.
+1. Read the supplied `requirements.md` and preserve its content hash, path, Objective, Scope,
+   Actors, confirmed decisions, exclusions, Acceptance IDs, and constraints.
+2. Read the referenced Environment Profiles and verify their confirmation and revision. Record the
+   environment revision used by this requirement; do not copy the entire environment definition.
+3. For every material Acceptance, define the verification stages, selected environment/profile,
+   account requirement, selected Skill/capability, required preconditions, evidence, expected
+   result, failure diagnosis, allowed repair scope, and next action.
+4. Keep requirement-level `acceptance_ids` and scenario mappings in this Profile. Do not write them
+   into an Environment Profile.
+5. Distinguish static strategy from dynamic execution. The Profile describes what to do; the current
+   source revision, actual account binding, build/deployment identity, evidence, and stage result
+   belong in Verification Run/Checkpoint.
+6. Define `waiting_external` for planned asynchronous build/deployment or external results and
+   `waiting_user` for prepared user testing or operational actions. Define `blocked` only when safe
+   continuation is not possible.
+7. For every blocker, define the affected Task/Batch, known and unknown facts, user action, exact
+   unlock condition, and explicit resume requirement. A blocker stops the affected scope and its
+   dependent work; it does not authorize guessing or silent fallback.
+8. Define how a confirmed failure enters a bounded repair set, which original scenario and related
+   regressions must rerun, and when the loop pauses for user decision instead of editing.
+9. Generate `<change-dir>/verification-profile.yaml` with `confirmation.state=pending` and show the
+   user a confirmation summary. Do not treat generation as authorization to execute.
+10. On a later explicit confirmation, confirm the exact `profile_id`, `profile_revision`, and
+    `content_hash`. Any substantive change resets confirmation to `pending`.
 
 ## Profile contract
 
-The generated profile must contain these top-level fields:
+Use [profile-schema.md](references/profile-schema.md) and
+[document-language.md](../bruce/references/document-language.md). The generated Profile must include
+these sections:
 
 ```yaml
 version: 1
-profile_id: example-project-verification
-project: example-project
-source_of_truth:
-  - path: docs/verification.md
-    fact: example evidence-backed project rule
-capabilities:
-  - capability_id: local-check
-    kind: local
-    status: available|unavailable|unknown
-stages:
-  - stage_id: local-check
-    executor: local|project-adapter|external|browser-provider|user
-    mode: sync|async|user
-    depends_on: []
-    acceptance_ids: [AC-001]
-    preconditions: []
-    trigger: example command or handoff
-    terminal_states: [pass, fail, blocked]
-    required_evidence: [command-result]
-    next_on_pass: next-stage|completion-gate
-    next_on_fail: classify
-    next_on_blocked: notify-user
-failure_mapping:
-  L0: retry only when idempotent
-  L1: bounded repair and reverify
-  L2: replan affected scope
-  L3: ask user and pause
-  L4: freeze and report known/unknown facts
-blocking:
-  affected_scope: task|batch|goal|incident
-  notification_required: true
-  unlock_requires_explicit_resume: true
-resume:
-  preserve: [task_id, batch_id, contract_revision, repair_round, retry_count]
-  rerun: [preflight, stale-evidence, original-failure, related-regressions]
+profile_kind: requirement-verification
+profile_id: requirement-specific-id
+profile_revision: 1
+content_hash: sha256:...
+profile_state: draft|needs_input|ready_for_confirmation|confirmed|stale|rejected|superseded
+confirmation:
+  state: pending|confirmed|rejected
+  confirmed_by: null
+  confirmed_at: null
+  confirmed_revision: null
+  confirmed_content_hash: null
+requirements:
+  path: /absolute/path/to/requirements.md
+  content_hash: sha256:...
+  acceptance_ids: []
+environment_refs: []
+account_requirements: []
+skill_selections: []
+acceptance: {}
+blocking_rules: {}
+resume_rules: {}
 completion:
   owner: completion-gate
-  adapter_may_return_completion: false
+  profile_may_return_completion: false
 ```
 
-Replace example values with repository-backed facts. Keep the stable machine-facing tokens unchanged.
-Do not add credentials, cookies, tokens, or secrets to the profile.
+Each `acceptance` entry must trace to `requirements.path` and contain a concrete verification and
+repair mapping. A Profile with missing environment, account, credential-source, or evidence facts
+must remain `draft`/`needs_input` or `issues`; it cannot be confirmed as complete.
 
-## Blocking and resume rules
+## Confirmation and freshness
 
-- `waiting_external` means the expected external system has not returned a terminal result; do not
-  repeatedly trigger the same action and do not report completion.
-- `waiting_user` means the exact artifact/target and manual steps are ready; provide expected results
-  and evidence requirements, then wait for a structured response.
-- `blocked` means safe continuation is not possible. Stop the affected Task/Batch, its dependent
-  work, and any repair/retry actions; notify the user with known facts, unknown facts, impact, and
-  `unlock_condition`.
-- Do not resume a blocked run because a new turn merely exists. Require explicit user handling or
-  resume intent, re-run changed preflight checks, invalidate affected old evidence, and continue
-  from the same Task/Batch/stage without resetting budgets.
-- If the user's response changes scope, acceptance, authorization, or risk, return the change to
-  Bruce for a new contract revision instead of silently continuing the old profile.
+- Newly generated Profiles are never confirmed by default.
+- User confirmation is an input authorization, not a Design Gate, Completion Gate, or test result.
+- Requirements hash, referenced Environment Profile revision, account requirement, selected Skill,
+  evidence layer, repair boundary, or external authorization changes make the Profile `stale` and
+  reset confirmation to `pending`.
+- A confirmed Profile can be consumed only when all referenced revisions and hashes still match.
+- Runtime preflight remains mandatory after confirmation.
+
+## Security
+
+Record account aliases/pools, actor, purpose, initial-state predicates, and Credential source
+references. Never write passwords, API Keys, Cookies, JWTs, SSO tickets, complete provider responses,
+or other secret values into the Profile, Checkpoint, Handoff, logs, or the response.
 
 ## Output
 
 Return exactly one outcome:
 
-- `Verification Profile: ready` when one repository-backed `verification-profile.yaml` is generated,
-  every material acceptance has a stage/evidence mapping, waits and blockers are explicit, and the
-  document check is clear.
-- `Missing verification evidence` when the project facts cannot support a safe profile. Do not
-  generate or update `verification-profile.yaml`; return the smallest bounded inspection needed.
-- `Verification Profile: issues` when the profile exists but has repairable mapping, evidence, or
-  boundary problems. Do not treat it as implementation approval or completion.
+- `Missing requirements input` when the user did not provide the exact requirements.md path.
+- `Missing verification evidence` when requirements or confirmed environment facts are insufficient to
+  construct a safe requirement-level verification strategy.
+- `Verification Profile: ready-for-confirmation` when the Profile is complete enough for the user to
+  review but remains `confirmation.state=pending`.
+- `Verification Profile: issues` when the generated draft has explicit repairable mapping or fact gaps.
 
-Also return `project`, `profile_path`, `stage_graph`, `waiting_external`, `waiting_user`, `blockers`,
-`evidence_gaps`, `document_check`, and `next_action`. Use `[]` for empty collections.
+Also return:
+
+```yaml
+requirements_path: ...
+requirements_content_hash: ...
+profile_path: ...
+profile_revision: ...
+confirmation_state: pending|confirmed|rejected
+acceptance_coverage:
+  covered: []
+  uncovered: []
+environment_refs: []
+account_requirements: []
+skill_selections: []
+waiting_external: []
+waiting_user: []
+blockers: []
+evidence_gaps: []
+next_action: confirm-profile|collect-environment-input|repair-profile|none
+```
+
+Do not return `Design: pass`, `Completion: pass`, or any other Gate verdict.
 
 ## Does not own
 
-Do not implement project code or adapters, execute CNB/deployment/runtime actions, collect credentials,
-replace project test policy, invoke Design Gate or Completion Gate automatically, create a second
-workflow or evidence store, or declare `Completion: pass|issues|blocked`.
+Do not generate Environment Profiles, execute project commands, trigger CNB or deployment, operate
+browsers or clients, retrieve or persist secrets, modify requirements.md, modify application code,
+create a Verification Run, invoke Design Gate or Completion Gate automatically, or declare completion.

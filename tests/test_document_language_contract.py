@@ -13,6 +13,7 @@ DOCUMENT_WRITERS = (
     "write-tests",
     "design-gate",
     "verification-profile",
+    "environment-profile",
 )
 
 

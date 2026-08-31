@@ -1,0 +1,35 @@
+# Profile security and evidence boundary
+
+Environment and Requirement Verification Profiles may describe how a credential or account is used,
+but never store the secret itself.
+
+## Allowed
+
+```yaml
+credential_id: auth-center-test
+source_ref: AUTH_CENTER_TEST_API_KEY
+required_scopes: [ticket-exchange]
+secret_value_persisted: false
+expose_to_model: false
+redact_logs: true
+```
+
+```yaml
+account_pool: auth-center-new-users
+account_alias: user-managed-test-account
+required_initial_state: local_identity_absent
+credential_source: user-managed-browser-session
+```
+
+## Forbidden
+
+- passwords, API Key values, access tokens, cookies, JWTs, SSO tickets;
+- complete external provider responses containing identity or token data;
+- secrets copied into Checkpoint, Handoff, logs, screenshots, or chat summaries.
+
+## Evidence distinction
+
+A Profile declares required evidence and its source. A Verification Run/Checkpoint records the actual
+captured evidence, source revision, environment revision, account binding, and current result. A
+Profile confirmation authorizes the strategy but does not assert runtime availability or acceptance
+success.

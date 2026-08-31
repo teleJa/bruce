@@ -146,6 +146,12 @@ Read [verification-loop.md](references/verification-loop.md) before changing beh
 an implementation while a material `Then` has no feasible evidence path unless the user explicitly
 accepts an exploratory or unverified boundary.
 
+When a task uses a persisted Environment Profile or Requirement Verification Profile, require the
+exact Profile revision and content hash. Newly generated or materially changed Profiles start with
+`confirmation.state=pending`; do not consume them for controlled implementation or verification until
+the user confirms the exact Profile. Profile confirmation is an input condition, not a third Bruce
+Gate, and it does not replace runtime capability preflight. See [profile-lifecycle.md](references/profile-lifecycle.md).
+
 For any persisted design, plan, test, handoff, or review document, read
 [document-language.md](references/document-language.md) and apply its language rule. The user's
 language controls natural-language prose; stable machine-facing contract tokens remain unchanged.
@@ -188,6 +194,8 @@ supporting skill only for a present need:
 - architecture or public/cross-component contract design: `write-architecture`;
 - schema or persistence design: `write-db-design`;
 - persistent implementation planning: `write-plan`;
+- reusable environment facts and capabilities: `environment-profile`;
+- requirement-scoped verification and repair strategy from an explicit `requirements.md`: `verification-profile`;
 - a question-driven throwaway logic or UI-variant exploration: `explore-prototype`;
 - an explicitly requested or implementation-governing grounded UI prototype: `write-prototype`;
 - complex acceptance and regression design: `write-tests`;
@@ -336,6 +344,10 @@ Goal execution records the result and synchronizes native Goal status without re
 
 Report changed files, acceptance evidence, the Design Gate result when applicable, the Completion
 Gate result, residual risks, and authorized delivery actions that were intentionally not performed.
+
+When a Profile is pending, stale, or missing required user facts, report that state and stop the
+affected verification boundary; do not silently downgrade the required evidence or continue with an
+unconfirmed environment assumption.
 
 ## Does not own
 

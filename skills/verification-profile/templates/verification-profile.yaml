@@ -1,38 +1,31 @@
-# Project-owned input consumed by Bruce's verification loop.
+# Requirement-scoped static strategy. Generated Profiles start unconfirmed.
 version: 1
-profile_id: example-project-verification
-project: example-project
-source_of_truth: []
-capabilities:
-  - capability_id: local-check
-    kind: local
-    status: unknown
-stages:
-  - stage_id: local-check
-    executor: project-adapter
-    mode: sync
-    depends_on: []
-    acceptance_ids: []
-    preconditions: []
-    trigger: project-owned command or adapter action
-    terminal_states: [pass, fail, blocked]
-    required_evidence: [command-result]
-    next_on_pass: completion-gate
-    next_on_fail: classify
-    next_on_blocked: notify-user
-failure_mapping:
-  L0: retry only when idempotent and within policy
-  L1: bounded repair and reverify original failure and regressions
-  L2: replan affected scope or dependency
-  L3: ask user and pause dependent work
-  L4: freeze writes and retries and report known/unknown facts
-blocking:
-  affected_scope: batch
+profile_kind: requirement-verification
+profile_id: requirement-specific-id
+profile_revision: 1
+content_hash: sha256:pending
+profile_state: draft
+confirmation:
+  state: pending
+  confirmed_by: null
+  confirmed_at: null
+  confirmed_revision: null
+  confirmed_content_hash: null
+requirements:
+  path: null
+  content_hash: null
+  acceptance_ids: []
+environment_refs: []
+account_requirements: []
+skill_selections: []
+acceptance: {}
+blocking_rules:
   notification_required: true
-  unlock_requires_explicit_resume: true
-resume:
-  preserve: [task_id, batch_id, contract_revision, repair_round, retry_count]
-  rerun: [preflight, stale-evidence, original-failure, related-regressions]
+  explicit_resume_required: true
+  stop_scope: affected-task-batch-and-dependent-work
+resume_rules:
+  preserve: [task_id, batch_id, contract_revision, profile_revision, retry_count, repair_round]
+  rerun: [changed-preflight, stale-evidence, original-failure, related-regressions]
 completion:
   owner: completion-gate
-  adapter_may_return_completion: false
+  profile_may_return_completion: false

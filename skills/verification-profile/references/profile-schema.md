@@ -1,93 +1,181 @@
-# Verification Profile schema
+# Requirement Verification Profile schema
 
-A profile is a project-owned input to Bruce's verification loop. It describes how a project proves its
-acceptance criteria without giving the profile authority to declare Bruce completion.
+A Requirement Verification Profile is a static, requirement-scoped strategy. It is generated from one
+explicit `requirements.md` and one or more confirmed Environment Profiles. It is not a test result,
+execution ledger, or completion verdict.
 
-## Required invariants
+## Lifecycle
 
-1. `version` is `1`, and `profile_id` and `project` are stable non-empty identifiers.
-2. Every material acceptance id appears in at least one stage's `acceptance_ids`.
-3. Every stage declares one executor, one mode, dependencies, preconditions, terminal states,
-   required evidence, and next actions.
-4. `waiting_external` and `waiting_user` are non-terminal waits; `blocked` freezes the affected
-   scope and requires notification plus an explicit resume.
-5. External results include a target or artifact identity and a basis revision before they can close an
-   acceptance row.
-6. Failure mapping points to Bruce's L0-L4 policy; profile-specific facts may refine classification but
-   may not weaken the policy or extend retry/repair budgets silently.
-7. `completion.owner` is `completion-gate`; an adapter or user response can provide evidence only.
-8. Profiles contain no credentials, cookies, access tokens, or secrets.
+```text
+draft -> needs_input -> ready_for_confirmation -> confirmed -> stale
+                                      |                 |
+                                  rejected          superseded
+```
 
-## Stage modes
-
-| Mode | Meaning | Typical executor |
-|---|---|---|
-| `sync` | The executor returns a terminal result during the current action. | `local`, `project-adapter`, `browser-provider` |
-| `async` | An external action returns later through polling or an event. | `external`, `project-adapter` |
-| `user` | The next action is an explicit user handoff and structured response. | `user` |
-
-## Result handling
-
-| Result | Bruce action |
-|---|---|
-| `pass` | Record current evidence and advance the graph. |
-| `fail` | Normalize expected/observed facts and classify before repair. |
-| `blocked` | Freeze affected scope, notify the user, and wait for unlock. |
-| `unclear` | Request the smallest missing fact; do not guess a repair. |
-| `unexecuted` | Keep the acceptance incomplete and record why it was not run. |
-
-## Minimal examples
-
-### Project with asynchronous build and manual client verification
+`confirmation.state` is separate from `profile_state`:
 
 ```yaml
-profile_id: example-desktop-project
-project: example-project
-stages:
-  - stage_id: local-check
-    executor: project-adapter
-    mode: sync
-    depends_on: []
-    acceptance_ids: [AC-001]
-    preconditions: [working-tree-basis-recorded]
-    trigger: project local check command
-    terminal_states: [pass, fail, blocked]
-    required_evidence: [command-result]
-    next_on_pass: external-build
-    next_on_fail: classify
-    next_on_blocked: notify-user
-  - stage_id: external-build
-    executor: external
-    mode: async
-    depends_on: [local-check]
-    acceptance_ids: [AC-001]
-    preconditions: [build-trigger-authorized]
-    trigger: project build adapter
-    terminal_states: [pass, fail, blocked]
-    required_evidence: [build-result, artifact-identity]
-    next_on_pass: user-client
-    next_on_fail: classify
-    next_on_blocked: notify-user
-  - stage_id: user-client
-    executor: user
-    mode: user
-    depends_on: [external-build]
-    acceptance_ids: [AC-001]
-    preconditions: [artifact-identity-confirmed]
-    trigger: user verification handoff
-    terminal_states: [pass, fail, blocked, unclear]
-    required_evidence: [observed-result, screenshot-or-log]
-    next_on_pass: completion-gate
-    next_on_fail: classify
-    next_on_blocked: notify-user
-blocking:
-  affected_scope: batch
-  notification_required: true
-  unlock_requires_explicit_resume: true
-resume:
-  preserve: [task_id, batch_id, contract_revision, repair_round, retry_count]
-  rerun: [preflight, stale-evidence, original-failure, related-regressions]
+profile_state: ready_for_confirmation
+confirmation:
+  state: pending
+```
+
+Only an explicit user confirmation of the exact profile identity, revision, and content hash can set
+both the profile and confirmation to confirmed. Confirmation is an input authorization, not a Bruce
+Gate.
+
+## Required top-level fields
+
+```yaml
+version: 1
+profile_kind: requirement-verification
+profile_id: requirement-specific-id
+profile_revision: 1
+content_hash: sha256:...
+profile_state: draft|needs_input|ready_for_confirmation|confirmed|stale|rejected|superseded
+confirmation:
+  state: pending|confirmed|rejected
+  confirmed_by: null
+  confirmed_at: null
+  confirmed_revision: null
+  confirmed_content_hash: null
+requirements:
+  path: /absolute/path/to/requirements.md
+  content_hash: sha256:...
+  acceptance_ids: []
+environment_refs: []
+account_requirements: []
+skill_selections: []
+acceptance: {}
+blocking_rules: {}
+resume_rules: {}
 completion:
   owner: completion-gate
-  adapter_may_return_completion: false
+  profile_may_return_completion: false
 ```
+
+## Environment reference
+
+```yaml
+environment_refs:
+  - profile_id: multica-sharkcloud-test
+    path: /project/.bruce/environments/sharkcloud-test.profile.yaml
+    profile_revision: 2
+    content_hash: sha256:...
+    required_confirmation: true
+    used_for: [AC-02, AC-03]
+```
+
+The referenced Profile is reusable environment input. Do not copy its current runtime results into
+this file.
+
+## Acceptance mapping
+
+```yaml
+acceptance:
+  AC-02:
+    source: requirements.md#AC-02
+    actors: [new-sso-user]
+    environments: [multica-local, multica-sharkcloud-test]
+    skills: [chrome:control-chrome]
+    verification_stages:
+      - stage_id: transaction-integration
+        executor: project-adapter
+        environment: multica-local
+        mode: sync
+        depends_on: []
+        preconditions: [test-database-available]
+        expected: identity-user-member-onboarding-atomic
+        evidence_required: [command-result, database-assertions]
+        on_pass: next-stage
+        on_fail: classify
+        on_blocked: notify-user
+      - stage_id: real-sso-login
+        executor: browser-provider
+        environment: multica-sharkcloud-test
+        mode: sync
+        depends_on: [build-deploy]
+        account: new-sso-user
+        preconditions: [deployed-revision-matches, unused-sso-subject-confirmed]
+        expected: workspace-route-without-onboarding
+        evidence_required: [final-url, visible-state, screenshot]
+        on_pass: completion-gate
+        on_fail: classify
+        on_blocked: notify-user
+    repair_rules:
+      - condition: member-missing-on-matching-revision
+        classification: L1
+        allowed_scope: server-auth-and-related-tests
+        rerun: [transaction-integration, real-sso-login]
+      - condition: deployed-revision-mismatch
+        classification: L2
+        action: stop-and-notify-user
+```
+
+Each material Acceptance must appear in `requirements.acceptance_ids` and in at least one acceptance
+mapping. A stage is evidence for its mapped Acceptance; passing one stage does not close the entire
+Acceptance unless all required stages and evidence are satisfied.
+
+## Environment, account, and Skill selection
+
+Environment references select reusable environments. Account requirements select aliases or pools and
+initial-state predicates. Skill selections record purpose and evidence boundary; availability still
+requires runtime preflight.
+
+```yaml
+account_requirements:
+  - binding_id: new-sso-user
+    environment_profile: multica-sharkcloud-test
+    account_pool: auth-center-new-users
+    required_initial_state: local_identity_absent
+    used_for: [AC-02, AC-03]
+skill_selections:
+  - skill_id: chrome:control-chrome
+    purpose: real-sso-login-and-visible-route
+    evidence_boundary: current-provider-browser-evidence
+    used_for: [AC-02, AC-03]
+```
+
+## Waiting, blocking, and resume
+
+```yaml
+blocking_rules:
+  notification_required: true
+  explicit_resume_required: true
+  stop_scope: affected-task-batch-and-dependent-work
+  rules:
+    - blocker_id: deployment-revision-mismatch
+      condition: deployed_commit_does_not_match_source_revision
+      known_facts: []
+      unknown_facts: []
+      user_action: confirm-or-fix-deployment
+      unlock_condition: deployed_commit_equals_source_revision
+      resume_from: deployment-check
+resume_rules:
+  preserve: [task_id, batch_id, contract_revision, profile_revision, retry_count, repair_round]
+  rerun: [changed-preflight, stale-evidence, original-failure, related-regressions]
+```
+
+`waiting_external` and `waiting_user` are planned non-terminal waits. `blocked` means safe progress is
+not possible and must stop, notify, and wait for explicit resume. These states belong to the dynamic
+Verification Run/Checkpoint; the static Profile only defines the rules.
+
+## Dynamic boundary
+
+Do not put these in the static Profile:
+
+- actual source revision or deployed revision;
+- actual build id or artifact result;
+- selected account instance used by one run;
+- current preflight result;
+- screenshots, logs, or user response;
+- current stage status or repair round;
+- `Completion` verdict.
+
+Store those in Verification Run/Checkpoint with references to the confirmed Profile revision.
+
+## Security invariant
+
+Credential entries may record `credential_id`, source reference, owner, scope, preflight method, and
+redaction policy. They must never record the secret value. Account entries may record alias/pool and
+state predicates, not passwords, tokens, cookies, or provider tickets.

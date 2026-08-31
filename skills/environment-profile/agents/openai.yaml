@@ -1,0 +1,4 @@
+interface:
+  display_name: "Environment Profile"
+  short_description: "Generate reusable environment profiles safely"
+  default_prompt: "Use $environment-profile to generate a repository-grounded, unconfirmed Environment Profile without executing the project environment."

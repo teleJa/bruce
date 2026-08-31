@@ -1,0 +1,22 @@
+# Dynamic execution record; do not write these values into a static Profile.
+version: 1
+run_id: VR-0001
+requirements_path: null
+requirements_content_hash: null
+profile_id: null
+profile_revision: null
+source_revision: null
+environment_profile_revisions: []
+account_bindings: []
+state: not_started|running|waiting_external|waiting_user|evaluating|repairing|re_verifying|paused|passed|blocked
+active_acceptance: null
+active_stage: null
+preflight_results: []
+stage_results: []
+evidence_refs: []
+findings: []
+blockers: []
+resume_event: null
+retry_count: 0
+repair_round: 0
+next_action: null

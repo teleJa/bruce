@@ -21,6 +21,7 @@ SUPPORTING_SKILLS = (
     "completion-gate",
     "doctor",
     "verification-profile",
+    "environment-profile",
 )
 
 LEGACY_MARKERS = (
@@ -176,24 +177,49 @@ class SupportingSkillContractTest(unittest.TestCase):
             self.assertIn(phrase, template)
         self.assertIn("## 业务不变量与权威状态", template)
 
-    def test_verification_profile_has_project_adapter_and_blocking_boundaries(self) -> None:
+    def test_verification_profile_is_requirement_scoped_and_unconfirmed(self) -> None:
         body = read("skills/verification-profile/SKILL.md")
         normalized = " ".join(body.split())
         for phrase in (
-            "Project Verification Profile",
+            "Requirement Verification Profile",
+            "exact `requirements.md` path",
+            "confirmation.state=pending",
+            "confirmed Environment Profiles",
             "waiting_external",
             "waiting_user",
             "blocked",
             "explicit resume",
             "Completion Gate",
-            "Missing verification evidence",
-            "Verification Profile: ready",
-            "Do not use this skill to implement an adapter",
+            "Missing requirements input",
+            "Verification Profile: ready-for-confirmation",
+            "Do not generate Environment Profiles",
         ):
             self.assertIn(phrase, normalized)
         self.assertIn("profile-schema.md", body)
         self.assertIn("verification-profile.yaml", body)
-        self.assertIn("declare `Completion: pass|issues|blocked`", body)
+        self.assertIn("acceptance_ids", body)
+
+    def test_environment_profile_has_reusable_and_secret_boundaries(self) -> None:
+        body = read("skills/environment-profile/SKILL.md")
+        normalized = " ".join(body.split())
+        for phrase in (
+            "reusable **Environment Profile**",
+            "user-provided environment knowledge",
+            "confirmation.state: pending",
+            "ready_for_confirmation",
+            "needs_input",
+            "unresolved_fact",
+            "account pools",
+            "credential references",
+            "preflight",
+            "freshness",
+            "ready_for_confirmation",
+            "Never report `Design: pass` or `Completion: pass|issues|blocked`",
+        ):
+            self.assertIn(phrase, normalized)
+        self.assertIn("profile-schema.md", body)
+        self.assertIn("environment-profile.yaml", body)
+        self.assertIn("Completion: pass|issues|blocked", body)
 
     def test_profile_does_not_trigger_supporting_modes(self) -> None:
         self.assertNotIn("Bruce routes a `full` task", read("skills/goal-execution/SKILL.md"))

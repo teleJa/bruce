@@ -20,6 +20,13 @@ task-contract package, `checkpoint.yaml`, and prototype artifacts).
 An existing task change directory may be reused only after the task context or the user identifies it;
 its presence alone must not make an unrelated directory the source of truth.
 
+Environment Profiles are project/environment-scoped reusable artifacts. Unless the user supplies a
+path, place them under `<project-root>/.bruce/environments/<environment-id>.profile.yaml`; do not place
+them inside an unrelated change directory. A Requirement Verification Profile is requirement-scoped
+and belongs beside its `requirements.md` under `<change-dir>/verification-profile.yaml`. Both artifacts
+carry revision and explicit user confirmation; their current execution results belong in a
+Verification Run/Checkpoint.
+
 ## Configuration
 
 The optional workspace configuration is:

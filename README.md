@@ -137,11 +137,16 @@ The repository is both the plugin root and a repo-local marketplace root. Instal
 user's Codex plugin state, so do this only with explicit authorization:
 
 ```bash
-codex plugin marketplace add /absolute/path/to/bruce
-codex plugin add bruce@bruce
+python3 scripts/refresh_local_plugin.py
 ```
 
-Start a new Codex task after installation, then ask: `Use Bruce to implement and verify this task.`
+Use this wrapper for updates instead of calling the cachebuster helper directly. Internally it
+performs the equivalent of `codex plugin marketplace add <plugin-root>` and
+`codex plugin add bruce@bruce --json`, then repairs compatibility aliases. Codex keeps
+an installed hook's absolute `PLUGIN_ROOT` for the lifetime of the current session; the wrapper
+keeps old Bruce cache roots usable while installing the new version, so an in-flight session does
+not emit a missing `post_tool_review_reminder.py` error. Start a new Codex task after installation,
+then ask: `Use Bruce to implement and verify this task.`
 Review and trust the Bruce hook in `/hooks` before testing planning-document reminders.
 The marketplace source is `.` because `.agents/plugins/marketplace.json` lives in the plugin root;
 it must not be rewritten to `./plugins/bruce`.

@@ -12,6 +12,11 @@ confirmation:
   confirmed_revision: null
   confirmed_content_hash: null
 
+declaration:
+  source: user
+  statement: null
+  provided_at: null
+
 project:
   name: null
   root: null
@@ -25,9 +30,15 @@ environment:
   allowed_operations: []
   prohibited_operations: []
 
-source_of_truth: []
 facts: []
 unresolved_facts: []
+
+local_env:
+  path: .env
+  required: false
+  ignored_by_vcs: required
+  file_mode: "0600"
+  required_variables: []
 
 build:
   strategy: null
@@ -59,15 +70,16 @@ skills: []
 preflight: []
 
 freshness:
-  basis: profile-facts-and-source-revisions
+  basis: user-declaration-and-selected-reference-revisions
   invalidate_on:
-    - pipeline-change
-    - deployment-target-change
+    - user-declaration-change
+    - environment-scope-change
     - endpoint-change
     - account-policy-change
     - credential-source-change
-    - client-artifact-change
-    - selected-skill-change
+    - selected-capability-change
+    - local-env-variable-scope-change
+    - local-env-security-change
   revalidation_required: true
 
 security:
@@ -82,7 +94,7 @@ confirmation_summary:
   user_must_confirm:
     - profile-identity-and-revision
     - environment-scope-and-safety
-    - source-facts-and-user-facts
+    - user-declaration-and-user-facts
     - build-and-deployment-path
     - accounts-and-credential-references
     - skills-and-preflight

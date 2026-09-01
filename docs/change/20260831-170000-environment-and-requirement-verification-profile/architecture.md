@@ -11,7 +11,7 @@ Environment Profile
           -> Completion Gate
 ```
 
-- Environment Profile 记录项目可复用的环境事实和能力来源。
+- Environment Profile 记录用户提供并确认的可复用环境信息和用户选择的能力引用，不是仓库扫描或代码索引。
 - Requirement Verification Profile 读取用户指定的 `requirements.md`，将需求 Acceptance 映射到已确认的环境、账号、Skill、证据和修复路径。
 - Verification Run/Checkpoint 记录一次执行的真实 revision、状态、证据、阻塞和恢复信息。
 - Completion Gate 仍是唯一最终完成判断。
@@ -24,13 +24,14 @@ Profile confirmation 是输入授权和事实确认，不是第三个 Gate。
 
 新增 `$environment-profile` supporting skill，负责：
 
-- 从仓库和项目文档提取构建、部署、服务、数据库、客户端和测试命令；
+- 接收用户提供的环境身份、范围、服务、账号、Credential 引用、权限和能力选择；不从仓库扫描来填充 Profile；
 - 收集用户脑中的环境事实、账号池、Credential 来源和操作授权；
-- 记录事实来源、未知项、preflight、secret policy 和 freshness；
+- 记录用户声明、未知项、preflight、secret policy 和 freshness；
 - 生成或更新项目环境 Profile；
-- 生成确认摘要并等待用户确认。
+- 生成确认摘要并等待用户确认；
+- 对本地环境检查项目根目录 `.env`，在用户明确授权后创建或补全被 Git 忽略的 `.env`，只输出元数据。
 
-它不执行构建、部署、数据库写入、客户端测试或外部操作。
+它不执行构建、部署、数据库写入、客户端测试或外部环境操作，也不实现通用 Secret Manager。
 
 ### 2.2 Requirement Verification Profile skill
 
@@ -56,7 +57,7 @@ Profile confirmation 是输入授权和事实确认，不是第三个 Gate。
 - stage 状态、evidence refs、failure classification、repair round；
 - `waiting_external`、`waiting_user`、`blocked`、resume event 和 stale evidence。
 
-本变更只定义接口和字段，不实现运行时；`skills/environment-profile/scripts/validate_profile.py` 只负责静态 Profile contract 校验，不执行项目环境或验证运行。
+本变更不实现项目环境或验证运行；`validate_profile.py` 只负责静态 Profile contract 校验，`check_local_env.py` 只返回本地 `.env` 元数据，`create_local_env.py` 只在用户明确授权后执行受限的本地文件初始化，不执行外部环境操作。
 
 ## 3. Environment Profile data model
 
@@ -70,10 +71,11 @@ Environment Profile 是 project/environment scoped 的共享资产，推荐放�
 
 - profile identity and revision；
 - project/environment/scope；
-- repository-backed and user-provided facts；
+- user-provided and user-confirmed facts；
 - build and deployment strategies；
 - service/database/client targets；
 - account pools and safe Credential references；
+- local `.env` path, required variable names and security conditions (never values)；
 - available Skills and evidence boundaries；
 - preflight and freshness rules；
 - confirmation metadata。
@@ -126,7 +128,7 @@ confirmed -> superseded
 规则：
 
 1. 新建 Profile 的 `confirmation.state` 必须为 `pending`。
-2. Profile revision、输入 hash、source facts、环境引用、账号要求、Skill 选择、证据层、修复边界或外部授权发生实质变化时，revision 增加，confirmation 重置为 `pending`。
+2. 用户声明、输入 hash、环境引用、账号要求、Credential 来源、能力选择、证据层、修复边界或外部授权发生实质变化时，revision 增加，confirmation 重置为 `pending`；普通仓库代码变化不触发 Environment Profile stale。
 3. 用户必须确认精确 `profile_id + profile_revision + content_hash`，确认消息不能只引用“继续”。
 4. 确认不证明环境当前可用；受控验证前仍执行 capability preflight。
 5. Profile 处于 `confirmed` 且所有引用 revision 匹配时，才允许作为 Bruce 验证循环输入。

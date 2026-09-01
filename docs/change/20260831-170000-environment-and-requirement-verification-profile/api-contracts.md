@@ -24,17 +24,15 @@ confirmation:
   confirmed_by: null
   confirmed_at: null
   confirmed_revision: null
-source_of_truth:
-  - path: .cnb.yml
-    fact: CNB build and deployment stages
+declaration:
+  source: user
+  statement: 用户声明的验证环境
 facts:
   - fact_id: deployment-target
     value: configured-test-cluster
     source:
       kind: user
-      path: null
-      revision: null
-      provided_at: 2026-08-31T00:00:00+08:00
+      provided_at: 2026-09-01T00:00:00+08:00
       statement: user-confirmed non-production target
     confirmation_required: true
     runtime_preflight_required: true
@@ -63,11 +61,18 @@ databases:
   - database_id: multica-test-postgres
     connection_ref: MULTICA_TEST_DATABASE_URL
     mutation_policy: local-ephemeral-or-explicitly-authorized
+local_env:
+  path: .env
+  required: true
+  ignored_by_vcs: required
+  file_mode: "0600"
+  required_variables: [AUTH_CENTER_TEST_API_KEY]
 credentials:
   - credential_id: auth-center-test
-    source_ref: user-managed-browser-session
+    source_ref: env:AUTH_CENTER_TEST_API_KEY
     secret_value_persisted: false
     expose_to_model: false
+    redact_logs: true
 account_pools:
   - account_pool_id: auth-center-new-users
     purpose: first-sso-login
@@ -98,6 +103,7 @@ security:
 约束：
 
 - `profile_state=confirmed` 只能在 `confirmation.state=confirmed`、`confirmed_revision=profile_revision` 且 `confirmed_content_hash=content_hash` 时成立。
+- Environment Profile 只记录用户提供并确认的信息；不包含 `source_of_truth`、仓库实现路径、Git revision 或代码事实。
 - `value_ref`、`target_ref`、`connection_ref` 和 `source_ref` 只能引用安全配置或外部资源，不得包含秘密值。
 - `build`/`deployment` 描述能力和证据要求，不记录本次实际 build/deployment 结果。
 
@@ -199,7 +205,7 @@ next_action: await-user|repair|resume|completion-gate
 
 ## 5. Security contract
 
-- Profile 可记录 Credential 的 `source_ref`、用途、scope、owner 和 preflight 方法。
-- Profile 不得记录 Credential value、密码、Cookie、JWT、ticket、完整 provider response 或敏感身份 payload。
+- Profile 可记录 Credential 的 `source_ref`、用途、scope、owner 和 preflight 方法；本地 Profile 可记录 `.env` 路径和必需变量名。
+- Profile 不得记录 Credential value、密码、Cookie、JWT、ticket、完整 provider response 或敏感身份 payload；实际本地值只允许经用户明确授权写入被 Git 忽略的 `.env`，不得进入 Profile 或模型可见输出。
 - 账号使用 alias/pool 和状态谓词；实际账号绑定必须在运行记录中按最小必要范围记录。
 - 日志、截图和用户回传证据必须遵守项目脱敏规则。

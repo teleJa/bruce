@@ -38,12 +38,12 @@ increments `profile_revision`, recalculates `content_hash`, and resets `confirma
 `pending`. A referenced environment profile revision change makes dependent requirement-scoped
 Verification Profiles stale.
 
-## Identity and sources
+## Identity and user declaration
 
 ```yaml
 version: 1
 profile_kind: environment
-profile_id: multica-shared-test
+profile_id: joytime-local
 profile_revision: 1
 content_hash: sha256:pending
 profile_state: draft
@@ -53,45 +53,47 @@ confirmation:
   confirmed_at: null
   confirmed_revision: null
   confirmed_content_hash: null
+
+declaration:
+  source: user
+  statement: 用户声明的本地验证环境
+  provided_at: 2026-09-01T00:00:00+08:00
+
+project:
+  name: joytime-studio
+  root: /path/provided-by-user
+
+environment:
+  name: local
+  kind: local
+  production: false
+  shared: false
 ```
 
 `profile_id` identifies the reusable environment contract. It must not identify a particular
 requirement or acceptance criterion. `content_hash` covers the profile content excluding mutable
 confirmation metadata, or another explicitly documented canonicalization rule.
 
-Material facts should carry source metadata:
+Environment Profile facts are user-provided and user-confirmed. Use `source.kind: user` for entries
+in `facts`. Repository and project-document sources are not valid Environment Profile fact sources;
+Bruce must not infer them from files it inspected.
 
-```yaml
-facts:
-  - fact_id: deployment-target
-    value: test-cluster
-    source:
-      kind: repository
-      path: .cnb.yml
-      revision: current
-      provided_at: null
-      statement: pipeline deploy target
-    confirmation_required: true
-    runtime_preflight_required: true
-```
+Do not add a `source_of_truth` field to an Environment Profile. Repository paths, source-code paths,
+implementation details, Git revisions, branches, and test scenario paths belong to codebase or
+requirement-scoped verification documentation, not to the user's environment declaration.
 
-Allowed static `source.kind` values are `repository`, `project-document`, and `user`. A user fact
-must preserve a short statement or reference without storing secrets. `runtime-preflight` and
-`external-system` are dynamic evidence sources and belong only in Verification Run/Checkpoint.
-A repository fact should name the path and, when available, the revision used to inspect it.
-
-Unknown material facts belong in `unresolved_facts`:
+Unknown information that the user wants included belongs in `unresolved_facts`:
 
 ```yaml
 unresolved_facts:
-  - fact_id: deployment-target
-    question: Which non-production cluster receives the successful build?
-    required_for: [deployment-verification]
+  - fact_id: test-account-purpose
+    question: Which user-confirmed account pool should be used for local browser verification?
+    required_for: [browser-verification]
     blocking: true
 ```
 
-Do not replace an unresolved fact with a guessed URL, account, default environment, historical
-value, or project convention.
+Do not replace an unresolved fact with a guessed URL, account, default environment, historical value,
+repository convention, or source-code inference.
 
 ## Environment scope
 
@@ -151,6 +153,30 @@ A static profile must not contain an actual build id, artifact result, deployed 
 result, current availability claim, runtime result, or selected account instance. Dynamic facts belong
 only in Verification Run/Checkpoint. Profile fact values and references must not contain passwords,
 API keys, tokens, cookies, private keys, or credential-bearing URLs.
+
+## Local `.env` bootstrap
+
+For a local environment, Bruce may create or update the project-root `.env` only after the user
+provides the required values. The `.env` is a local secret sink, not Profile content. The Profile may
+record the path, required variable names, and security conditions, but never the values:
+
+```yaml
+local_env:
+  path: .env
+  required: true
+  ignored_by_vcs: required
+  file_mode: "0600"
+  required_variables:
+    - BRUCE_AUTH_CENTER_PASSWORD
+```
+
+Before using it, check that the file is a regular owner-only file, is ignored by Git, is not tracked,
+and contains every required variable with a non-empty value. If it is absent or incomplete, report
+only the missing variable names and their purposes, guide the user to provide them, write the file
+atomically while preserving unrelated entries, and repeat the metadata-only check. Never print,
+copy, hash, or include the values in the Profile, confirmation summary, evidence, logs, screenshots,
+or model-facing output. A successful check proves local presence only; it is not authentication or
+runtime availability proof.
 
 ## Services, databases, and clients
 
@@ -227,7 +253,7 @@ skills:
   - skill_id: cnb-pipeline
     capability_id: cnb-diagnosis
     purpose: inspect-and-diagnose-project-pipeline
-    prerequisites: [repository-access]
+    prerequisites: [user-confirmed-project-access]
     evidence_boundary:
       proves: [pipeline-configuration-facts]
       does_not_prove: [terminal-build-success, deployed-revision]
@@ -253,23 +279,27 @@ preflight:
     failure_action: stop-and-notify-user
 ```
 
-Freshness rules describe when a confirmed profile becomes stale:
+Freshness rules describe when a confirmed profile becomes stale. Ordinary repository source
+changes do not make an Environment Profile stale unless the user-declared environment contract or a
+user-selected reference changed. The Profile does not carry repository source revisions:
 
 ```yaml
 freshness:
-  basis: profile-facts-and-source-revisions
+  basis: user-declared-facts-and-references
   invalidate_on:
-    - pipeline-change
-    - deployment-target-change
+    - user-declaration-change
+    - environment-scope-change
     - endpoint-change
     - account-policy-change
     - credential-source-change
-    - client-artifact-change
-    - selected-skill-change
+    - selected-capability-change
+    - local-env-variable-scope-change
+    - local-env-security-change
   revalidation_required: true
 ```
 
 Current preflight outcomes belong in a Verification Run or Checkpoint, not in this static profile.
+`runtime-preflight` is evidence collected during execution, not an Environment Profile fact source.
 
 ## Confirmation summary and ownership
 
@@ -277,7 +307,7 @@ The confirmation summary must identify:
 
 - `profile_id`, `profile_revision`, and `content_hash`;
 - environment identity, safety class, and intended verification scope;
-- repository/project-document sources and user-provided facts;
+- user-provided and user-confirmed facts;
 - unresolved facts and exact user questions;
 - build/deployment path and authorized operations;
 - account pools, credential references, services, databases, clients, Skills, and preflight;

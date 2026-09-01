@@ -9,19 +9,28 @@
 ### PROFILE-001：Environment Profile 默认未确认
 
 - 映射：AC-001、AC-005
-- Given：仓库发现本地测试、CNB、服务、账号池和浏览器 Skill 信息。
+- Given：用户提供本地测试、CNB、服务、账号池和浏览器能力信息。
 - When：运行 `$environment-profile` 生成 Profile。
-- Then：生成环境身份、事实来源、能力、账号池、Credential 引用、Skill evidence boundary 和 preflight；`profile_state=ready_for_confirmation`，`confirmation.state=pending`。
+- Then：只生成用户声明的环境身份、范围、能力、账号池、Credential 引用和 preflight；不包含仓库代码路径或 `source_of_truth`；`profile_state=ready_for_confirmation`，`confirmation.state=pending`。
 - Evidence：Skill resource/metadata tests、schema fixture 和 template assertions。
 - 必需验证层级：unit/contract。
 
 ### PROFILE-002：环境信息不足时要求用户补充
 
 - 映射：AC-002、AC-006
-- Given：仓库没有部署目标、账号初始状态或 Credential 来源的可验证事实。
+- Given：用户没有提供部署目标、账号初始状态或 Credential 来源，或用户确认的本地 `.env` 缺失变量。
 - When：生成 Environment Profile。
-- Then：记录 `unresolved_facts` 和最小用户问题；不写入猜测值或秘密值，状态保持 `draft` 或 `needs_input`。
-- Evidence：missing-fact and secret-boundary tests。
+- Then：记录 `unresolved_facts` 和最小用户问题；不从仓库推导环境信息或变量清单；本地 `.env` 缺失或不完整时只列用户确认范围内的变量名和用途，用户明确授权后才创建或补全被 Git 忽略且 owner-only 的 `.env`，不回显秘密值；状态保持 `draft` 或 `needs_input`。
+- Evidence：missing-fact、`.env` metadata checker and secret-boundary tests。
+- 必需验证层级：unit/contract。
+
+### PROFILE-002A：本地 `.env` 缺失或不安全时引导用户
+
+- 映射：AC-002、AC-006
+- Given：项目根目录没有 `.env`、缺少必需变量、权限过宽、未被 Git 忽略、已被跟踪或是 symlink。
+- When：运行 `$environment-profile`。
+- Then：只报告缺失变量名或安全问题；缺少文件/变量时引导用户明确授权后创建或补全 `.env`，不回显秘密值；不安全文件 fail closed。
+- Evidence：`check_local_env.py` tests and redaction assertions。
 - 必需验证层级：unit/contract。
 
 ### PROFILE-003：Verification Profile 必须读取 requirements.md
@@ -94,7 +103,7 @@
 
 - 不验证真实 CNB、部署、账号、API Key、Auth Center、Chrome、Desktop 或数据库可用性。
 - 用户确认只证明其接受 Profile 内容，不证明运行时能力或需求已通过。
-- Profile fixture 中只使用 Credential reference 和账号 alias，不使用真实秘密值。
+- Profile fixture 中只使用用户提供的 Credential reference 和账号 alias，不使用真实秘密值；`.env` 测试只使用专用假值且输出不得回显。
 - 只有未来真实 Verification Run 具备当前 revision、preflight 和证据后，才能关闭对应 Acceptance。
 
 ## 自检
@@ -103,6 +112,8 @@
 - `$verification-profile` 强制读取 requirements.md，并保持需求级 AC 映射。
 - 两类 Profile 默认 pending，精确确认后才能被 Bruce 消费。
 - 环境信息允许来自 user，但来源和 preflight requirement 已记录。
-- Credential 只记录引用，不记录秘密值。
+- Credential 只记录用户提供的引用，不记录秘密值；本地秘密只允许在用户明确授权后写入被 Git 忽略的 `.env`。
+- Environment Profile 只使用 `user` 来源；仓库代码路径、Git revision、`source_of_truth` 和测试场景不进入 Profile。
+- 对抗性 user-only validator 测试覆盖缺少 declaration/source、嵌套 `source_of_truth`、实现路径、测试场景和原始 credential/local-env 值字段。
 - 阻塞会停止受影响工作、通知用户并要求显式恢复。
 - 动态结果与静态 Profile 分离，Completion Gate 仍是唯一完成判断。

@@ -37,4 +37,4 @@
 
 ## 交付边界
 
-实现阶段只修改 Bruce Skill、references、templates、契约测试和文档；不接入 Multica/Joytime 环境，不触发 CNB/部署，不读取或落盘秘密值。
+实现阶段只修改 Bruce Skill、references、templates、契约测试和文档；不接入 Multica/Joytime 环境，不触发 CNB/部署；仅允许用户明确授权后将本地验证秘密写入被 Git 忽略的 `.env`，不写入 Profile 或输出。

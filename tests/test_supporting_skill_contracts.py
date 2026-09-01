@@ -204,7 +204,7 @@ class SupportingSkillContractTest(unittest.TestCase):
         normalized = " ".join(body.split())
         for phrase in (
             "reusable **Environment Profile**",
-            "user-provided environment knowledge",
+            "user-provided and user-confirmed environment information",
             "confirmation.state: pending",
             "ready_for_confirmation",
             "needs_input",

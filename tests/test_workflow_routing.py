@@ -43,6 +43,14 @@ class WorkflowRoutingContractTest(unittest.TestCase):
         self.assertIn("Never infer `guarded` or `critical` from `full`", skill)
         self.assertIn("use `low` even when", skill)
 
+    def test_environment_operations_remains_explicit_and_does_not_chain(self) -> None:
+        workflow = read("skills/bruce/SKILL.md")
+        self.assertIn("`environment-operations`", workflow)
+        self.assertIn("Environment Operation Manifest generation/use remains an explicit user-selected capability", workflow)
+        lifecycle = read("skills/bruce/references/profile-lifecycle.md")
+        self.assertIn("Environment Operation Manifest lifecycle", lifecycle)
+        self.assertIn("not a third Profile type", lifecycle)
+
     def test_active_workflow_does_not_expose_legacy_verdict_protocol(self) -> None:
         paths = (
             "skills/bruce/SKILL.md",

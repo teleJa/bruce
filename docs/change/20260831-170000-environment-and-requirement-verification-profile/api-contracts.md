@@ -18,80 +18,74 @@ environment:
   kind: shared-test
   production: false
   shared: true
+  purposes: [development, integration-test]
+  purpose: user-confirmed shared test environment
+  allowed_operations: [readiness-check, test-deploy]
+  prohibited_operations: [production-write]
+declaration:
+  source: user
+  statement: user-confirmed shared test environment
+  provided_at: 2026-09-01T00:00:00+08:00
 profile_state: ready_for_confirmation
 confirmation:
   state: pending
   confirmed_by: null
   confirmed_at: null
   confirmed_revision: null
-declaration:
-  source: user
-  statement: 用户声明的验证环境
-facts:
-  - fact_id: deployment-target
-    value: configured-test-cluster
-    source:
-      kind: user
-      provided_at: 2026-09-01T00:00:00+08:00
-      statement: user-confirmed non-production target
-    confirmation_required: true
-    runtime_preflight_required: true
-build:
-  strategy: cnb
-  executor: external-system
-  trigger:
-    method: project-cnb-trigger
-    authorization_required: true
-  terminal_states: [success, failed, canceled, unknown]
-  required_evidence: [build_id, source_commit, terminal_status, artifact_identity]
-  invariants: [trigger-accepted-is-not-build-success]
+  confirmed_content_hash: null
 deployment:
-  strategy: cnb-to-test-cluster
-  executor: project-adapter
-  targets:
-    - target_id: test-backend
-      identity_ref: configured-test-cluster
-  terminal_states: [deployed, failed, rolled_back, unknown]
-  required_evidence: [deployed_commit, deployed_artifact, rollout_status, readiness_result]
-  invariants: [build-success-is-not-deployment-success, deployment-success-is-not-user-verification]
-services:
-  - service_id: multica-web
-    target_ref: MULTICA_TEST_WEB_URL
-databases:
-  - database_id: multica-test-postgres
+  mode: user-confirmed
+  owner: user-confirmed-operator
+  application_services:
+    - service_id: multica-web
+      deployment_unit: user-confirmed
+authentication:
+  mode: user-confirmed
+  references: []
+build:
+  strategy: user-confirmed
+  executor: user-confirmed
+  working_directory: user-confirmed-project-root
+  operations: []
+  artifact_expectations: []
+lifecycle:
+  prepare: []
+  start: []
+  stop: []
+  status: []
+  logs: []
+dependencies:
+  - dependency_id: multica-test-postgres
+    category: database
+    deployment_unit: user-confirmed
+    locality: user-confirmed
     connection_ref: MULTICA_TEST_DATABASE_URL
     mutation_policy: local-ephemeral-or-explicitly-authorized
-local_env:
-  path: .env
-  required: true
-  ignored_by_vcs: required
-  file_mode: "0600"
-  required_variables: [AUTH_CENTER_TEST_API_KEY]
-credentials:
-  - credential_id: auth-center-test
-    source_ref: env:AUTH_CENTER_TEST_API_KEY
-    secret_value_persisted: false
-    expose_to_model: false
-    redact_logs: true
-account_pools:
-  - account_pool_id: auth-center-new-users
-    purpose: first-sso-login
-    allocation: user-confirmed-unused-subject
-skills:
-  - skill_id: cnb-pipeline
-    purpose: inspect-and-diagnose-build-pipeline
-    evidence_boundary: pipeline-config-or-diagnosis-only
-  - skill_id: chrome:control-chrome
-    purpose: real-sso-browser-interaction
-    evidence_boundary: current-provider-browser-evidence
-preflight:
-  - check_id: test-target-reachable
-  - check_id: deployed-revision
-  - check_id: required-config
-  - check_id: account-state
-  - check_id: browser-session
-freshness:
-  invalidate_on: [deployment-topology-change, endpoint-change, account-policy-change, credential-source-change, skill-removal]
+network:
+  access_scope: user-confirmed
+  endpoints:
+    - endpoint_id: multica-web
+      endpoint_ref: MULTICA_TEST_WEB_URL
+data_policy:
+  ownership: user-confirmed
+  persistence: user-confirmed
+  migration_write: explicit-authorization-required
+  reset_or_drop: explicit-authorization-required
+configuration:
+  local_env:
+    mode: user-managed
+    path: .env
+    variable_refs: []
+operations: []
+operation_manifest:
+  requested: false
+  manifest_id: null
+  output_path: null
+  source_profile: self
+  generation: opt-in-after-confirmation
+  included_operations: []
+  excluded_operations: [migrate, reset, drop, destroy, publish, deploy-remote]
+preflight: []
 security:
   persist_secrets: false
   expose_secrets_to_model: false
@@ -103,7 +97,8 @@ security:
 约束：
 
 - `profile_state=confirmed` 只能在 `confirmation.state=confirmed`、`confirmed_revision=profile_revision` 且 `confirmed_content_hash=content_hash` 时成立。
-- Environment Profile 只记录用户提供并确认的信息；不包含 `source_of_truth`、仓库实现路径、Git revision 或代码事实。
+- Environment Profile 只记录用户提供并确认的开发/测试运行拓扑；不包含 `source_of_truth`、仓库实现路径、Git revision 或代码事实。
+- Environment Operation Manifest 只能由 confirmed Profile 显式派生，绑定 Profile revision/hash，且不自动执行或扩大授权。
 - `value_ref`、`target_ref`、`connection_ref` 和 `source_ref` 只能引用安全配置或外部资源，不得包含秘密值。
 - `build`/`deployment` 描述能力和证据要求，不记录本次实际 build/deployment 结果。
 

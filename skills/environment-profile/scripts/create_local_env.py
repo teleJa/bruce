@@ -117,11 +117,47 @@ def _write_values(root: Path, values: dict[str, str]) -> Path:
     return env_path
 
 
-def create_local_env(root: Path, required: list[str], provided: dict[str, str] | None = None) -> Path:
+def _validate_required_names(required: list[str]) -> list[str]:
     names = sorted(set(required))
     invalid = [name for name in names if not ENV_NAME_PATTERN.fullmatch(name)]
     if invalid:
         raise ValueError("invalid-required-variable-name")
+    return names
+
+
+def create_local_env_template(root: Path, required: list[str]) -> Path:
+    """Create a secure empty-value .env template without receiving secret values."""
+    names = _validate_required_names(required)
+    root = root.resolve()
+    env_path = root / ".env"
+    if not root.is_dir():
+        raise RuntimeError("project-root-not-found")
+    if os.path.lexists(env_path):
+        raise RuntimeError("env-file-already-exists")
+    if _is_git_repository(root) and _is_tracked(root):
+        raise RuntimeError("tracked-env-file")
+    _ensure_ignored(root)
+
+    fd, temp_name = tempfile.mkstemp(prefix=".bruce-env-", dir=root, text=True)
+    temp_path = Path(temp_name)
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            stream.write("# Local Environment Profile values. Fill locally; do not commit.\n")
+            for name in names:
+                stream.write(f"{name}=\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temp_path, env_path)
+        os.chmod(env_path, 0o600)
+    except Exception:
+        temp_path.unlink(missing_ok=True)
+        raise
+    return env_path
+
+
+def create_local_env(root: Path, required: list[str], provided: dict[str, str] | None = None) -> Path:
+    names = _validate_required_names(required)
     values = dict(provided or {})
     for name in names:
         if name not in values:
@@ -138,14 +174,27 @@ def main() -> int:
         description="Create or complete a project-local .env using hidden prompts; never print values."
     )
     parser.add_argument("project_root", type=Path)
-    parser.add_argument("--required", action="append", required=True)
+    parser.add_argument("--required", action="append", default=[])
+    parser.add_argument(
+        "--template",
+        action="store_true",
+        help="create a missing .env with empty values only; never prompt for secrets",
+    )
     args = parser.parse_args()
+    if not args.template and not args.required:
+        parser.error("--required is required unless --template is used")
     try:
-        create_local_env(args.project_root, args.required)
+        if args.template:
+            create_local_env_template(args.project_root, args.required)
+        else:
+            create_local_env(args.project_root, args.required)
     except (OSError, RuntimeError, ValueError) as error:
         print(f"Environment file creation failed: {error}")
         return 1
-    print("Environment file created or updated; values were not displayed.")
+    if args.template:
+        print("Environment file template created with empty values; add local credential values outside chat.")
+    else:
+        print("Environment file created or updated; values were not displayed.")
     return 0
 
 

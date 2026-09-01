@@ -43,6 +43,8 @@ FORBIDDEN_ENV_METADATA_KEYS = {
     "source_file",
     "source_files",
     "code_path",
+    "test_scenarios",
+    "runtime_status",
 }
 DECLARATION_KEYS = {"source", "statement", "provided_at"}
 FACT_KEYS = {"fact_id", "value", "source", "confirmation_required", "runtime_preflight_required"}
@@ -52,6 +54,14 @@ CREDENTIAL_KEYS = {
     "credential_id", "kind", "source_ref", "owner", "scope", "preflight_method",
     "secret_value_persisted", "expose_to_model", "redact_logs",
 }
+PROFILE_OPERATION_KEYS = {
+    "operation_id", "category", "purpose", "executor", "working_directory_ref", "argv",
+    "authorization", "risk", "mutates", "ownership", "target", "impact", "rollback",
+    "cleanup", "required_evidence",
+}
+OPERATION_RISKS = {"read-only", "guarded", "critical"}
+OPERATION_CRITICAL_CATEGORIES = {"migrate", "seed", "reset", "drop", "destroy", "publish", "deploy-remote", "production-access", "credential-rotation"}
+SECRET_ASSIGNMENT_PATTERN = re.compile(r"(?i)^(?:[A-Z0-9_]*(?:PASSWORD|PASSWD|TOKEN|API_KEY|SECRET)[A-Z0-9_]*)=")
 DYNAMIC_ENV_KEYS = {
     "run_id",
     "stage_results",
@@ -177,6 +187,67 @@ def validate_profile(data: Any) -> list[str]:
                 for index, name in enumerate(required_variables):
                     if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
                         errors.append(f"local_env.required_variables[{index}] must be a valid environment variable name")
+        operations = data.get("operations", [])
+        if not isinstance(operations, list):
+            errors.append("Environment Profile operations must be a list")
+        else:
+            for index, operation in enumerate(operations):
+                if not isinstance(operation, dict):
+                    errors.append(f"operations[{index}] must be a mapping")
+                    continue
+                for key in set(operation) - PROFILE_OPERATION_KEYS:
+                    errors.append(f"operations[{index}] field is not allowed: {key}")
+                for key in ("operation_id", "category", "executor", "authorization", "risk"):
+                    if not isinstance(operation.get(key), str) or not operation[key].strip():
+                        errors.append(f"operations[{index}].{key} is required")
+                risk = operation.get("risk")
+                if risk not in OPERATION_RISKS:
+                    errors.append(f"operations[{index}].risk must be read-only, guarded, or critical")
+                argv = operation.get("argv")
+                if argv is not None:
+                    if not isinstance(argv, list) or not all(isinstance(item, str) and item for item in argv):
+                        errors.append(f"operations[{index}].argv must be a non-empty string list")
+                    elif any(SECRET_ASSIGNMENT_PATTERN.search(item) for item in argv):
+                        errors.append(f"operations[{index}].argv must not contain secret assignments")
+                category = operation.get("category")
+                minimum_risk = "read-only" if category in {"status", "health-check", "inspect-declared-resources", "logs", "preflight"} else "guarded"
+                if risk == "read-only" and minimum_risk != "read-only":
+                    errors.append(f"operations[{index}] category requires at least guarded risk")
+                if risk == "guarded" and operation.get("authorization") in (None, "none"):
+                    errors.append(f"operations[{index}] guarded operation requires per-invocation authorization")
+                if category in OPERATION_CRITICAL_CATEGORIES:
+                    if operation.get("authorization") != "explicit-per-invocation":
+                        errors.append(f"operations[{index}] critical operation requires explicit authorization")
+                    if risk != "critical":
+                        errors.append(f"operations[{index}] critical operation risk must be critical")
+                    for key in ("target", "impact", "rollback"):
+                        if not isinstance(operation.get(key), str) or not operation[key].strip():
+                            errors.append(f"operations[{index}] critical operation requires {key}")
+                if category in {"stop", "down", "cleanup"} and not operation.get("ownership"):
+                    errors.append(f"operations[{index}] stop-like operation requires ownership")
+        operation_manifest = data.get("operation_manifest")
+        if operation_manifest is not None:
+            if not isinstance(operation_manifest, dict):
+                errors.append("operation_manifest must be a mapping")
+            else:
+                allowed_operation_manifest_keys = {
+                    "requested", "manifest_id", "output_path", "source_profile", "generation",
+                    "included_operations", "excluded_operations",
+                }
+                for key in set(operation_manifest) - allowed_operation_manifest_keys:
+                    errors.append(f"operation_manifest field is not allowed: {key}")
+                if not isinstance(operation_manifest.get("requested"), bool):
+                    errors.append("operation_manifest.requested must be boolean")
+                if operation_manifest.get("requested"):
+                    for key in ("manifest_id", "output_path"):
+                        if not isinstance(operation_manifest.get(key), str) or not operation_manifest[key].strip():
+                            errors.append(f"operation_manifest.{key} is required when requested")
+                    if operation_manifest.get("generation") != "opt-in-after-confirmation":
+                        errors.append("operation_manifest.generation must be opt-in-after-confirmation")
+                for key in ("included_operations", "excluded_operations"):
+                    value = operation_manifest.get(key, [])
+                    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+                        errors.append(f"operation_manifest.{key} must be a list of strings")
         facts = data.get("facts", [])
         if not isinstance(facts, list):
             errors.append("Environment Profile facts must be a list")

@@ -14,6 +14,7 @@ DOCUMENT_WRITERS = (
     "design-gate",
     "verification-profile",
     "environment-profile",
+    "environment-operations",
 )
 
 

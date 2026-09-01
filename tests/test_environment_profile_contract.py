@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 import subprocess
+import stat
 import sys
 import tempfile
 import unittest
@@ -35,13 +36,15 @@ class EnvironmentProfileContractTest(unittest.TestCase):
         for phrase in (
             "reusable **Environment Profile**",
             "user-provided and user-confirmed environment information",
-            "user environment declaration",
-            "not a repository scan",
+            "user-confirmed environment declaration",
+            "Repository-assisted candidate discovery",
+            "candidates only",
+            "$inspect-parallel",
             "confirmation",
             "state: pending",
             "ready_for_confirmation",
             "needs_input",
-            "unresolved_fact",
+            "unresolved questions",
             "account pools",
             "credential references",
             "secret values",
@@ -70,7 +73,8 @@ class EnvironmentProfileContractTest(unittest.TestCase):
             "confirmation",
             "state: pending",
             "Repository and project-document sources are not valid Environment Profile fact sources",
-            "user-provided and user-confirmed",
+            "accepted after Bruce presents repository-derived candidates",
+            "empty values for safe candidate variable names",
             "runtime preflight",
             "secret value",
             "Verification Run/Checkpoint",
@@ -79,6 +83,62 @@ class EnvironmentProfileContractTest(unittest.TestCase):
         ):
             self.assertIn(phrase, normalized)
         self.assertIn("must not contain", normalized.lower())
+
+    def test_local_env_template_creates_empty_owner_only_ignored_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            result = subprocess.run(
+                [sys.executable, str(CREATE_ENV), str(root), "--template", "--required", "LOCAL_TOKEN", "--required", "DB_HOST"],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            env_path = root / ".env"
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertTrue(env_path.is_file())
+            self.assertEqual(0o600, stat.S_IMODE(env_path.stat().st_mode))
+            self.assertEqual(
+                "# Local Environment Profile values. Fill locally; do not commit.\nDB_HOST=\nLOCAL_TOKEN=\n",
+                env_path.read_text(encoding="utf-8"),
+            )
+            self.assertIn(".env", (root / ".gitignore").read_text(encoding="utf-8"))
+            self.assertIn(".bruce-env-*", (root / ".gitignore").read_text(encoding="utf-8"))
+            self.assertEqual(0, subprocess.run(["git", "check-ignore", "--quiet", ".env"], cwd=root, check=False).returncode)
+
+    def test_local_env_template_allows_no_candidate_names(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            result = subprocess.run(
+                [sys.executable, str(CREATE_ENV), str(root), "--template"],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual(
+                "# Local Environment Profile values. Fill locally; do not commit.\n",
+                (root / ".env").read_text(encoding="utf-8"),
+            )
+
+    def test_local_env_template_refuses_to_overwrite_existing_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            existing = root / ".env"
+            existing.write_text("UNCHANGED=1\n", encoding="utf-8")
+            os.chmod(existing, 0o600)
+            result = subprocess.run(
+                [sys.executable, str(CREATE_ENV), str(root), "--template", "--required", "LOCAL_TOKEN"],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(1, result.returncode)
+            self.assertIn("env-file-already-exists", result.stdout)
+            self.assertEqual("UNCHANGED=1\n", existing.read_text(encoding="utf-8"))
 
     def test_validator_accepts_static_profile_and_rejects_dynamic_or_secret_content(self) -> None:
         validator = load_validator()
@@ -114,377 +174,110 @@ class EnvironmentProfileContractTest(unittest.TestCase):
         self.assertTrue(any("Environment Profile fact source must be user" in error for error in errors))
         self.assertTrue(any("secret-bearing field" in error or "secret-like value" in error for error in errors))
 
-    def test_agent_prompt_describes_user_declared_profile(self) -> None:
-        metadata = read("skills/environment-profile/agents/openai.yaml")
-        self.assertIn("user-provided", metadata)
-        self.assertIn("without scanning repository implementation files", metadata)
-        self.assertNotIn("repository-grounded", metadata)
-
-    def test_template_is_user_declared_and_has_no_source_of_truth(self) -> None:
+    def test_template_declares_environment_topology_and_operation_manifest(self) -> None:
         template = yaml.safe_load(read("skills/environment-profile/templates/environment-profile.yaml"))
-        self.assertEqual("user", template["declaration"]["source"])
-        self.assertNotIn("source_of_truth", template)
-        self.assertEqual("user-declaration-and-selected-reference-revisions", template["freshness"]["basis"])
+        for key in ("deployment", "build", "lifecycle", "dependencies", "network", "identities", "data_policy", "configuration", "operations", "operation_manifest"):
+            self.assertIn(key, template)
+        for legacy in ("services", "databases", "clients", "skills"):
+            self.assertNotIn(legacy, template)
+        self.assertFalse(template["operation_manifest"]["requested"])
+        self.assertEqual("opt-in-after-confirmation", template["operation_manifest"]["generation"])
 
-    def test_validator_rejects_repository_facts_and_repository_metadata(self) -> None:
+    def test_validator_rejects_unsafe_profile_operations(self) -> None:
         validator = load_validator()
         profile = {
             "version": 1,
             "profile_kind": "environment",
-            "profile_id": "repository-backed",
-            "profile_revision": 1,
-            "content_hash": "sha256:abc",
-            "profile_state": "draft",
-            "confirmation": {"state": "pending"},
-            "source_of_truth": [{"path": "backend/cmd/server/main.go"}],
-            "facts": [{"fact_id": "implementation", "source": {"kind": "repository", "path": "backend/cmd/server/main.go", "revision": "current"}}],
-        }
-        errors = validator.validate_profile(profile)
-        self.assertIn("Environment Profile must not contain repository metadata: source_of_truth", errors)
-        self.assertTrue(any("fact source must be user" in error for error in errors))
-        self.assertTrue(any("must not contain repository source metadata" in error for error in errors))
-
-        user_profile = {**profile}
-        user_profile.pop("source_of_truth")
-        user_profile["declaration"] = {"source": "user", "statement": "user-declared environment"}
-        user_profile["facts"] = [{"fact_id": "declared", "source": {"kind": "user"}}]
-        self.assertEqual([], validator.validate_profile(user_profile))
-
-        bypass = {
-            **user_profile,
-            "facts": [{"fact_id": "declared", "source": {"kind": "user"}, "implementation_path": "backend/main.go"}],
-            "test_scenarios": [{"name": "scenario"}],
-            "local_env": {"path": ".env", "required": True, "ignored_by_vcs": "required", "file_mode": "0600", "required_variables": [], "values": {"TOKEN": "hidden"}},
-            "credentials": [{"secret_value_persisted": False, "expose_to_model": False, "redact_logs": True, "raw_value": "hidden"}],
-        }
-        bypass_errors = validator.validate_profile(bypass)
-        self.assertTrue(any("implementation_path" in error for error in bypass_errors))
-        self.assertTrue(any("test_scenarios" in error for error in bypass_errors))
-        self.assertTrue(any("local_env field is not allowed: values" in error for error in bypass_errors))
-        self.assertTrue(any("credentials[0] field is not allowed: raw_value" in error for error in bypass_errors))
-
-    def test_validator_rejects_facts_without_user_source(self) -> None:
-        validator = load_validator()
-        profile = {
-            "version": 1,
-            "profile_kind": "environment",
-            "profile_id": "missing-source",
+            "profile_id": "unsafe-operations",
             "profile_revision": 1,
             "content_hash": "sha256:abc",
             "profile_state": "draft",
             "confirmation": {"state": "pending"},
             "declaration": {"source": "user", "statement": "user-declared environment"},
-            "facts": [{"fact_id": "missing-source"}],
+            "operations": [{
+                "operation_id": "reset", "category": "reset", "executor": "local-process",
+                "authorization": "none", "risk": "critical", "argv": ["TOKEN=not-for-output"],
+            }, {
+                "operation_id": "build", "category": "build", "executor": "local-process",
+                "authorization": "none", "risk": "read-only",
+            }],
         }
         errors = validator.validate_profile(profile)
-        self.assertIn("facts[0].source must be a mapping with kind=user", errors)
+        self.assertTrue(any("category requires at least guarded risk" in error for error in errors))
+        self.assertTrue(any("critical operation requires explicit authorization" in error for error in errors))
+        self.assertTrue(any("critical operation requires target" in error for error in errors))
+        self.assertTrue(any("argv must not contain secret assignments" in error for error in errors))
 
-    def test_validator_enforces_local_env_and_credential_security_flags(self) -> None:
+    def test_validator_rejects_unbounded_operation_manifest_metadata(self) -> None:
         validator = load_validator()
         profile = {
             "version": 1,
             "profile_kind": "environment",
-            "profile_id": "unsafe-local-env",
-            "profile_revision": 1,
-            "content_hash": "sha256:abc",
-            "profile_state": "draft",
-            "confirmation": {"state": "pending"},
-            "security": {
-                "persist_secrets": True,
-                "expose_secrets_to_model": True,
-                "credential_values_allowed": True,
-                "credential_refs_only": False,
-            },
-            "local_env": {"path": "other.env", "ignored_by_vcs": "optional", "required_variables": ["bad-name"]},
-            "credentials": [{"secret_value_persisted": True, "expose_to_model": True, "redact_logs": False}],
-        }
-        errors = validator.validate_profile(profile)
-        for expected in (
-            "security.persist_secrets must be false",
-            "security.expose_secrets_to_model must be false",
-            "security.credential_values_allowed must be false",
-            "security.credential_refs_only must be true",
-            "local_env.path must be .env",
-            "local_env.ignored_by_vcs must be required",
-            "local_env.required_variables[0] must be a valid environment variable name",
-            "credentials[0].secret_value_persisted must be false",
-            "credentials[0].expose_to_model must be false",
-            "credentials[0].redact_logs must be true",
-        ):
-            self.assertIn(expected, errors)
-
-    def test_validator_requires_local_profile_security_fields(self) -> None:
-        validator = load_validator()
-        profile = {
-            "version": 1,
-            "profile_kind": "environment",
-            "profile_id": "local-profile",
-            "profile_revision": 1,
-            "content_hash": "sha256:abc",
-            "profile_state": "draft",
-            "confirmation": {"state": "pending"},
-            "declaration": {"source": "user", "statement": "user-declared local environment"},
-            "environment": {"kind": "local"},
-        }
-        errors = validator.validate_profile(profile)
-        self.assertIn("local Environment Profile requires security mapping", errors)
-        self.assertIn("local Environment Profile requires local_env mapping", errors)
-
-        profile["security"] = {
-            "persist_secrets": False,
-            "expose_secrets_to_model": False,
-            "credential_values_allowed": False,
-            "credential_refs_only": True,
-        }
-        profile["local_env"] = {
-            "path": ".env",
-            "required": True,
-            "ignored_by_vcs": "required",
-            "file_mode": "0644",
-            "required_variables": [],
-        }
-        errors = validator.validate_profile(profile)
-        self.assertIn("local_env.file_mode must be 0600", errors)
-
-    def test_validator_requires_matching_confirmation_hash(self) -> None:
-        validator = load_validator()
-        profile = {
-            "version": 1,
-            "profile_kind": "environment",
-            "profile_id": "confirmed-test",
-            "profile_revision": 2,
-            "content_hash": "sha256:new",
-            "profile_state": "confirmed",
-            "confirmation": {
-                "state": "confirmed",
-                "confirmed_revision": 2,
-                "confirmed_content_hash": "sha256:old",
-            },
-        }
-        errors = validator.validate_profile(profile)
-        self.assertIn("confirmed_content_hash must match content_hash", errors)
-
-    def test_validator_cli_validates_a_profile_file(self) -> None:
-        profile = {
-            "version": 1,
-            "profile_kind": "environment",
-            "profile_id": "cli-test",
+            "profile_id": "operation-manifest",
             "profile_revision": 1,
             "content_hash": "sha256:abc",
             "profile_state": "draft",
             "confirmation": {"state": "pending"},
             "declaration": {"source": "user", "statement": "user-declared environment"},
+            "operation_manifest": {
+                "requested": True,
+                "manifest_id": "local-ops",
+                "output_path": ".bruce/environments/local.operations.yaml",
+                "generation": "automatic",
+                "included_operations": "build",
+                "raw_secret": "not-for-output",
+            },
         }
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "environment.profile.yaml"
-            path.write_text(yaml.safe_dump(profile, sort_keys=False), encoding="utf-8")
-            result = subprocess.run(
-                [sys.executable, str(VALIDATOR), str(path)],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        self.assertEqual(0, result.returncode, result.stderr)
-        self.assertIn("Profile validation passed", result.stdout)
+        errors = validator.validate_profile(profile)
+        self.assertIn("operation_manifest field is not allowed: raw_secret", errors)
+        self.assertIn("operation_manifest.generation must be opt-in-after-confirmation", errors)
+        self.assertIn("operation_manifest.included_operations must be a list of strings", errors)
 
-
-    def test_skill_requires_local_env_bootstrap_without_model_exposure(self) -> None:
-        body = read("skills/environment-profile/SKILL.md")
+    def test_environment_operations_skill_is_manifest_based_and_bounded(self) -> None:
+        body = read("skills/environment-operations/SKILL.md")
         normalized = " ".join(body.split())
         for phrase in (
-            "Local `.env` bootstrap",
-            "project-root `.env`",
-            "check_local_env.py",
-            "missing variable names",
-            "ensure the project `.gitignore` contains the exact `.env` entry",
-            "owner-only permissions",
-            "create_local_env.py",
-            "hidden prompts",
-            "ordinary chat",
-            "do not echo the submitted values",
-            "A successful `.env` check proves only local configuration presence",
+            "Environment Operation Manifest",
+            "confirmed Environment Profile",
+            "does not dynamically register a project-level",
+            "Do not infer commands",
+            "critical",
+            "Verification Run/Checkpoint",
         ):
             self.assertIn(phrase, normalized)
+        template = yaml.safe_load(read("skills/environment-operations/templates/operation-manifest.yaml"))
+        self.assertEqual("environment-operation", template["manifest_kind"])
+        self.assertFalse(template["declaration"]["confirmed"])
 
-    def test_template_declares_local_env_safety_contract(self) -> None:
-        template = yaml.safe_load(read("skills/environment-profile/templates/environment-profile.yaml"))
-        self.assertEqual(".env", template["local_env"]["path"])
-        self.assertEqual("required", template["local_env"]["ignored_by_vcs"])
-        self.assertEqual("0600", template["local_env"]["file_mode"])
-        self.assertEqual([], template["local_env"]["required_variables"])
-        ignored_lines = read(".gitignore").splitlines()
-        self.assertIn(".env", ignored_lines)
-        self.assertIn(".bruce-env-*", ignored_lines)
-
-    def test_local_env_checker_reports_missing_names_without_values(self) -> None:
+    def test_operation_manifest_validator_rejects_unconfirmed_and_unsafe_operations(self) -> None:
+        validator_path = ROOT / "skills/environment-operations/scripts/validate_operation_manifest.py"
+        spec = importlib.util.spec_from_file_location("operation_manifest_validator", validator_path)
+        module = importlib.util.module_from_spec(spec)
+        assert spec and spec.loader
+        spec.loader.exec_module(module)
+        valid = yaml.safe_load(read("skills/environment-operations/templates/operation-manifest.yaml"))
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            result = subprocess.run(
-                [sys.executable, str(ENV_CHECKER), str(root), "--required", "BRUCE_TEST_PASSWORD"],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        self.assertEqual(2, result.returncode, result.stderr)
-        report = json.loads(result.stdout)
-        self.assertEqual(["BRUCE_TEST_PASSWORD"], report["missing_required_names"])
-        self.assertNotIn("value", report)
-        self.assertNotIn("password", report)
-
-    def test_local_env_checker_accepts_ignored_owner_only_complete_file(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-            (root / ".gitignore").write_text(".env\n", encoding="utf-8")
-            env_path = root / ".env"
-            env_path.write_text("BRUCE_TEST_PASSWORD=not-for-output\n", encoding="utf-8")
-            os.chmod(env_path, 0o600)
-            result = subprocess.run(
-                [sys.executable, str(ENV_CHECKER), str(root), "--required", "BRUCE_TEST_PASSWORD"],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        self.assertEqual(0, result.returncode, result.stderr)
-        report = json.loads(result.stdout)
-        self.assertTrue(report["usable"])
-        self.assertTrue(report["ignored"])
-        self.assertFalse(report["tracked"])
-        self.assertTrue(report["owner_is_current_user"])
-        self.assertNotIn("not-for-output", result.stdout)
-
-    def test_local_env_creator_preserves_entries_and_writes_owner_only_file(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-            (root / ".gitignore").write_text(".env\n", encoding="utf-8")
-            env_path = root / ".env"
-            env_path.write_text("EXISTING=value\n", encoding="utf-8")
-            os.chmod(env_path, 0o600)
-            result = subprocess.run(
-                [sys.executable, str(CREATE_ENV), str(root), "--required", "BRUCE_TEST_TOKEN"],
-                input="created-secret\n",
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            self.assertEqual(0, result.returncode, result.stderr)
-            self.assertEqual(0o600, os.stat(env_path).st_mode & 0o777)
-            contents = env_path.read_text(encoding="utf-8")
-            self.assertIn("EXISTING=value", contents)
-            self.assertIn("BRUCE_TEST_TOKEN=created-secret", contents)
-            self.assertNotIn("created-secret", result.stdout)
-            self.assertNotIn("created-secret", result.stderr)
-
-    def test_local_env_creator_refuses_insecure_existing_file(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-            (root / ".gitignore").write_text(".env\n", encoding="utf-8")
-            env_path = root / ".env"
-            env_path.write_text("EXISTING=value\n", encoding="utf-8")
-            os.chmod(env_path, 0o644)
-            result = subprocess.run(
-                [sys.executable, str(CREATE_ENV), str(root), "--required", "BRUCE_TEST_TOKEN"],
-                input="created-secret\n",
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        self.assertEqual(1, result.returncode)
-        self.assertIn("permissions-too-open", result.stdout)
-        self.assertNotIn("created-secret", result.stdout)
-        self.assertNotIn("created-secret", result.stderr)
-
-    def test_local_env_checker_reports_existing_incomplete_env(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-            (root / ".gitignore").write_text(".env\n", encoding="utf-8")
-            env_path = root / ".env"
-            env_path.write_text("OTHER=value\n", encoding="utf-8")
-            os.chmod(env_path, 0o600)
-            result = subprocess.run(
-                [sys.executable, str(ENV_CHECKER), str(root), "--required", "BRUCE_TEST_TOKEN"],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        self.assertEqual(2, result.returncode)
-        report = json.loads(result.stdout)
-        self.assertEqual(["BRUCE_TEST_TOKEN"], report["missing_required_names"])
-        self.assertFalse(report["usable"])
-        self.assertNotIn("value", result.stdout)
-
-    def test_local_env_checker_rejects_unignored_env_file(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-            env_path = root / ".env"
-            env_path.write_text("BRUCE_TEST_TOKEN=not-for-output\n", encoding="utf-8")
-            os.chmod(env_path, 0o600)
-            result = subprocess.run(
-                [sys.executable, str(ENV_CHECKER), str(root), "--required", "BRUCE_TEST_TOKEN"],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        self.assertEqual(3, result.returncode)
-        report = json.loads(result.stdout)
-        self.assertFalse(report["usable"])
-        self.assertFalse(report["ignored"])
-        self.assertFalse(report["tracked"])
-        self.assertNotIn("not-for-output", result.stdout)
-
-    def test_local_env_checker_rejects_symlinked_env_file(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-            (root / ".gitignore").write_text(".env\n", encoding="utf-8")
-            outside = root / "outside.env"
-            outside.write_text("BRUCE_TEST_TOKEN=not-for-output\n", encoding="utf-8")
-            (root / ".env").symlink_to(outside)
-            result = subprocess.run(
-                [sys.executable, str(ENV_CHECKER), str(root), "--required", "BRUCE_TEST_TOKEN"],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        self.assertEqual(3, result.returncode, result.stderr)
-        report = json.loads(result.stdout)
-        self.assertFalse(report["usable"])
-        self.assertTrue(report["symlink"])
-        self.assertNotIn("not-for-output", result.stdout)
-
-    def test_local_env_checker_rejects_tracked_or_world_readable_file(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
-            env_path = root / ".env"
-            env_path.write_text("BRUCE_TEST_TOKEN=not-for-output\n", encoding="utf-8")
-            os.chmod(env_path, 0o644)
-            subprocess.run(["git", "add", ".env"], cwd=root, check=True)
-            result = subprocess.run(
-                [sys.executable, str(ENV_CHECKER), str(root), "--required", "BRUCE_TEST_TOKEN"],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        self.assertEqual(3, result.returncode, result.stderr)
-        report = json.loads(result.stdout)
-        self.assertFalse(report["usable"])
-        self.assertTrue(report["tracked"])
-        self.assertFalse(report["owner_only_permissions"])
-        self.assertNotIn("not-for-output", result.stdout)
+            profile = {
+                "version": 1, "profile_kind": "environment", "profile_id": "local-profile",
+                "profile_revision": 1, "content_hash": "sha256:abc", "profile_state": "confirmed",
+                "declaration": {"source": "user", "statement": "user-declared"},
+                "confirmation": {"state": "confirmed", "confirmed_revision": 1, "confirmed_content_hash": "sha256:abc"},
+                "operations": [{"operation_id": "status", "category": "status", "executor": "local-read-only", "authorization": "none", "risk": "read-only"}],
+            }
+            profile_path = root / "profile.yaml"
+            profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
+            valid.update({
+                "manifest_id": "local-ops",
+                "profile_ref": {"path": str(profile_path), "profile_id": "local-profile", "profile_revision": 1, "profile_content_hash": "sha256:abc"},
+                "declaration": {"source": "environment-profile", "confirmed": True},
+                "operations": ["status"],
+            })
+            self.assertEqual([], module.validate_manifest(valid))
+            unsafe = {**valid, "operations": ["reset"], "raw_value": "not-for-output"}
+            errors = module.validate_manifest(unsafe)
+        self.assertIn("operations[0] is not declared by source Environment Profile", errors)
+        self.assertIn("forbidden manifest field: raw_value", errors)
 
 
 if __name__ == "__main__":

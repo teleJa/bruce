@@ -20,17 +20,38 @@ tasks:
     parallel_safe: false
   - task_id: T-002
     title: 新增 environment-profile skill
-    contract_revision: 3
+    contract_revision: 4
     path: tasks/T-002-add-environment-profile-skill.md
     depends_on: [T-001]
-    acceptance_ids: [AC-001, AC-002, AC-006, AC-008]
+    acceptance_ids: [AC-001, AC-002, AC-006, AC-008, AC-010]
     allowed_paths:
       - skills/environment-profile/**
       - .gitignore
       - tests/test_supporting_skill_contracts.py
       - tests/test_agents_metadata.py
       - tests/test_document_language_contract.py
+      - tests/test_workflow_routing.py
       - tests/test_environment_profile_contract.py
+    excluded_paths: [projects/**, deployments/**, database/**]
+    parallel_safe: false
+  - task_id: T-005
+    title: 派生 Environment Operation Manifest
+    contract_revision: 1
+    path: tasks/T-005-derive-environment-operation-manifest.md
+    depends_on: [T-002]
+    acceptance_ids: [AC-010, AC-011]
+    allowed_paths:
+      - skills/environment-operations/**
+      - skills/environment-profile/**
+      - skills/bruce/SKILL.md
+      - skills/bruce/references/profile-lifecycle.md
+      - skills/bruce/references/profile-security.md
+      - README.md
+      - tests/test_environment_operations_contract.py
+      - tests/test_environment_profile_contract.py
+      - tests/test_supporting_skill_contracts.py
+      - tests/test_agents_metadata.py
+      - tests/test_document_language_contract.py
     excluded_paths: [projects/**, deployments/**, database/**]
     parallel_safe: false
   - task_id: T-003

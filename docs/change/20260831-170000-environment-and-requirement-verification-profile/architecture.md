@@ -11,7 +11,7 @@ Environment Profile
           -> Completion Gate
 ```
 
-- Environment Profile 记录用户提供并确认的可复用环境信息和用户选择的能力引用，不是仓库扫描或代码索引。
+- Environment Profile 记录用户提供并确认的、支撑开发和测试的可复用运行拓扑与操作声明，不是仓库扫描或代码索引。
 - Requirement Verification Profile 读取用户指定的 `requirements.md`，将需求 Acceptance 映射到已确认的环境、账号、Skill、证据和修复路径。
 - Verification Run/Checkpoint 记录一次执行的真实 revision、状态、证据、阻塞和恢复信息。
 - Completion Gate 仍是唯一最终完成判断。
@@ -24,9 +24,9 @@ Profile confirmation 是输入授权和事实确认，不是第三个 Gate。
 
 新增 `$environment-profile` supporting skill，负责：
 
-- 接收用户提供的环境身份、范围、服务、账号、Credential 引用、权限和能力选择；不从仓库扫描来填充 Profile；
+- 接收用户提供的环境身份、用途、应用部署、构建/生命周期、依赖/中间件、网络、身份、数据、Credential 引用、权限和能力选择；不从仓库扫描来填充 Profile；
 - 收集用户脑中的环境事实、账号池、Credential 来源和操作授权；
-- 记录用户声明、未知项、preflight、secret policy 和 freshness；
+- 记录用户声明、运行拓扑、操作边界、未知项、preflight、secret policy 和 freshness；
 - 生成或更新项目环境 Profile；
 - 生成确认摘要并等待用户确认；
 - 对本地环境检查项目根目录 `.env`，在用户明确授权后创建或补全被 Git 忽略的 `.env`，只输出元数据。
@@ -72,6 +72,7 @@ Environment Profile 是 project/environment scoped 的共享资产，推荐放�
 - profile identity and revision；
 - project/environment/scope；
 - user-provided and user-confirmed facts；
+- application deployment, build/lifecycle, dependencies (including databases/middleware), network, identity, data, configuration, and operation declarations；
 - build and deployment strategies；
 - service/database/client targets；
 - account pools and safe Credential references；
@@ -82,7 +83,11 @@ Environment Profile 是 project/environment scoped 的共享资产，推荐放�
 
 它不包含某个需求的 AC、Task、Scenario、当前结果或完成判断。
 
-## 4. Requirement Verification Profile data model
+## 4. Derived Environment Operation Manifest
+
+`$environment-operations` is an opt-in static capability that generates a project-local operation Manifest only from an exact confirmed Environment Profile. It packages declared build, deployment, dependency preparation, lifecycle, status, logs, and preflight operations; it does not dynamically register a project Skill, execute operations, infer commands from source, or expand authorization. High-risk operations such as migration, reset/drop, remote deployment, production access, and credential retrieval remain excluded or separately authorized. A stale source Profile makes the Manifest stale.
+
+## 5. Requirement Verification Profile data model
 
 Requirement Verification Profile 推荐放在需求变更目录：
 

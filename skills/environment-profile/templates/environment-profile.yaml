@@ -26,6 +26,7 @@ environment:
   kind: null
   production: false
   shared: false
+  purposes: []
   purpose: null
   allowed_operations: []
   prohibited_operations: []
@@ -43,6 +44,9 @@ local_env:
 build:
   strategy: null
   executor: null
+  working_directory: null
+  operations: []
+  artifact_expectations: []
   trigger:
     method: null
     authorization_required: true
@@ -52,8 +56,11 @@ build:
     - trigger-accepted-is-not-build-success
 
 deployment:
+  mode: null
+  owner: null
   strategy: null
   executor: null
+  application_services: []
   targets: []
   terminal_states: [deployed, failed, rolled_back, unknown]
   required_evidence: []
@@ -61,13 +68,43 @@ deployment:
     - build-success-is-not-deployment-success
     - deployment-success-is-not-user-verification
 
-services: []
-databases: []
-clients: []
+lifecycle:
+  prepare: []
+  start: []
+  stop: []
+  status: []
+  logs: []
+
+dependencies: []
+network:
+  access_scope: null
+  endpoints: []
+identities: []
+data_policy: {}
+configuration: {}
+operations: []
+
 account_pools: []
 credentials: []
-skills: []
+capabilities: []
 preflight: []
+
+operation_manifest:
+  requested: false
+  manifest_id: null
+  output_path: null
+  source_profile: self
+  generation: opt-in-after-confirmation
+  included_operations: []
+  excluded_operations:
+    - migrate
+    - seed
+    - reset
+    - drop
+    - destroy
+    - publish
+    - deploy-remote
+    - credential-rotation
 
 freshness:
   basis: user-declaration-and-selected-reference-revisions
@@ -80,6 +117,8 @@ freshness:
     - selected-capability-change
     - local-env-variable-scope-change
     - local-env-security-change
+    - topology-change
+    - operation-manifest-operation-set-change
   revalidation_required: true
 
 security:
@@ -95,6 +134,7 @@ confirmation_summary:
     - profile-identity-and-revision
     - environment-scope-and-safety
     - user-declaration-and-user-facts
+    - environment-topology-and-operation-boundaries
     - build-and-deployment-path
     - accounts-and-credential-references
     - skills-and-preflight

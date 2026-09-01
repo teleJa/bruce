@@ -1,6 +1,6 @@
 # T-002：新增 environment-profile skill
 
-- Contract revision: 3
+- Contract revision: 4
 
 ## Objective
 
@@ -11,6 +11,7 @@
 - `skills/environment-profile/SKILL.md`；
 - `agents/openai.yaml`、schema reference、Profile template、静态 `validate_profile.py`、本地 `.env` metadata checker 和显式授权的 `.env` creator；
 - 用户声明与确认边界；禁止 repository/project-document 事实和 `source_of_truth` 进入 Environment Profile；
+- 开发/测试环境拓扑：部署、构建、生命周期、依赖/中间件、网络、身份、数据、配置和 preflight；
 - 账号池、Credential 引用、构建/部署、服务/数据库/客户端、Skill 和 preflight 字段；
 - needs-input、ready-for-confirmation、`.env` 缺失引导、用户授权写入和 confirmation boundary。
 
@@ -30,6 +31,7 @@
 - skill 能生成只包含用户提供并确认信息的可复用 Environment Profile；
 - 无法确认的用户环境信息形成最小用户问题；
 - 不从仓库扫描或推导代码路径、Git revision、测试场景或实现细节；
+- 可选生成 Environment Operation Manifest，但只能在 Profile 确认后封装已确认操作；
 - Profile 默认未确认；
 - API Key 等在 Profile 中只记录安全引用，不记录值；本地环境经用户明确提供并授权后，可写入项目根目录且被 Git 忽略的 `.env`；
 - Profile 提供 Skill/capability evidence boundary，但不声称运行时可用；静态 validator 拒绝 secret/dynamic runtime fields。

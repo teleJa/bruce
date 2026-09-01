@@ -33,6 +33,24 @@
 - Evidence：`check_local_env.py` tests and redaction assertions。
 - 必需验证层级：unit/contract。
 
+### PROFILE-002B：开发测试环境拓扑
+
+- 映射：AC-010
+- Given：用户声明 local/shared/test 环境用于开发或测试。
+- When：运行 `$environment-profile`。
+- Then：收集应用部署、构建、生命周期、依赖/中间件、网络、身份、数据、配置/凭证和 preflight；未涉及域可明确为 `not-in-scope`；数据库以 `dependencies` + `data_policy` 表示，服务访问以 `deployment` + `network` 表示；不扫描仓库填充。
+- Evidence：topology schema/template, operation metadata and user-only validator tests。
+- 必需验证层级：unit/contract。
+
+### PROFILE-002C：派生 Environment Operation Manifest
+
+- 映射：AC-011
+- Given：Environment Profile 已确认 revision/hash，且用户显式请求操作 Manifest。
+- When：运行 `$environment-operations`。
+- Then：生成绑定源 Profile ID/revision/hash 的项目级 Manifest，Manifest 只选择已确认 build/deployment/lifecycle/preflight operation ID；完整操作定义仍来自源 Profile，默认排除 migration/reset/drop/remote/production/credential retrieval。
+- Evidence：Manifest validator/template and boundary tests。
+- 必需验证层级：unit/contract。
+
 ### PROFILE-003：Verification Profile 必须读取 requirements.md
 
 - 映射：AC-003
@@ -114,6 +132,7 @@
 - 环境信息允许来自 user，但来源和 preflight requirement 已记录。
 - Credential 只记录用户提供的引用，不记录秘密值；本地秘密只允许在用户明确授权后写入被 Git 忽略的 `.env`。
 - Environment Profile 只使用 `user` 来源；仓库代码路径、Git revision、`source_of_truth` 和测试场景不进入 Profile。
+- Environment Profile 先描述开发/测试运行拓扑；派生 Operation Manifest 只复用已确认操作，不替代 Requirement Verification Profile 或运行时证据。
 - 对抗性 user-only validator 测试覆盖缺少 declaration/source、嵌套 `source_of_truth`、实现路径、测试场景和原始 credential/local-env 值字段。
 - 阻塞会停止受影响工作、通知用户并要求显式恢复。
 - 动态结果与静态 Profile 分离，Completion Gate 仍是唯一完成判断。

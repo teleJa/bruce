@@ -96,9 +96,11 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Independent review is a mode inside one of those gates, not another verdict that callers combine.
 
 The canonical entry is [`skills/bruce/SKILL.md`](skills/bruce/SKILL.md). Other directories under
-`skills/` are independently discoverable supporting capabilities. Every skill includes generated
-`agents/openai.yaml` UI metadata. Bruce has no CLI, MCP server, app, sandbox implementation, or
-custom scheduler.
+`skills/` are independently discoverable supporting capabilities. `environment-operations` is a
+static generic capability that reads/writes a project-local Environment Operation Manifest from an
+exact confirmed Environment Profile; it does not dynamically install project Skills. Every skill
+includes generated `agents/openai.yaml` UI metadata. Bruce has no CLI, MCP server, app, sandbox
+implementation, or custom scheduler.
 
 `design-gate` is the only implementation-entry decision. `completion-gate` is the only completion
 decision. `goal-execution` is an optional persistence mode: it records those results and synchronizes

@@ -17,6 +17,8 @@
 | R-07 | 秘密值不进入 Profile | API Key、密码、Cookie、JWT、SSO ticket 和其他 Credential 值不得写入 Profile、Checkpoint、Handoff 或聊天摘要；仅在用户明确提供并授权时，允许将本地验证所需值写入项目根目录且被 Git 忽略的 `.env`。Profile 只记录安全引用和使用方式。 |
 | R-08 | Profile 不产生完成结论 | Profile、环境确认、Skill、Adapter 和验证运行都不能替代 Design Gate 或 Completion Gate。 |
 | R-09 | 阻塞必须停止并通知 | 发生环境未知、权限不足、版本不匹配、账号状态不明或外部状态未知时，停止受影响 Task/Batch，通知用户并等待显式恢复。 |
+| R-10 | 环境是开发测试运行拓扑 | Environment Profile 记录支撑开发和测试的用户确认运行拓扑：应用部署、构建、生命周期、依赖/中间件、网络、身份、数据、配置/凭证和 preflight；不记录实现代码路径。 |
+| R-11 | 操作 Skill 从确认环境派生 | 只有在 Environment Profile 精确确认后，用户显式请求时，Bruce 才能基于其中已确认的构建、部署和生命周期操作生成项目级 Environment Operation Manifest；派生能力不扩展授权。 |
 
 ## Scope
 
@@ -33,6 +35,7 @@
 - 不实现 CNB、Temporal、Kubernetes、Electron、浏览器、数据库或任意项目 Adapter。
 - 不将密码、API Key、Cookie、JWT、SSO ticket 或其他秘密值写入 Profile、Checkpoint、Handoff、日志或输出；本地环境仅在用户明确提供并授权时创建项目根目录 `.env`，不实现通用 Secret Manager。
 - 不从仓库扫描或推导 Environment Profile 的环境事实、代码路径、Git revision、测试场景或实现细节。
+- 不从未确认的 Profile 生成可用 Operation Manifest；Manifest 只能封装 Profile 中已确认的操作，不能扩大数据库、凭证、远程部署或生产权限。
 - 不把用户确认实现成第三个 Gate；Design Gate 和 Completion Gate 的 ownership 不变。
 - 不在 Profile 文件中记录某次执行的实时状态、测试通过结果、当前 build id 或最终完成结论。
 - 不自动选择用户未确认的测试账号、部署目标、外部写操作或生产环境。
@@ -96,6 +99,20 @@
 - Then：标记受影响 Profile 为 `stale`，清除其可用确认状态；重新生成或更新后必须由用户确认新 revision。
 - Evidence：freshness matrix and stale invalidation tests。
 
+### AC-010：Environment Profile 描述开发测试运行拓扑
+
+- Given：用户声明一个用于开发或测试的 local/shared/staging 环境。
+- When：生成 Environment Profile。
+- Then：Profile 记录用户确认的应用部署、构建、生命周期、依赖/中间件、网络、身份、数据、配置/凭证和 preflight；未涉及的域可明确为 `not-in-scope`；不写入代码路径或仓库推导事实。
+- Evidence：topology schema/template and user-only contract tests。
+
+### AC-011：从确认环境派生操作 Manifest
+
+- Given：Environment Profile 已精确确认 revision 与 content hash，且用户请求生成操作 Manifest。
+- When：运行 `$environment-operations`。
+- Then：只生成绑定源 Profile ID/revision/hash 的项目级 Manifest，Manifest 只选择已确认操作的 ID，完整 command/risk/authorization/ownership 仍从源 Profile 解析；高风险操作默认排除，不能扩大授权；Profile stale 时 Manifest stale。
+- Evidence：derived Manifest validator/template and boundary tests。
+
 ### AC-009：Completion ownership 不变
 
 - Given：Profile 已确认，部分验证步骤成功，仍有未完成或用户等待的 Acceptance。
@@ -105,7 +122,7 @@
 
 ## 约束与风险
 
-- 环境 Profile 是用户提供并确认的可复用环境声明，不是仓库扫描结果或当前运行结果；所有动态结果必须进入 Verification Run/Checkpoint。
+- 环境 Profile 是用户提供并确认的可复用开发/测试运行拓扑声明，不是仓库扫描结果或当前运行结果；所有动态结果必须进入 Verification Run/Checkpoint。
 - 用户确认的是 Profile 内容和 revision，不是测试通过，也不是外部系统可用。
 - Profile 中的 Skill 仅表示选择和用途；Skill 存在、Provider 配置存在或 Credential 引用存在，都不能替代运行时 preflight。
 - 需求级 Profile 可以引用多个环境 Profile，但每个被引用的环境 Profile 必须处于 `confirmed` 且 revision 匹配。

@@ -194,7 +194,8 @@ supporting skill only for a present need:
 - architecture or public/cross-component contract design: `write-architecture`;
 - schema or persistence design: `write-db-design`;
 - persistent implementation planning: `write-plan`;
-- reusable environment facts and capabilities: `environment-profile`;
+- user-confirmed development/test environment topology and controlled operations: `environment-profile`;
+- explicit generation or use of a bounded project-local operation Manifest from a confirmed Environment Profile: `environment-operations`;
 - requirement-scoped verification and repair strategy from an explicit `requirements.md`: `verification-profile`;
 - a question-driven throwaway logic or UI-variant exploration: `explore-prototype`;
 - an explicitly requested or implementation-governing grounded UI prototype: `write-prototype`;
@@ -205,7 +206,7 @@ supporting skill only for a present need:
   record: `goal-execution`;
 - final completion decision for every implementation task: `completion-gate`.
 
-A resolved profile does not itself invoke Goal, Design Gate, test design, or prototype generation.
+A resolved profile does not itself invoke Goal, Design Gate, test design, prototype generation, or `environment-operations`. Environment Operation Manifest generation/use remains an explicit user-selected capability and never auto-executes operations.
 A required persisted implementation plan does invoke `write-tests`; plan verification bullets do not
 replace the resulting `test-plan.md`. Run `design-gate` only when a requirement, architecture, API
 contract, table design, implementation

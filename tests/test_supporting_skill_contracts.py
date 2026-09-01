@@ -22,6 +22,7 @@ SUPPORTING_SKILLS = (
     "doctor",
     "verification-profile",
     "environment-profile",
+    "environment-operations",
 )
 
 LEGACY_MARKERS = (

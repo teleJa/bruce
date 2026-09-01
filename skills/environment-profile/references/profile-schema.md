@@ -74,13 +74,14 @@ environment:
 requirement or acceptance criterion. `content_hash` covers the profile content excluding mutable
 confirmation metadata, or another explicitly documented canonicalization rule.
 
-Environment Profile facts are user-provided and user-confirmed. Use `source.kind: user` for entries
-in `facts`. Repository and project-document sources are not valid Environment Profile fact sources;
-Bruce must not infer them from files it inspected.
+Environment Profile facts are user-confirmed. Use `source.kind: user` for entries in `facts`, including
+facts accepted after Bruce presents repository-derived candidates. Repository and project-document
+sources are not valid Environment Profile fact sources: discovery evidence may guide a user question,
+but Bruce must not write it as accepted fact until the user confirms or corrects it.
 
-Do not add a `source_of_truth` field to an Environment Profile. Repository paths, source-code paths,
-implementation details, Git revisions, branches, and test scenario paths belong to codebase or
-requirement-scoped verification documentation, not to the user's environment declaration.
+Do not add a `source_of_truth` field, repository-candidate labels, or repository paths to an
+Environment Profile. Source-code paths, implementation details, Git revisions, branches, and test
+scenario paths remain discovery/verification evidence, not part of the user's environment declaration.
 
 Unknown information that the user wants included belongs in `unresolved_facts`:
 
@@ -95,70 +96,95 @@ unresolved_facts:
 Do not replace an unresolved fact with a guessed URL, account, default environment, historical value,
 repository convention, or source-code inference.
 
-## Environment scope
+## Environment topology for development and testing
+
+An Environment Profile describes a user-confirmed runtime topology that supports development and
+ testing. Its baseline domains are:
+
+1. `environment`: identity, purpose, kind, and safety scope;
+2. `deployment`: how application services run and who owns their lifecycle;
+3. `build`: how the user builds application units and what artifact is expected;
+4. `lifecycle`: user-confirmed prepare/start/stop/status/log operations;
+5. `dependencies`: databases, caches, queues, object stores, middleware, or local service adapters;
+6. `network`: host/container/remote access scope and declared entrypoints;
+7. `identities`: operator and application/test accounts, roles, and initial-state policies;
+8. `data_policy`: persistence, isolation, mutation, migration, reset, and cleanup boundaries;
+9. `configuration`: local `.env` and other safe configuration/credential references;
+10. `preflight`: non-destructive checks and expected evidence.
+
+The user may explicitly mark a domain `not-in-scope`. That is a confirmed boundary and must not be
+turned into an unresolved question. These fields describe reusable environment conditions and
+operations, not current runtime results or requirement-specific test steps.
 
 ```yaml
-environment:
-  name: shared-test
-  kind: local|shared-test|staging|production|other
-  production: false
-  shared: true
-  purpose: integration-and-real-use-verification
-  allowed_operations: [readiness-check, test-deploy]
-  prohibited_operations: [production-write]
-```
-
-Use explicit safety and authorization boundaries. Do not silently infer that a shared environment
-is disposable or that a listed operator may perform a write.
-
-## Build and deployment
-
-Build and deployment are separate contracts. Each must state the strategy, executor or external
-system, inputs, terminal states, required evidence, and non-equivalence rules.
-
-```yaml
-build:
-  strategy: cnb
-  executor: external-system
-  trigger:
-    method: project-defined
-    authorization_required: true
-  terminal_states: [success, failed, canceled, unknown]
-  required_evidence:
-    - build_id
-    - source_commit
-    - terminal_status
-    - artifact_identity
-  invariants:
-    - trigger-accepted-is-not-build-success
-
 deployment:
-  strategy: project-defined
-  executor: project-adapter
-  targets:
-    - target_id: test-backend
-      identity_ref: MULTICA_TEST_BACKEND
-  terminal_states: [deployed, failed, rolled_back, unknown]
-  required_evidence:
-    - deployed_commit
-    - deployed_artifact
-    - rollout_status
-    - readiness_result
-  invariants:
-    - build-success-is-not-deployment-success
-    - deployment-success-is-not-user-verification
-```
+  mode: local-process
+  owner: developer
+  application_services:
+    - service_id: joytime-backend
+      deployment_unit: local-process
+    - service_id: joytime-frontend
+      deployment_unit: local-process
 
-A static profile must not contain an actual build id, artifact result, deployed revision, rollout
-result, current availability claim, runtime result, or selected account instance. Dynamic facts belong
-only in Verification Run/Checkpoint. Profile fact values and references must not contain passwords,
-API keys, tokens, cookies, private keys, or credential-bearing URLs.
+build:
+  strategy: user-confirmed-local-build
+  executor: local-operator
+  working_directory: user-confirmed-project-root
+  operations: [build-application]
+  artifact_expectations: [user-confirmed-local-artifact]
+
+dependencies:
+  - dependency_id: postgres
+    category: database
+    deployment_unit: docker-container
+    locality: local
+    purposes: [application-runtime, integration-test]
+  - dependency_id: newsnow
+    category: middleware-or-external-adapter
+    deployment_unit: docker-container
+    locality: local
+    purposes: [application-runtime]
+
+network:
+  access_scope: local-machine-and-local-container-network
+  endpoints: []
+
+identities:
+  - identity_id: local-developer
+    kind: operator
+    purpose: [service-lifecycle, local-debug]
+
+data_policy:
+  ownership: user-confirmed
+  persistence: user-confirmed
+  database_write: authorization-required
+  migration_write: explicit-authorization-required
+  reset_or_drop: explicit-authorization-required
+
+lifecycle:
+  prepare: []
+  start: []
+  stop: []
+  status: []
+  logs: []
+
+operations:
+  - operation_id: build-application
+    category: build
+    executor: local-process
+    authorization: per-invocation
+    risk: low
+```
 
 ## Local `.env` bootstrap
 
-For a local environment, Bruce may create or update the project-root `.env` only after the user
-provides the required values. The `.env` is a local secret sink, not Profile content. The Profile may
-record the path, required variable names, and security conditions, but never the values:
+For a local environment, Bruce may create a missing project-root `.env` template before the user
+provides values. The template contains only empty values for safe candidate variable names, is ignored
+by VCS, and is owner-only `0600`; Bruce then tells the user to populate local account/credential values
+directly in `.env` or through a hidden local prompt. Candidate names become required only after user
+confirmation. Bruce may update an existing `.env` through hidden prompts only for confirmed variables.
+The `.env` is a local secret sink, not Profile content. The Profile may record the path, confirmed
+required variable names, and security conditions, but never the values:
 
 ```yaml
 local_env:
@@ -178,36 +204,34 @@ copy, hash, or include the values in the Profile, confirmation summary, evidence
 or model-facing output. A successful check proves local presence only; it is not authentication or
 runtime availability proof.
 
-## Services, databases, and clients
+## Resource references
 
-Record safe target references and policies, not live results or secret values:
+Use `deployment.application_services`, `dependencies`, and `network.endpoints` to identify reusable
+application and middleware resources. A database is a dependency with data policy; an interactive
+client is a declared network/identity access path. Record safe references and policies, not live
+results or secret values:
 
 ```yaml
-services:
-  - service_id: web
-    purpose: browser-verification
-    endpoint_ref: MULTICA_TEST_WEB_URL
-    access: user-or-environment-provided
-    runtime_preflight: endpoint-readiness
-
-databases:
-  - database_id: test-postgres
-    purpose: integration-and-authoritative-readback
-    connection_ref: MULTICA_TEST_DATABASE_URL
-    mutation_policy: local-ephemeral-only|authorization-required|forbidden
+dependencies:
+  - dependency_id: test-postgres
+    category: database
+    deployment_unit: docker-container
+    locality: local
+    connection_ref: user-confirmed-test-postgres
+    mutation_policy: authorization-required
     cleanup_policy: dedicated-fixture-or-approved-reset
-    secret_value_persisted: false
 
-clients:
-  - client_id: desktop-macos
-    purpose: real-client-verification
-    artifact_source_ref: user-or-project-provided
-    version_identity_required: true
-    runtime_preflight: client-version-and-startup
+network:
+  access_scope: local-machine-and-local-container-network
+  endpoints:
+    - endpoint_id: web
+      purpose: browser-verification
+      endpoint_ref: user-confirmed-local-web
+      runtime_preflight: endpoint-readiness
 ```
 
-`connection_ref`, `endpoint_ref`, and `artifact_source_ref` are references or handles. They must not
-contain passwords, tokens, cookies, private keys, or credential-bearing URLs.
+`connection_ref` and `endpoint_ref` are safe references or handles. They must not contain passwords,
+tokens, cookies, private keys, or credential-bearing URLs.
 
 ## Accounts and Credentials
 
@@ -281,7 +305,8 @@ preflight:
 
 Freshness rules describe when a confirmed profile becomes stale. Ordinary repository source
 changes do not make an Environment Profile stale unless the user-declared environment contract or a
-user-selected reference changed. The Profile does not carry repository source revisions:
+user-selected reference changed. Topology, operation, and authorization changes are material. The
+Profile does not carry repository source revisions:
 
 ```yaml
 freshness:
@@ -295,11 +320,41 @@ freshness:
     - selected-capability-change
     - local-env-variable-scope-change
     - local-env-security-change
+    - topology-change
+    - operation-manifest-operation-set-change
   revalidation_required: true
 ```
 
 Current preflight outcomes belong in a Verification Run or Checkpoint, not in this static profile.
 `runtime-preflight` is evidence collected during execution, not an Environment Profile fact source.
+
+## Environment Operation Manifest
+
+A confirmed Environment Profile may optionally produce a project-local operation manifest. This is an
+explicit derived artifact consumed by `$environment-operations`, not an automatic Skill registration
+or execution side effect:
+
+```yaml
+operation_manifest:
+  requested: true
+  manifest_id: joytime-local-operations
+  output_path: .bruce/environments/joytime-local.operations.yaml
+  source_profile: self
+  generation: opt-in-after-confirmation
+  included_operations: [prepare, build, up, down, status, logs, preflight]
+  excluded_operations: [migrate, reset, drop, destroy, publish, deploy-remote]
+
+# The generated .operations.yaml separately binds profile_id, profile_revision, and content hash;
+# its operations field contains selected operation IDs only.
+```
+
+The manifest must bind the exact source Profile ID, revision, and content hash. It contains only
+selected operation IDs; full command/executor/risk/authorization/ownership definitions remain in the
+source Profile and cannot be overridden by the Manifest. It may select only user-confirmed operations
+and must not infer commands, containers, dependencies, credentials, or ports from repository source.
+Its presence does not grant authorization; `guarded` and `critical` operations retain the
+per-invocation authorization declared in the source Profile. A stale source Profile makes the manifest
+stale.
 
 ## Confirmation summary and ownership
 
@@ -310,7 +365,7 @@ The confirmation summary must identify:
 - user-provided and user-confirmed facts;
 - unresolved facts and exact user questions;
 - build/deployment path and authorized operations;
-- account pools, credential references, services, databases, clients, Skills, and preflight;
+- account pools, credential references, topology domains, capabilities, and preflight;
 - security policy and freshness rules.
 
 Confirmation is user acceptance of the profile as a controlled input. It is not a Design verdict,

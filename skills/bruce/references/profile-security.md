@@ -1,7 +1,6 @@
 # Profile security and evidence boundary
 
-Environment and Requirement Verification Profiles may describe how a credential or account is used,
-but never store the secret itself.
+Environment and Requirement Verification Profiles, and derived Environment Operation Manifests, may describe how a credential or account is used, but never store the secret itself.
 
 ## Allowed
 
@@ -25,11 +24,9 @@ credential_source: user-managed-browser-session
 
 - passwords, API Key values, access tokens, cookies, JWTs, SSO tickets;
 - complete external provider responses containing identity or token data;
-- secrets copied into Checkpoint, Handoff, logs, screenshots, or chat summaries.
+- secrets copied into Environment Operation Manifests, Checkpoint, Handoff, logs, screenshots, or chat summaries;
+- `.env` values passed as command-line arguments or embedded in `argv`/shell text.
 
 ## Evidence distinction
 
-A Profile declares required evidence and its source. A Verification Run/Checkpoint records the actual
-captured evidence, source revision, environment revision, account binding, and current result. A
-Profile confirmation authorizes the strategy but does not assert runtime availability or acceptance
-success.
+A Profile declares required evidence and its source. A derived Environment Operation Manifest declares only the source Profile binding and bounded operation metadata. A Verification Run/Checkpoint records the actual captured evidence, source revision, environment revision, account binding, operation result, and current status. Profile confirmation and Manifest generation do not assert runtime availability or acceptance success.

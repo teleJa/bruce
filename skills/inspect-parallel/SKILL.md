@@ -55,6 +55,18 @@ Return:
 
 This Skill is the `inspector` Profile consumer. Before dispatch, build a v1 Task Packet with `task_kind=inspect`, `output=task_evidence_packet`, `allowed_paths=[]`, while the `inspector` Profile declares `write_scope=none`; include repository evidence sources, allowed/denied tools, acceptance ids, and explicit stop conditions. Resolve the Profile through the shared Bruce resolver; do not select a provider-specific model or Runtime here. The inspector must return only repository-backed evidence and a `model_resolution` record.
 
+### Mandatory pre-dispatch routing gate
+
+When `Inspection mode: parallel`, apply this gate separately to every shard before calling the native `spawn_agent` tool:
+
+1. Complete the v1 Task Packet and resolve the `inspector` Profile through the shared Bruce resolver using the current task, applicable user/project/task overrides, and confirmed host capabilities.
+2. Treat the resolver output as a prerequisite, not as a suggestion. Do not call `spawn_agent` until a `model_resolution` record and resolver-produced host arguments are available for that shard.
+3. Use the resolver-produced `model` and `reasoning_effort` values verbatim. Pass `model` only when `resolution_result=resolved`; when `resolution_result=fallback`, intentionally omit `model`, preserve the current-model fallback, and record `fallback_used`, `fallback_reason`, `effective_model`, and `capability_status=degraded`.
+4. If resolution is `blocked`, the resolver fails, or the host arguments and `model_resolution` disagree, do not dispatch that shard. Return the blocked reason or inspect that missing scope directly according to the fallback procedure above.
+5. Attach the same `model_resolution` record to the shard's Task Packet/result. A worker's later `model_resolution` output does not prove that pre-dispatch resolution occurred; the main Agent must retain the pre-dispatch record.
+
+In `Inspection mode: direct`, do not create a native subagent and do not run model routing merely to satisfy this gate.
+
 ## Does not own
 
 Do not modify files, run external side effects, decide profile or risk, form the task contract, create

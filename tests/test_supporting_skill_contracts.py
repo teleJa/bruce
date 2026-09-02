@@ -269,6 +269,22 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("Do not invoke another supporting skill automatically", normalized)
         self.assertNotIn("oh-my-claudecode", body.lower())
 
+    def test_parallel_inspection_requires_pre_dispatch_model_resolution(self) -> None:
+        body = read("skills/inspect-parallel/SKILL.md")
+        normalized = " ".join(body.split())
+        for phrase in (
+            "Mandatory pre-dispatch routing gate",
+            "before calling the native `spawn_agent` tool",
+            "Do not call `spawn_agent` until a `model_resolution` record",
+            "Pass `model` only when `resolution_result=resolved`",
+            "when `resolution_result=fallback`, intentionally omit `model`",
+            "If resolution is `blocked`, the resolver fails",
+            "A worker's later `model_resolution` output does not prove",
+            "In `Inspection mode: direct`, do not create a native subagent",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, normalized)
+
     def test_write_plan_does_not_cascade_to_parallel_inspection(self) -> None:
         normalized = " ".join(read("skills/write-plan/SKILL.md").split())
         self.assertIn("when Bruce already produced them", normalized)

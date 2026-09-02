@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import os
+import stat
 import subprocess
 import sys
 import tempfile
@@ -12,180 +14,129 @@ import yaml
 from tests._support import ROOT, read
 
 SKILL = ROOT / "skills/environment-operations/SKILL.md"
-TEMPLATE = ROOT / "skills/environment-operations/templates/operation-manifest.yaml"
-VALIDATOR = ROOT / "skills/environment-operations/scripts/validate_operation_manifest.py"
+GENERATOR = ROOT / "skills/environment-operations/scripts/generate_operation_skill.py"
 
 
-def load_validator():
-    spec = importlib.util.spec_from_file_location("operation_manifest_validator", VALIDATOR)
+def load_generator():
+    spec = importlib.util.spec_from_file_location("operation_skill_generator", GENERATOR)
     if spec is None or spec.loader is None:
-        raise RuntimeError("cannot load operation manifest validator")
+        raise RuntimeError("cannot load operation Skill generator")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
+def confirmed_profile(root: Path, *, command: list[str]) -> Path:
+    profile = {
+        "version": 1,
+        "profile_kind": "environment",
+        "profile_id": "local-profile",
+        "profile_revision": 1,
+        "content_hash": "sha256:abc",
+        "profile_state": "confirmed",
+        "environment": {"kind": "local"},
+        "declaration": {"source": "user", "statement": "user-declared"},
+        "confirmation": {"state": "confirmed", "confirmed_revision": 1, "confirmed_content_hash": "sha256:abc"},
+        "local_env": {"path": ".env", "required": False, "ignored_by_vcs": "required", "file_mode": "0600", "required_variables": []},
+        "security": {"persist_secrets": False, "expose_secrets_to_model": False, "credential_values_allowed": False, "credential_refs_only": True},
+        "operations": [
+            {"operation_id": "local-build", "category": "build", "purpose": "build", "executor": "local-operator", "working_directory_ref": "project-root", "argv": command, "authorization": "explicit-per-invocation", "risk": "guarded", "mutates": True, "required_evidence": ["command-exit-status"]},
+            {"operation_id": "local-service-start", "category": "start", "purpose": "start", "executor": "local-operator", "working_directory_ref": "project-root", "argv": command, "authorization": "explicit-per-invocation", "risk": "guarded", "mutates": True, "ownership": "profile-owned", "required_evidence": ["process-observation"]},
+            {"operation_id": "local-service-stop", "category": "stop", "purpose": "stop", "executor": "local-operator", "working_directory_ref": "project-root", "argv": command, "authorization": "explicit-per-invocation", "risk": "guarded", "mutates": True, "ownership": "profile-owned", "required_evidence": ["process-observation"]},
+        ],
+    }
+    path = root / ".bruce/environments/local-profile.profile.yaml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(yaml.safe_dump(profile, sort_keys=False), encoding="utf-8")
+    return path
+
+
 class EnvironmentOperationsContractTest(unittest.TestCase):
-    def test_skill_requires_confirmed_profile_and_keeps_operations_bounded(self) -> None:
+    def test_skill_generates_executable_project_artifacts_not_manifest(self) -> None:
         body = " ".join(read("skills/environment-operations/SKILL.md").split())
         for phrase in (
-            "confirmed Environment Profile",
-            "Environment Operation Manifest",
-            "does not dynamically register a project-level",
-            "Do not infer commands",
-            "critical",
+            "executable project-local Skill",
+            "bounded runner script",
+            "does **not** generate `operations.yaml`",
+            "existing Skill check",
+            "Never overwrite an existing non-Bruce-owned Skill",
+            "Makefile target",
+            "run_operation.py",
+            "--confirm",
             "Verification Run/Checkpoint",
         ):
             self.assertIn(phrase, body)
+        self.assertFalse((ROOT / "skills/environment-operations/templates/operation-manifest.yaml").exists())
+        self.assertFalse((ROOT / "skills/environment-operations/scripts/validate_operation_manifest.py").exists())
 
-    def test_manifest_template_is_unconfirmed_and_secret_safe(self) -> None:
-        data = yaml.safe_load(TEMPLATE.read_text(encoding="utf-8"))
-        self.assertEqual("environment-operation", data["manifest_kind"])
-        self.assertFalse(data["declaration"]["confirmed"])
-        self.assertFalse(data["security"]["secret_values_allowed"])
-        self.assertTrue(data["runtime"]["preflight_required"])
-
-    def test_validator_accepts_bounded_read_only_operation(self) -> None:
-        validator = load_validator()
-        manifest = yaml.safe_load(TEMPLATE.read_text(encoding="utf-8"))
+    def test_generator_creates_skill_and_runner_from_confirmed_profile(self) -> None:
+        generator = load_generator()
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            profile = {
-                "version": 1,
-                "profile_kind": "environment",
-                "profile_id": "local-profile",
-                "profile_revision": 1,
-                "content_hash": "sha256:abc",
-                "profile_state": "confirmed",
-                "declaration": {"source": "user", "statement": "user-declared"},
-                "confirmation": {
-                    "state": "confirmed",
-                    "confirmed_revision": 1,
-                    "confirmed_content_hash": "sha256:abc",
-                },
-                "operations": [{"operation_id": "status", "category": "status", "executor": "local-read-only", "authorization": "none", "risk": "read-only"}],
-            }
-            profile_path = root / "profile.yaml"
-            profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
-            manifest.update({
-                "manifest_id": "local-ops",
-                "profile_ref": {
-                    "path": str(profile_path),
-                    "profile_id": "local-profile",
-                    "profile_revision": 1,
-                    "profile_content_hash": "sha256:abc",
-                },
-                "declaration": {"source": "environment-profile", "confirmed": True},
-                "operations": ["status"],
-            })
-            self.assertEqual([], validator.validate_manifest(manifest))
+            profile = confirmed_profile(root, command=[sys.executable, "-c", "print('ok')"])
+            skill_root = root / ".codex/skills"
+            output = generator.generate(profile, root, skill_root, None, False)
+            skill = output / "SKILL.md"
+            runner = output / "scripts/run_operation.py"
+            metadata = output / "agents/openai.yaml"
+            self.assertEqual((root / ".codex/skills/local-profile-operations").resolve(), output)
+            self.assertTrue(skill.is_file())
+            self.assertTrue(runner.is_file())
+            self.assertTrue(metadata.is_file())
+            self.assertEqual(0o755, stat.S_IMODE(runner.stat().st_mode))
+            generated = skill.read_text(encoding="utf-8")
+            self.assertIn("local-service-start", generated)
+            self.assertIn("local-service-stop", generated)
+            self.assertIn("local-build", generated)
+            self.assertIn("EXPECTED_CONTENT_HASH", runner.read_text(encoding="utf-8"))
 
-    def test_validator_rejects_unsafe_or_underdeclared_operations(self) -> None:
-        validator = load_validator()
+            blocked = subprocess.run([sys.executable, str(runner), "--operation", "local-build"], cwd=root, capture_output=True, text=True)
+            self.assertEqual(2, blocked.returncode)
+            self.assertIn("requires --confirm", blocked.stderr)
+            executed = subprocess.run([sys.executable, str(runner), "--operation", "local-build", "--confirm"], cwd=root, capture_output=True, text=True)
+            self.assertEqual(0, executed.returncode, executed.stderr)
+            self.assertIn('"exit_code": 0', executed.stdout)
+            profile.write_text(profile.read_text(encoding="utf-8") + "# changed after generation\n", encoding="utf-8")
+            stale = subprocess.run([sys.executable, str(runner), "--operation", "local-build", "--confirm"], cwd=root, capture_output=True, text=True)
+            self.assertEqual(2, stale.returncode)
+            self.assertIn("Profile file changed", stale.stderr)
+
+    def test_generator_rejects_unconfirmed_profile_and_unowned_existing_skill(self) -> None:
+        generator = load_generator()
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            profile = {
-                "version": 1, "profile_kind": "environment", "profile_id": "local-profile",
-                "profile_revision": 1, "content_hash": "sha256:abc", "profile_state": "confirmed",
-                "declaration": {"source": "user", "statement": "user-declared"},
-                "confirmation": {"state": "confirmed", "confirmed_revision": 1, "confirmed_content_hash": "sha256:abc"},
-                "operations": [{"operation_id": "status", "category": "status", "executor": "local-read-only", "authorization": "none", "risk": "read-only"}],
-            }
-            profile_path = root / "profile.yaml"
-            profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
-            manifest = yaml.safe_load(TEMPLATE.read_text(encoding="utf-8"))
-            manifest.update({
-                "manifest_id": "unsafe-ops",
-                "profile_ref": {"path": str(profile_path), "profile_id": "local-profile", "profile_revision": 1, "profile_content_hash": "sha256:abc"},
-                "declaration": {"source": "environment-profile", "confirmed": True},
-                "operations": ["reset"],
-                "raw_value": "not-for-output",
-            })
-            errors = validator.validate_manifest(manifest)
-        self.assertTrue(any("operations[0] is not declared by source Environment Profile" in error for error in errors))
-        self.assertTrue(any("forbidden manifest field: raw_value" in error for error in errors))
+            profile = confirmed_profile(root, command=[sys.executable, "-c", "print('ok')"])
+            data = yaml.safe_load(profile.read_text(encoding="utf-8"))
+            data["profile_state"] = "draft"
+            data["confirmation"]["state"] = "pending"
+            profile.write_text(yaml.safe_dump(data), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "must be confirmed"):
+                generator.generate(profile, root, root / ".codex/skills", None, False)
 
-    def test_validator_rejects_unconfirmed_mismatched_or_downgraded_source_operations(self) -> None:
-        validator = load_validator()
+            profile = confirmed_profile(root, command=[sys.executable, "-c", "print('ok')"])
+            target = root / ".codex/skills/local-profile-operations"
+            target.mkdir(parents=True)
+            (target / "SKILL.md").write_text("---\nname: hand-written\n---\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "unowned"):
+                generator.generate(profile, root, root / ".codex/skills", None, False)
+
+    def test_generated_runner_loads_dotenv_without_printing_values(self) -> None:
+        generator = load_generator()
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            profile = {
-                "version": 1,
-                "profile_kind": "environment",
-                "profile_id": "local-profile",
-                "profile_revision": 1,
-                "content_hash": "sha256:abc",
-                "profile_state": "confirmed",
-                "declaration": {"source": "user", "statement": "user-declared"},
-                "confirmation": {
-                    "state": "confirmed",
-                    "confirmed_revision": 1,
-                    "confirmed_content_hash": "sha256:abc",
-                },
-                "operations": [{
-                    "operation_id": "build",
-                    "category": "build",
-                    "executor": "local-process",
-                    "authorization": "per-invocation",
-                    "risk": "guarded",
-                }],
-            }
-            profile_path = root / "profile.yaml"
-            profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
-            manifest = yaml.safe_load(TEMPLATE.read_text(encoding="utf-8"))
-            manifest.update({
-                "manifest_id": "local-ops",
-                "profile_ref": {"path": str(profile_path), "profile_id": "local-profile", "profile_revision": 1, "profile_content_hash": "sha256:wrong"},
-                "declaration": {"source": "environment-profile", "confirmed": True},
-                "operations": ["build"],
-            })
-            errors = validator.validate_manifest(manifest)
-            self.assertIn("profile_ref.profile_content_hash must match source Environment Profile", errors)
-            self.assertIn("profile_ref.profile_content_hash must match source Environment Profile", errors)
-
-            profile["profile_state"] = "needs_input"
-            profile["confirmation"]["state"] = "pending"
-            profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
-            errors = validator.validate_manifest(manifest)
-        self.assertIn("source Environment Profile must be confirmed", errors)
-        self.assertIn("source Environment Profile confirmation.state must be confirmed", errors)
-
-    def test_validator_cli_does_not_execute_manifest(self) -> None:
-        manifest = yaml.safe_load(TEMPLATE.read_text(encoding="utf-8"))
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            profile = {
-                "version": 1,
-                "profile_kind": "environment",
-                "profile_id": "cli-profile",
-                "profile_revision": 1,
-                "content_hash": "sha256:abc",
-                "profile_state": "confirmed",
-                "declaration": {"source": "user", "statement": "user-declared"},
-                "confirmation": {
-                    "state": "confirmed",
-                    "confirmed_revision": 1,
-                    "confirmed_content_hash": "sha256:abc",
-                },
-                "operations": [],
-            }
-            profile_path = root / "profile.yaml"
-            profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
-            manifest.update({
-                "manifest_id": "cli-ops",
-                "profile_ref": {
-                    "path": "profile.yaml",
-                    "profile_id": "cli-profile",
-                    "profile_revision": 1,
-                    "profile_content_hash": "sha256:abc",
-                },
-                "declaration": {"source": "environment-profile", "confirmed": True},
-            })
-            path = root / "manifest.yaml"
-            path.write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
-            result = subprocess.run([sys.executable, str(VALIDATOR), str(path)], cwd=ROOT, capture_output=True, text=True, check=False)
-        self.assertEqual(0, result.returncode, result.stderr)
-        self.assertIn("Manifest validation passed", result.stdout)
+            profile = confirmed_profile(root, command=[sys.executable, "-c", "import os; print(os.environ['LOCAL_TOKEN'])"])
+            data = yaml.safe_load(profile.read_text(encoding="utf-8"))
+            data["local_env"]["required"] = True
+            data["local_env"]["required_variables"] = ["LOCAL_TOKEN"]
+            profile.write_text(yaml.safe_dump(data), encoding="utf-8")
+            env = root / ".env"
+            env.write_text("LOCAL_TOKEN=not-for-output\n", encoding="utf-8")
+            os.chmod(env, 0o600)
+            output = generator.generate(profile, root, root / ".codex/skills", None, False)
+            result = subprocess.run([sys.executable, str(output / "scripts/run_operation.py"), "--operation", "local-build", "--confirm"], cwd=root, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertNotIn("not-for-output", result.stdout)
+            self.assertIn("<redacted>", result.stdout)
 
 
 if __name__ == "__main__":

@@ -225,29 +225,26 @@ def validate_profile(data: Any) -> list[str]:
                             errors.append(f"operations[{index}] critical operation requires {key}")
                 if category in {"stop", "down", "cleanup"} and not operation.get("ownership"):
                     errors.append(f"operations[{index}] stop-like operation requires ownership")
+        # Backward-compatible read-only validation for profiles created before executable
+        # operation Skills replaced the old manifest artifact. New profiles do not emit this field.
         operation_manifest = data.get("operation_manifest")
         if operation_manifest is not None:
             if not isinstance(operation_manifest, dict):
-                errors.append("operation_manifest must be a mapping")
+                errors.append("legacy operation_manifest must be a mapping")
             else:
-                allowed_operation_manifest_keys = {
+                allowed_legacy_manifest_keys = {
                     "requested", "manifest_id", "output_path", "source_profile", "generation",
                     "included_operations", "excluded_operations",
                 }
-                for key in set(operation_manifest) - allowed_operation_manifest_keys:
-                    errors.append(f"operation_manifest field is not allowed: {key}")
+                for key in set(operation_manifest) - allowed_legacy_manifest_keys:
+                    errors.append(f"legacy operation_manifest field is not allowed: {key}")
                 if not isinstance(operation_manifest.get("requested"), bool):
-                    errors.append("operation_manifest.requested must be boolean")
-                if operation_manifest.get("requested"):
-                    for key in ("manifest_id", "output_path"):
-                        if not isinstance(operation_manifest.get(key), str) or not operation_manifest[key].strip():
-                            errors.append(f"operation_manifest.{key} is required when requested")
-                    if operation_manifest.get("generation") != "opt-in-after-confirmation":
-                        errors.append("operation_manifest.generation must be opt-in-after-confirmation")
+                    errors.append("legacy operation_manifest.requested must be boolean")
                 for key in ("included_operations", "excluded_operations"):
                     value = operation_manifest.get(key, [])
                     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
-                        errors.append(f"operation_manifest.{key} must be a list of strings")
+                        errors.append(f"legacy operation_manifest.{key} must be a list of strings")
+
         facts = data.get("facts", [])
         if not isinstance(facts, list):
             errors.append("Environment Profile facts must be a list")

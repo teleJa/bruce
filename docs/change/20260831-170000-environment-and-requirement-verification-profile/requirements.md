@@ -18,7 +18,7 @@
 | R-08 | Profile 不产生完成结论 | Profile、环境确认、Skill、Adapter 和验证运行都不能替代 Design Gate 或 Completion Gate。 |
 | R-09 | 阻塞必须停止并通知 | 发生环境未知、权限不足、版本不匹配、账号状态不明或外部状态未知时，停止受影响 Task/Batch，通知用户并等待显式恢复。 |
 | R-10 | 环境是开发测试运行拓扑 | Environment Profile 记录支撑开发和测试的用户确认运行拓扑：应用部署、构建、生命周期、依赖/中间件、网络、身份、数据、配置/凭证和 preflight；不记录实现代码路径。 |
-| R-11 | 操作 Skill 从确认环境派生 | 只有在 Environment Profile 精确确认后，用户显式请求时，Bruce 才能基于其中已确认的构建、部署和生命周期操作生成项目级 Environment Operation Manifest；派生能力不扩展授权。 |
+| R-11 | 操作 Skill 从确认环境派生 | 只有在 Environment Profile 精确确认后，用户显式请求时，Bruce 才能基于其中已确认的构建、部署和生命周期操作生成项目级 Executable Environment Operation Skill；派生能力不扩展授权。 |
 
 ## Scope
 
@@ -35,7 +35,7 @@
 - 不实现 CNB、Temporal、Kubernetes、Electron、浏览器、数据库或任意项目 Adapter。
 - 不将密码、API Key、Cookie、JWT、SSO ticket 或其他秘密值写入 Profile、Checkpoint、Handoff、日志或输出；本地环境仅在用户明确提供并授权时创建项目根目录 `.env`，不实现通用 Secret Manager。
 - 不从仓库扫描或推导 Environment Profile 的环境事实、代码路径、Git revision、测试场景或实现细节。
-- 不从未确认的 Profile 生成可用 Operation Manifest；Manifest 只能封装 Profile 中已确认的操作，不能扩大数据库、凭证、远程部署或生产权限。
+- 不从未确认的 Profile 生成可执行 Operation Skill；生成的 Skill 只能封装 Profile 中已确认的操作，不能扩大数据库、凭证、远程部署或生产权限。
 - 不把用户确认实现成第三个 Gate；Design Gate 和 Completion Gate 的 ownership 不变。
 - 不在 Profile 文件中记录某次执行的实时状态、测试通过结果、当前 build id 或最终完成结论。
 - 不自动选择用户未确认的测试账号、部署目标、外部写操作或生产环境。
@@ -106,12 +106,12 @@
 - Then：Profile 记录用户确认的应用部署、构建、生命周期、依赖/中间件、网络、身份、数据、配置/凭证和 preflight；未涉及的域可明确为 `not-in-scope`；不写入代码路径或仓库推导事实。
 - Evidence：topology schema/template and user-only contract tests。
 
-### AC-011：从确认环境派生操作 Manifest
+### AC-011：从确认环境派生可执行操作 Skill
 
-- Given：Environment Profile 已精确确认 revision 与 content hash，且用户请求生成操作 Manifest。
+- Given：Environment Profile 已精确确认 revision 与 content hash，且用户请求生成可执行操作 Skill。
 - When：运行 `$environment-operations`。
-- Then：只生成绑定源 Profile ID/revision/hash 的项目级 Manifest，Manifest 只选择已确认操作的 ID，完整 command/risk/authorization/ownership 仍从源 Profile 解析；高风险操作默认排除，不能扩大授权；Profile stale 时 Manifest stale。
-- Evidence：derived Manifest validator/template and boundary tests。
+- Then：在目标项目中生成绑定源 Profile ID/revision/hash 的 `SKILL.md` 与 bounded runner；Skill 只执行 Profile 已确认的 `argv`，可调用项目已有脚本或 Makefile 完成编译、启动、停止、健康检查等操作；高风险操作默认不执行且不能扩大授权；Profile stale 或 hash 不匹配时 runner fail closed；不生成 `operations.yaml`。
+- Evidence：generated Skill/runner generation, execution, stale-binding, secret-redaction and boundary tests。
 
 ### AC-009：Completion ownership 不变
 

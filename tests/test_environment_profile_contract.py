@@ -174,14 +174,12 @@ class EnvironmentProfileContractTest(unittest.TestCase):
         self.assertTrue(any("Environment Profile fact source must be user" in error for error in errors))
         self.assertTrue(any("secret-bearing field" in error or "secret-like value" in error for error in errors))
 
-    def test_template_declares_environment_topology_and_operation_manifest(self) -> None:
+    def test_template_declares_environment_topology_and_operation_declarations(self) -> None:
         template = yaml.safe_load(read("skills/environment-profile/templates/environment-profile.yaml"))
-        for key in ("deployment", "build", "lifecycle", "dependencies", "network", "identities", "data_policy", "configuration", "operations", "operation_manifest"):
+        for key in ("deployment", "build", "lifecycle", "dependencies", "network", "identities", "data_policy", "configuration", "operations"):
             self.assertIn(key, template)
-        for legacy in ("services", "databases", "clients", "skills"):
-            self.assertNotIn(legacy, template)
-        self.assertFalse(template["operation_manifest"]["requested"])
-        self.assertEqual("opt-in-after-confirmation", template["operation_manifest"]["generation"])
+        self.assertNotIn("operation_manifest", template)
+        self.assertNotIn("operations.yaml", read("skills/environment-profile/templates/environment-profile.yaml"))
 
     def test_validator_rejects_unsafe_profile_operations(self) -> None:
         validator = load_validator()
@@ -208,76 +206,6 @@ class EnvironmentProfileContractTest(unittest.TestCase):
         self.assertTrue(any("critical operation requires target" in error for error in errors))
         self.assertTrue(any("argv must not contain secret assignments" in error for error in errors))
 
-    def test_validator_rejects_unbounded_operation_manifest_metadata(self) -> None:
-        validator = load_validator()
-        profile = {
-            "version": 1,
-            "profile_kind": "environment",
-            "profile_id": "operation-manifest",
-            "profile_revision": 1,
-            "content_hash": "sha256:abc",
-            "profile_state": "draft",
-            "confirmation": {"state": "pending"},
-            "declaration": {"source": "user", "statement": "user-declared environment"},
-            "operation_manifest": {
-                "requested": True,
-                "manifest_id": "local-ops",
-                "output_path": ".bruce/environments/local.operations.yaml",
-                "generation": "automatic",
-                "included_operations": "build",
-                "raw_secret": "not-for-output",
-            },
-        }
-        errors = validator.validate_profile(profile)
-        self.assertIn("operation_manifest field is not allowed: raw_secret", errors)
-        self.assertIn("operation_manifest.generation must be opt-in-after-confirmation", errors)
-        self.assertIn("operation_manifest.included_operations must be a list of strings", errors)
-
-    def test_environment_operations_skill_is_manifest_based_and_bounded(self) -> None:
-        body = read("skills/environment-operations/SKILL.md")
-        normalized = " ".join(body.split())
-        for phrase in (
-            "Environment Operation Manifest",
-            "confirmed Environment Profile",
-            "does not dynamically register a project-level",
-            "Do not infer commands",
-            "critical",
-            "Verification Run/Checkpoint",
-        ):
-            self.assertIn(phrase, normalized)
-        template = yaml.safe_load(read("skills/environment-operations/templates/operation-manifest.yaml"))
-        self.assertEqual("environment-operation", template["manifest_kind"])
-        self.assertFalse(template["declaration"]["confirmed"])
-
-    def test_operation_manifest_validator_rejects_unconfirmed_and_unsafe_operations(self) -> None:
-        validator_path = ROOT / "skills/environment-operations/scripts/validate_operation_manifest.py"
-        spec = importlib.util.spec_from_file_location("operation_manifest_validator", validator_path)
-        module = importlib.util.module_from_spec(spec)
-        assert spec and spec.loader
-        spec.loader.exec_module(module)
-        valid = yaml.safe_load(read("skills/environment-operations/templates/operation-manifest.yaml"))
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            profile = {
-                "version": 1, "profile_kind": "environment", "profile_id": "local-profile",
-                "profile_revision": 1, "content_hash": "sha256:abc", "profile_state": "confirmed",
-                "declaration": {"source": "user", "statement": "user-declared"},
-                "confirmation": {"state": "confirmed", "confirmed_revision": 1, "confirmed_content_hash": "sha256:abc"},
-                "operations": [{"operation_id": "status", "category": "status", "executor": "local-read-only", "authorization": "none", "risk": "read-only"}],
-            }
-            profile_path = root / "profile.yaml"
-            profile_path.write_text(yaml.safe_dump(profile), encoding="utf-8")
-            valid.update({
-                "manifest_id": "local-ops",
-                "profile_ref": {"path": str(profile_path), "profile_id": "local-profile", "profile_revision": 1, "profile_content_hash": "sha256:abc"},
-                "declaration": {"source": "environment-profile", "confirmed": True},
-                "operations": ["status"],
-            })
-            self.assertEqual([], module.validate_manifest(valid))
-            unsafe = {**valid, "operations": ["reset"], "raw_value": "not-for-output"}
-            errors = module.validate_manifest(unsafe)
-        self.assertIn("operations[0] is not declared by source Environment Profile", errors)
-        self.assertIn("forbidden manifest field: raw_value", errors)
 
 
 if __name__ == "__main__":

@@ -321,40 +321,20 @@ freshness:
     - local-env-variable-scope-change
     - local-env-security-change
     - topology-change
-    - operation-manifest-operation-set-change
   revalidation_required: true
 ```
 
 Current preflight outcomes belong in a Verification Run or Checkpoint, not in this static profile.
 `runtime-preflight` is evidence collected during execution, not an Environment Profile fact source.
 
-## Environment Operation Manifest
+## Executable environment operations
 
-A confirmed Environment Profile may optionally produce a project-local operation manifest. This is an
-explicit derived artifact consumed by `$environment-operations`, not an automatic Skill registration
-or execution side effect:
-
-```yaml
-operation_manifest:
-  requested: true
-  manifest_id: joytime-local-operations
-  output_path: .bruce/environments/joytime-local.operations.yaml
-  source_profile: self
-  generation: opt-in-after-confirmation
-  included_operations: [prepare, build, up, down, status, logs, preflight]
-  excluded_operations: [migrate, reset, drop, destroy, publish, deploy-remote]
-
-# The generated .operations.yaml separately binds profile_id, profile_revision, and content hash;
-# its operations field contains selected operation IDs only.
-```
-
-The manifest must bind the exact source Profile ID, revision, and content hash. It contains only
-selected operation IDs; full command/executor/risk/authorization/ownership definitions remain in the
-source Profile and cannot be overridden by the Manifest. It may select only user-confirmed operations
-and must not infer commands, containers, dependencies, credentials, or ports from repository source.
-Its presence does not grant authorization; `guarded` and `critical` operations retain the
-per-invocation authorization declared in the source Profile. A stale source Profile makes the manifest
-stale.
+A confirmed Environment Profile may optionally produce an executable project-local Skill through
+`$environment-operations`. The generated Skill and bounded runner use the confirmed `operations`
+entries and their `argv`, risk, authorization, ownership, and evidence requirements. This is an
+explicit derived code artifact, not Profile content, and no `operations.yaml` is generated. A legacy
+`operation_manifest` field may be read for backward compatibility but is ignored and is not emitted by
+new Profiles.
 
 ## Confirmation summary and ownership
 

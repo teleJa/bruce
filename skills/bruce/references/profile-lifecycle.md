@@ -6,7 +6,7 @@ Bruce supports two static profile types that feed its verification loop:
 - **Requirement Verification Profile**: one requirement-scoped verification and repair strategy derived
   from an explicit `requirements.md` and confirmed Environment Profiles.
 
-Neither Profile is a test result, execution ledger, Gate, or completion verdict. A confirmed Environment Profile may explicitly derive a project-local Environment Operation Manifest, but the Manifest is not a third Profile type or a new authorization source.
+Neither Profile is a test result, execution ledger, Gate, or completion verdict. A confirmed Environment Profile may explicitly generate a project-local executable operation Skill, but that Skill is not a third Profile type or a new authorization source.
 
 ## Lifecycle
 
@@ -58,18 +58,17 @@ documentation, Requirement Verification Profiles, or Verification Run/Checkpoint
 A Requirement Verification Profile may use the broader evidence classes needed for requirement
 mapping. Runtime preflight still checks whether a user-declared environment fact is currently true.
 
-## Environment Operation Manifest lifecycle
+## Executable environment Skill lifecycle
 
-`$environment-operations` may create a project-local `<environment-id>.operations.yaml` only from an
-exact confirmed Environment Profile and a user-explicit request. The Manifest binds the source
-`profile_id`, `profile_revision`, and `content_hash`; it selects only operation IDs and resolves full
-operation definitions from that exact Profile. It becomes stale when the source Profile becomes stale
-or those values no longer match.
+`$environment-operations` may generate a project-local executable Skill and bounded runner only from
+an exact confirmed Environment Profile and a user-explicit request. The generated runner binds the
+source `profile_id`, `profile_revision`, and `content_hash`, and fails closed when those values no
+longer match. It uses only confirmed Profile `argv` entries and does not generate `operations.yaml`.
 
-Manifest generation and Manifest presence do not authorize build, start, stop, database mutation,
-remote deployment, production access, or credential retrieval. Each operation retains its own risk
-class, ownership boundary, and per-invocation authorization requirement. Runtime outcomes remain in
-Verification Run/Checkpoint.
+Generation does not authorize or execute build, start, stop, database mutation, remote deployment,
+production access, or credential retrieval. Each operation retains its own risk class, ownership
+boundary, and per-invocation authorization requirement. Runtime outcomes remain in Verification
+Run/Checkpoint.
 
 ## Secret boundary
 

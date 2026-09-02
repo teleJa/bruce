@@ -83,9 +83,9 @@ Environment Profile 是 project/environment scoped 的共享资产，推荐放�
 
 它不包含某个需求的 AC、Task、Scenario、当前结果或完成判断。
 
-## 4. Derived Environment Operation Manifest
+## 4. Derived Executable Environment Operation Skill
 
-`$environment-operations` is an opt-in static capability that generates a project-local operation Manifest only from an exact confirmed Environment Profile. It packages declared build, deployment, dependency preparation, lifecycle, status, logs, and preflight operations; it does not dynamically register a project Skill, execute operations, infer commands from source, or expand authorization. High-risk operations such as migration, reset/drop, remote deployment, production access, and credential retrieval remain excluded or separately authorized. A stale source Profile makes the Manifest stale.
+`$environment-operations` is an opt-in static capability that generates a project-local executable operation Skill only from an exact confirmed Environment Profile. It packages declared build, deployment, dependency preparation, lifecycle, status, logs, and preflight operations; it does not dynamically register a project Skill, execute operations, infer commands from source, or expand authorization. High-risk operations such as migration, reset/drop, remote deployment, production access, and credential retrieval remain excluded or separately authorized. A stale source Profile makes the generated Skill stale.
 
 ## 5. Requirement Verification Profile data model
 

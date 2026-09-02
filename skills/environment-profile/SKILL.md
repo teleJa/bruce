@@ -177,9 +177,9 @@ browser session, or an operator-provided credential handle. Keep `secret_value_p
 9. Wait for explicit confirmation of the exact profile revision and content hash. A vague “continue”,
    “looks good”, or “try it” is not confirmation. A material edit increments `profile_revision` and
    resets `confirmation.state` to `pending`.
-10. After exact confirmation, offer `$environment-operations` as a separate explicit opt-in. It may
-    generate a project-local operation manifest from confirmed Profile declarations; it does not run
-    operations automatically.
+10. After exact confirmation, offer `$environment-operations` as a separate explicit opt-in. It
+    generates an executable project-local Skill and bounded runner from the confirmed operations; it
+    does not generate an operations manifest or run operations automatically.
 
 ## Confirmation and use rules
 
@@ -216,8 +216,8 @@ The output must include:
   repository-candidate labels, or a generated `source_of_truth` list;
 - application deployment topology, build strategy, lifecycle operations, dependency/middleware,
   network, identity, data, configuration, and preflight declarations;
-- optional Environment Operation Manifest request/metadata; it is generated only from a confirmed
-  Profile by the explicit `$environment-operations` Skill;
+- confirmed operation declarations that can be compiled into an executable project-local Skill by
+  the explicit `$environment-operations` Skill;
 - dependency/middleware, network, identity/account-pool, and safe Credential references;
 - user-confirmed capabilities and their evidence boundaries;
 - non-destructive preflight checks and required runtime evidence;
@@ -238,4 +238,4 @@ Verification Run or Checkpoint state, Design Gate, Completion Gate, project adap
 CNB/CI execution, deployment, database reads or writes, browser or client operation, external Secret
 Manager administration, or external runtime state. It owns only the narrow local `.env` template/bootstrap described above;
 it does not provide general credential retrieval or authorization.
-It never executes a build, deploy, login, SQL statement, client test, or Environment Operation Manifest on the project's behalf. `$environment-operations` is a separate explicit Skill and does not auto-run when this Profile is generated.
+It never executes a build, deploy, login, SQL statement, client test, or environment operation on the project's behalf. `$environment-operations` is a separate explicit Skill and does not auto-run when this Profile is generated.

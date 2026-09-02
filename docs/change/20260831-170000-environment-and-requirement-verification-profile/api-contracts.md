@@ -77,14 +77,7 @@ configuration:
     path: .env
     variable_refs: []
 operations: []
-operation_manifest:
-  requested: false
-  manifest_id: null
-  output_path: null
-  source_profile: self
-  generation: opt-in-after-confirmation
-  included_operations: []
-  excluded_operations: [migrate, reset, drop, destroy, publish, deploy-remote]
+# Executable operation Skill is a derived project artifact, not an Environment Profile field.
 preflight: []
 security:
   persist_secrets: false
@@ -98,7 +91,7 @@ security:
 
 - `profile_state=confirmed` 只能在 `confirmation.state=confirmed`、`confirmed_revision=profile_revision` 且 `confirmed_content_hash=content_hash` 时成立。
 - Environment Profile 只记录用户提供并确认的开发/测试运行拓扑；不包含 `source_of_truth`、仓库实现路径、Git revision 或代码事实。
-- Environment Operation Manifest 只能由 confirmed Profile 显式派生，绑定 Profile revision/hash，且不自动执行或扩大授权。
+- Executable Environment Operation Skill 只能由 confirmed Profile 显式派生，绑定 Profile revision/hash，且不自动执行或扩大授权。
 - `value_ref`、`target_ref`、`connection_ref` 和 `source_ref` 只能引用安全配置或外部资源，不得包含秘密值。
 - `build`/`deployment` 描述能力和证据要求，不记录本次实际 build/deployment 结果。
 

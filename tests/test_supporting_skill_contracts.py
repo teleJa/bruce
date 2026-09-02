@@ -209,7 +209,7 @@ class SupportingSkillContractTest(unittest.TestCase):
             "confirmation.state: pending",
             "ready_for_confirmation",
             "needs_input",
-            "unresolved_fact",
+            "unresolved questions",
             "account pools",
             "credential references",
             "preflight",

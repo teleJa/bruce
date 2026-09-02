@@ -97,8 +97,9 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 
 The canonical entry is [`skills/bruce/SKILL.md`](skills/bruce/SKILL.md). Other directories under
 `skills/` are independently discoverable supporting capabilities. `environment-operations` is a
-static generic capability that reads/writes a project-local Environment Operation Manifest from an
-exact confirmed Environment Profile; it does not dynamically install project Skills. Every skill
+project-operation capability that generates an executable project-local Skill and bounded runner from
+an exact confirmed Environment Profile; it does not generate `operations.yaml` or silently execute
+project operations. Every skill
 includes generated `agents/openai.yaml` UI metadata. Bruce has no CLI, MCP server, app, sandbox
 implementation, or custom scheduler.
 

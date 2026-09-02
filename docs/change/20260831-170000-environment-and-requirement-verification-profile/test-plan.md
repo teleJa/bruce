@@ -42,13 +42,13 @@
 - Evidence：topology schema/template, operation metadata and user-only validator tests。
 - 必需验证层级：unit/contract。
 
-### PROFILE-002C：派生 Environment Operation Manifest
+### PROFILE-002C：派生 Executable Environment Operation Skill
 
 - 映射：AC-011
-- Given：Environment Profile 已确认 revision/hash，且用户显式请求操作 Manifest。
+- Given：Environment Profile 已确认 revision/hash，且用户显式请求可执行操作 Skill。
 - When：运行 `$environment-operations`。
-- Then：生成绑定源 Profile ID/revision/hash 的项目级 Manifest，Manifest 只选择已确认 build/deployment/lifecycle/preflight operation ID；完整操作定义仍来自源 Profile，默认排除 migration/reset/drop/remote/production/credential retrieval。
-- Evidence：Manifest validator/template and boundary tests。
+- Then：生成绑定源 Profile ID/revision/hash 的项目级 `SKILL.md` 与 runner，Skill 只执行已确认 build/deployment/lifecycle/preflight 的 `argv`；可复用项目脚本或 Makefile，默认禁止 migration/reset/drop/remote/production/credential retrieval。
+- Evidence：generated Skill/runner generation, execution, stale-binding, secret-redaction and boundary tests。
 - 必需验证层级：unit/contract。
 
 ### PROFILE-003：Verification Profile 必须读取 requirements.md
@@ -132,7 +132,7 @@
 - 环境信息允许来自 user，但来源和 preflight requirement 已记录。
 - Credential 只记录用户提供的引用，不记录秘密值；本地秘密只允许在用户明确授权后写入被 Git 忽略的 `.env`。
 - Environment Profile 只使用 `user` 来源；仓库代码路径、Git revision、`source_of_truth` 和测试场景不进入 Profile。
-- Environment Profile 先描述开发/测试运行拓扑；派生 Operation Manifest 只复用已确认操作，不替代 Requirement Verification Profile 或运行时证据。
+- Environment Profile 先描述开发/测试运行拓扑；派生 Operation 生成的 Skill 只复用已确认操作，不替代 Requirement Verification Profile 或运行时证据。
 - 对抗性 user-only validator 测试覆盖缺少 declaration/source、嵌套 `source_of_truth`、实现路径、测试场景和原始 credential/local-env 值字段。
 - 阻塞会停止受影响工作、通知用户并要求显式恢复。
 - 动态结果与静态 Profile 分离，Completion Gate 仍是唯一完成判断。

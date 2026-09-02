@@ -1,18 +1,19 @@
 ---
 name: environment-operations
-description: Use a confirmed Environment Profile to generate or apply a bounded environment operation manifest for later development and test operations.
+description: Generate an executable project-local Skill and bounded runner from a confirmed Environment Profile for build, start, stop, health, and other explicitly declared environment operations.
 ---
 
 # Environment Operations
 
-Use one exact, confirmed Environment Profile to generate or apply a project-local **Environment
-Operation Manifest**. The manifest packages user-confirmed build, deployment, dependency, lifecycle,
-network, data, identity, configuration, and preflight operations for later explicit use.
+Use one exact, confirmed Environment Profile to generate an **executable project-local Skill**. The
+primary delivery is a project-local `SKILL.md` plus a bounded runner script. The generated Skill uses
+the commands already declared in the Profile, normally by invoking an existing project script or
+Makefile target for build, start, stop, health, logs, and other explicitly declared operations.
+
+This Skill does **not** generate `operations.yaml` or another operation manifest. A list of operation
+IDs without an executable implementation is not a useful delivery artifact.
 
 Natural-language fields follow [document-language.md](../bruce/references/document-language.md); for Chinese requests use Simplified Chinese while preserving stable machine-facing tokens.
-
-This Skill is a static, generic capability. It does not dynamically register a project-level
-`SKILL.md`, install global Skills, or silently execute operations when a Profile is generated.
 
 ## Preconditions
 
@@ -25,92 +26,117 @@ confirmation.confirmed_revision == profile_revision
 confirmation.confirmed_content_hash == content_hash
 ```
 
-The user must explicitly request manifest generation or operation use and confirm:
+A `draft`, `needs_input`, `ready_for_confirmation`, or `stale` Profile cannot generate an executable
+project Skill. The user must explicitly request this generation and confirm the target project and
+scope. Generation writes only the selected project-local Skill directory; it does not execute build,
+start, stop, database, deployment, or credential operations.
 
-- the manifest ID and project-local output path;
-- which declared operations are included;
-- which operations remain excluded or require per-invocation authorization;
-- resource ownership and stop boundaries;
-- whether local `.env` may be used as a process input (never values in the manifest).
+## Repository Skill location and existing Skill check
 
-A `draft`, `needs_input`, `ready_for_confirmation`, or `stale` Profile cannot produce a usable
-operation manifest.
+Before generation, inspect the target project for its supported local Skill roots, in this order:
 
-## Manifest location and binding
+1. existing `.codex/skills/`;
+2. existing `.agents/skills/`;
+3. existing project `skills/`;
+4. otherwise the user-confirmed new root `.codex/skills/`.
 
-For a project environment, use:
+Search those roots for existing `SKILL.md` files whose description or instructions already cover the
+Profile's build/start/stop operations. If an existing Skill already owns the operation, do not create
+a duplicate silently: present its path and ask whether to reuse it or update it. If no suitable Skill
+exists, generate `<skill-root>/<environment-id>-operations/SKILL.md` and its companion executable
+`scripts/run_operation.py`. Never overwrite an existing non-Bruce-owned Skill. A prior generated
+Skill may be updated only with an explicit update request.
 
-```text
-<project-root>/.bruce/environments/<environment-id>.operations.yaml
+## Generation workflow
+
+1. Load and validate the exact confirmed Environment Profile. Do not use an old revision or a stale
+   confirmation.
+2. Read the Profile's confirmed `operations` entries. Each entry must have an `operation_id`, a
+   non-empty `argv` list, risk, authorization, and required evidence. The `argv` is the executable
+   command; it may call an existing project script such as `./start.sh`, or a Makefile target such as
+   `make build`. Do not invent a command or replace a declared command with a generic fallback.
+3. Resolve the project-local Skill root and check for an existing owner as described above.
+4. Run `scripts/generate_operation_skill.py`. It creates:
+
+   ```text
+   <project-root>/<skill-root>/<environment-id>-operations/
+   ├── SKILL.md
+   ├── agents/openai.yaml
+   └── scripts/run_operation.py
+   ```
+
+5. The generated runner binds to the Profile ID, revision, and content hash. It fails closed if the
+   Profile changes, loses exact confirmation, contains an unsafe command, or the operation is not
+   declared by the Profile.
+6. The generated Skill documents every declared operation and gives the exact command to invoke it.
+   `guarded` operations such as build/start/stop require an explicit `--confirm`; `critical`
+   operations additionally require `--authorize-critical`.
+7. Report generated files and operation IDs. Do not report a successful build/start/stop: generation
+   is not execution. Runtime results belong in Verification Run/Checkpoint.
+
+## Execution model of the generated Skill
+
+The generated `scripts/run_operation.py` is the actual bounded executor:
+
+- executes only the Profile's `argv` list, without shell interpolation;
+- uses the Profile's project-root or contained working directory;
+- loads the confirmed project-root `.env` as child-process input when declared, after checking it is
+  a current-user-owned `0600` regular file; it never prints `.env` values;
+- blocks undeclared operations, stale Profile bindings, secret assignments in `argv`, and unsafe
+  paths;
+- requires `--confirm` for guarded operations and an additional `--authorize-critical` for critical
+  operations;
+- supports `--dry-run` without executing the command;
+- returns redacted output and exit status; detailed runtime evidence must be stored by the caller in a
+  Verification Run/Checkpoint.
+
+The generated Skill can therefore execute real project commands, for example:
+
+```bash
+python3 .codex/skills/joytime-local-operations/scripts/run_operation.py \
+  --operation local-build --confirm
+
+python3 .codex/skills/joytime-local-operations/scripts/run_operation.py \
+  --operation local-service-start --confirm
+
+python3 .codex/skills/joytime-local-operations/scripts/run_operation.py \
+  --operation local-service-stop --confirm
 ```
 
-The manifest must bind to the source Profile path, `profile_revision`, and `content_hash`. If the
-source Profile changes or becomes stale, the manifest is stale and cannot be used until regenerated
-or explicitly updated and reconfirmed.
+The paths above are examples; the generated Skill always uses the actual project-local path and
+Profile operation IDs.
 
-## Allowed source information
+## Safety boundaries
 
-Use only operations already declared and confirmed in the Environment Profile. The Manifest contains
-only selected `operation_id` values; it does not copy or override `argv`, executor, risk,
-authorization, ownership, targets, or other operation fields. When applying a Manifest, the consumer
-loads those complete definitions from the exact bound Profile. The selected operation IDs may cover:
-
-- application deployment topology and lifecycle;
-- build and artifact expectations;
-- dependency or middleware preparation and status checks;
-- network endpoint and readiness checks;
-- data, identity, credential-reference, and configuration preconditions;
-- non-destructive preflight operations.
-
-Do not infer commands, paths, ports, containers, credentials, accounts, or dependencies from
-Go/TypeScript/Python source, Makefiles, repository conventions, historical commands, or test files.
-If an operation is not declared by the user, leave it out and request new Environment Profile input.
-
-## Operation risk classes
-
-```text
-read-only:
-  status, health-check, inspect-declared-resources, bounded-redacted-logs
-
-guarded:
-  prepare, build, up, down for explicitly owned resources
-
-critical:
-  migrate, seed, reset, drop, destroy, publish, deploy-remote, production-access,
-  credential-rotation
-```
-
-`read-only` operations may run within their declared scope. `guarded` operations require explicit
-per-invocation confirmation. `critical` operations require concrete per-operation authorization and
-must state target, impact, rollback/cleanup, and evidence requirements. A manifest never grants
-production, remote deployment, database write, or credential-read access merely by listing it.
-
-`down` and cleanup operations must be limited to resources owned by the current invocation or
-explicitly declared as safe to stop. They must not stop unrelated processes, containers, networks,
-or databases.
-
-## Secret and runtime boundaries
-
-The manifest may contain environment-variable names and safe credential references, but never
-passwords, API keys, tokens, cookies, JWTs, private keys, credential-bearing URLs, or `.env` values.
-Do not pass secret values as command-line arguments. Tool output, logs, screenshots, Checkpoints, and
-model-facing summaries must contain metadata and redacted evidence only.
-
-Applying an operation manifest must run the source Profile's declared preflight first. Operation
-success is not environment availability, application acceptance, deployment success, or Completion
-Gate approval. Runtime results belong in Verification Run/Checkpoint, not in the static Profile or
-manifest.
+- Generating a Skill does not authorize or execute any operation.
+- The generated runner does not infer commands from source, Makefiles, repository conventions,
+  historical commands, or test files; those may be used by `environment-profile` only to form
+  candidates before user confirmation.
+- Start/stop commands remain limited to resources explicitly owned by the Profile. They must not
+  stop unrelated processes, containers, networks, or databases.
+- Migration, seed, reset, drop, destroy, remote deployment, production access, and credential
+  rotation remain critical and require explicit per-invocation authorization.
+- Credentials are referenced through `.env` or safe handles only. Values never enter generated
+  Skill files, command-line arguments, logs, screenshots, Profile summaries, or model-facing output.
+- Generation and operation success are not environment availability, requirement acceptance,
+  deployment success, or a Completion Gate verdict.
 
 ## Output
 
-Use [operation-manifest.yaml](templates/operation-manifest.yaml) as the manifest shape and validate
-it with [validate_operation_manifest.py](scripts/validate_operation_manifest.py). Return the manifest
-path, source Profile identity, included operations, excluded/high-risk operations, and confirmation
-state. Do not return a Design or Completion verdict.
+Return:
+
+- generated project-local `SKILL.md` path;
+- generated runner script path;
+- source Profile identity and exact revision/hash binding;
+- included operation IDs and their risk/authorization classes;
+- existing Skill reuse/update decision, if any;
+- explicit statement that no operation was executed during generation.
+
+Do not return a Design or Completion verdict.
 
 ## Does not own
 
-This Skill does not define or modify Environment Profiles, infer operations from repository source,
-install or register project/global Skills, retrieve credentials, execute unlisted build/deploy/start/
-stop/database operations, authorize production or destructive actions, record runtime results, or
+This Skill does not modify Environment Profiles, generate `operations.yaml`, create generic operation
+IDs without Profile declarations, silently overwrite existing Skills, retrieve credentials, execute
+operations during generation, authorize production or destructive actions, record runtime results, or
 decide verification/completion status.

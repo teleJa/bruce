@@ -89,23 +89,6 @@ credentials: []
 capabilities: []
 preflight: []
 
-operation_manifest:
-  requested: false
-  manifest_id: null
-  output_path: null
-  source_profile: self
-  generation: opt-in-after-confirmation
-  included_operations: []
-  excluded_operations:
-    - migrate
-    - seed
-    - reset
-    - drop
-    - destroy
-    - publish
-    - deploy-remote
-    - credential-rotation
-
 freshness:
   basis: user-declaration-and-selected-reference-revisions
   invalidate_on:
@@ -118,7 +101,6 @@ freshness:
     - local-env-variable-scope-change
     - local-env-security-change
     - topology-change
-    - operation-manifest-operation-set-change
   revalidation_required: true
 
 security:

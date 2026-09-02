@@ -1,4 +1,4 @@
 interface:
   display_name: "Environment Operations"
-  short_description: "Use confirmed environments through bounded operation manifests"
-  default_prompt: "Use $environment-operations to generate or apply a bounded operation manifest from a confirmed Environment Profile."
+  short_description: "Generate executable project Skills for confirmed environments"
+  default_prompt: "Use $environment-operations to generate or update a bounded project-local Skill and runner from a confirmed Environment Profile."

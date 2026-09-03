@@ -29,8 +29,9 @@ repository-specific copy.
 - Current user feedback and the last valid artifact/run for refinement.
 - The user's explicit Open Design selection before `start_run`.
 - The document language rule in [document-language.md](../bruce/references/document-language.md).
-- For a Chinese request, write natural-language artifact content in Simplified Chinese while
-  preserving provider fields, paths, statuses, hashes, and other stable tokens.
+- For a Chinese request, write natural-language artifact content and Markdown headings in Simplified Chinese
+  (e.g., , , , , , , , , , ,  等)
+  while preserving provider fields, paths, statuses, hashes, and other stable tokens.
 
 ## Artifact placement
 

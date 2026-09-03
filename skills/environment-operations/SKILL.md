@@ -69,8 +69,9 @@ Skill may be updated only with an explicit update request.
    Profile changes, loses exact confirmation, contains an unsafe command, or the operation is not
    declared by the Profile.
 6. The generated Skill documents every declared operation and gives the exact command to invoke it.
-   `guarded` operations such as build/start/stop require an explicit `--confirm`; `critical`
-   operations additionally require `--authorize-critical`.
+   Operations with `authorization: profile-confirmed` are authorized by the exact confirmed Profile
+   and do not require another user prompt. Operations with `authorization: explicit-per-invocation`
+   require `--confirm`; critical operations additionally require `--authorize-critical`.
 7. Report generated files and operation IDs. Do not report a successful build/start/stop: generation
    is not execution. Runtime results belong in Verification Run/Checkpoint.
 
@@ -84,8 +85,10 @@ The generated `scripts/run_operation.py` is the actual bounded executor:
   a current-user-owned `0600` regular file; it never prints `.env` values;
 - blocks undeclared operations, stale Profile bindings, secret assignments in `argv`, and unsafe
   paths;
-- requires `--confirm` for guarded operations and an additional `--authorize-critical` for critical
-  operations;
+- allows `profile-confirmed` operations covered by `test_context.authorization.approved_scopes`
+  without another user prompt;
+- requires `--confirm` for `explicit-per-invocation` operations and an additional
+  `--authorize-critical` for critical operations;
 - supports `--dry-run` without executing the command;
 - returns redacted output and exit status; detailed runtime evidence must be stored by the caller in a
   Verification Run/Checkpoint.
@@ -115,7 +118,8 @@ Profile operation IDs.
 - Start/stop commands remain limited to resources explicitly owned by the Profile. They must not
   stop unrelated processes, containers, networks, or databases.
 - Migration, seed, reset, drop, destroy, remote deployment, production access, and credential
-  rotation remain critical and require explicit per-invocation authorization.
+  rotation remain critical and require explicit per-invocation authorization, even if a broader
+  test scope was confirmed.
 - Credentials are referenced through `.env` or safe handles only. Values never enter generated
   Skill files, command-line arguments, logs, screenshots, Profile summaries, or model-facing output.
 - Generation and operation success are not environment availability, requirement acceptance,

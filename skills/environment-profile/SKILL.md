@@ -1,189 +1,149 @@
 ---
 name: environment-profile
-description: Generate a reusable Environment Profile from user-provided and user-confirmed environment information, with safe credential references, confirmation, preflight, and freshness boundaries.
+description: Generate a reusable Agent test and verification Environment Profile with one confirmed execution scope for build, deployment, test data, authentication, and evidence.
 ---
 
 # Environment Profile
 
-Generate or update a reusable **Environment Profile** for one project environment. The profile
-records the environment information provided and confirmed by the user, without pretending that the
-environment is currently available or that any requirement has passed.
+Generate or update a reusable **Environment Profile** for Agent testing and verification from
+user-provided and user-confirmed environment information. The Profile is the Agent's confirmed
+execution context: it records how the Agent may build or deploy the project,
+prepare isolated test data, authenticate, run tests, inspect evidence, and stop safely.
 
-An Environment Profile is a user-confirmed environment declaration, not a repository inventory,
-code index, architecture report, or implementation inventory. Before drafting it, Bruce may perform a
-bounded read-only exploration of the target repository to reduce the user's data-entry burden. That
-exploration produces **candidates only**: it is never copied into Profile facts or treated as an
-accepted environment declaration until the user confirms or corrects it.
-The environment exists to support development and testing. Its baseline therefore describes
-the user-confirmed runtime topology and controlled operations: application deployment, build,
-lifecycle, dependencies and middleware, network access, identities and accounts, data policy,
-configuration and credentials, and health/preflight requirements.
+This is not a repository inventory, architecture report, test result, or Completion verdict. Repository
+inspection is used only to form candidates. The user confirms the candidates and the execution scope.
+Natural-language fields follow [document-language.md](../bruce/references/document-language.md); for
+Chinese requests use Simplified Chinese while preserving stable machine-facing tokens.
 
-This is a supporting capability inside Bruce's workflow. It prepares a confirmed input for
-requirement-scoped `$verification-profile`; it does not execute the environment.
+## Core rule: one confirmation, one test scope
 
-Natural-language document fields follow [document-language.md](../bruce/references/document-language.md); for Chinese requests use Simplified Chinese while preserving stable machine-facing tokens.
-Validate a generated static profile with [validate_profile.py](scripts/validate_profile.py) before presenting its confirmation summary.
+A confirmed Profile is an authorization contract for the declared test scope. The Agent must not ask
+the user to approve every build, local deployment, test-data preparation, authentication, or test
+operation again when:
 
-## Invocation decision
+- the Profile is exactly confirmed by `profile_id`, `profile_revision`, and `content_hash`;
+- the operation is declared in `operations`;
+- the operation uses `authorization: profile-confirmed`;
+- the operation category or ID is covered by `test_context.authorization.approved_scopes`; and
+- the operation is not critical or otherwise listed in `escalation_required_for`.
 
-Use this skill when the user wants to record reusable information about one environment, such as
-its identity, endpoints, database references, account pools, credential references, allowed
-operations, local `.env` variables, or user-selected capabilities.
+Operations outside this scope, destructive database actions, production access, remote deployment,
+and credential rotation still require explicit per-invocation authorization. A Profile confirmation
+never authorizes an unlisted operation.
 
-Do not use this Profile for broad implementation archaeology or requirement acceptance. Its bounded
-repository exploration is limited to candidate local topology, lifecycle commands, dependency
-references, endpoints, and configuration-variable **names** needed to draft this environment. If a
-verification task needs runtime facts, test scenarios, source-level call chains, or acceptance
-criteria, record those in the requirement-scoped Verification Profile or Verification Run instead.
+## When to use
 
-Do not use this skill to define the acceptance criteria for a particular requirement. Use
-`$verification-profile` with an explicit `requirements.md` for that requirement.
+Use this Skill when the user wants an Agent to test or verify a project in a reusable environment,
+including any combination of:
+
+- build and local deployment/startup;
+- test-data preparation, isolation, and cleanup;
+- account pools, authentication method, and safe credential references;
+- application and dependency endpoints;
+- automated tests and read-only evidence collection.
+
+Do not use it to define requirement-specific Acceptance criteria. Use `$verification-profile` for
+that; it references this Profile instead of copying it.
 
 ## Required inputs
 
-- Project root or an explicitly named repository.
-- Environment identity, purpose, and intended local/shared/test/staging/production scope. Never
-  silently select production.
-- Any user-owned operational boundary that cannot be safely inferred or confirmed from candidates,
-  such as prohibited data actions, account-policy exceptions, or selected external credential
-  provider.
+- Project root or explicitly named repository.
+- Environment name, purpose, and local/shared/test/staging/production scope.
+- The intended Agent test scope and any user-owned data or authorization boundaries that cannot be
+  safely inferred.
 
-The initial user input does **not** need to enumerate the whole topology. If identity or purpose is
-missing, ask only the smallest clarification needed, then derive a candidate declaration as described
-below. A relevant domain may be explicitly declared `not-in-scope`; that is a confirmed environment
-boundary, not an unresolved fact.
+Never silently select production. If the user leaves out a needed decision, ask only that decision;
+otherwise derive bounded repository candidates.
 
-## Repository-assisted candidate discovery
+## Candidate discovery
 
-Before drafting a Profile, inspect the target repository read-only to prepare a concise candidate
-baseline. This lowers repeated questions; it does not replace user confirmation.
+Inspect the target repository read-only. Check the applicable `AGENTS.md`, Git status, README/runbooks,
+Makefiles, startup/deployment scripts, test commands, Compose/container descriptors, migration or
+fixture tooling, endpoint configuration, and `.env.example`-style files. Extract variable names only;
+never reveal or copy values.
 
-1. First check the target root, applicable `AGENTS.md`, Git status, and safe declarative files such as
-   README/runbooks, package/build manifests, Compose or container descriptors, Makefiles, startup
-   scripts, CI configuration, migration tooling, and `.env.example`-style files. From environment
-   files, extract variable **names only**; never reveal or copy their values.
-2. When at least two independent discovery surfaces are necessary (for example application lifecycle
-   and persistence/configuration), invoke `$inspect-parallel` with bounded read-only shards. Each
-   shard must return exact paths, symbols or commands, candidate facts, and confidence; no shard may
-   write files, execute builds, contact services, or decide Profile state. When there is only one
-   small/tightly coupled surface, inspect directly instead of spawning agents merely to parallelize.
-3. Synthesize a short candidate declaration: deployment/build/lifecycle, dependencies and data
-   stores, network endpoints, likely identity/account boundary, candidate `.env` variable names, and
-   non-destructive preflight. Mark every item `repository-candidate`, cite its path in the **chat
-   summary only**, and distinguish direct observations from inferences.
-4. Ask the user to confirm or correct the candidate declaration in one compact confirmation request.
-   The user may accept individual candidates, change them, or mark domains `not-in-scope`. Only the
-   accepted/corrected result becomes Profile facts with `source.kind: user`; source paths and
-   repository-candidate labels do not enter the static Profile. Use `unresolved_fact` only for a
-   remaining user-owned decision that is required for the requested Profile scope.
-5. Do not use discovery to infer credential values, login sessions, account availability, permission
-   grants, production authorization, current service health, or destructive data authority. Keep
-   these as user declarations, `not-in-scope`, or unresolved input.
+Use `$inspect-parallel` only when at least two independent discovery surfaces materially reduce cost,
+for example lifecycle/deployment and persistence/test-data configuration. Inspect directly when the
+surface is small or tightly coupled. No discovery shard may write files, execute builds, contact
+services, or decide Profile state.
 
-## Local `.env` bootstrap
+Synthesize a short candidate list mapped to the compact `test_context` sections:
 
-For a local environment, check the project-root `.env` before finalizing the Profile. Do not search
-parent directories, home directories, shell history, or unrelated repositories for credentials.
-Use `scripts/check_local_env.py` or an equivalent metadata-only check and never print a value from
-the file. Repository discovery may identify **candidate names** but not required variables until the
-user confirms them.
+- `workflow`: build, deploy/start, test-data preparation/cleanup, authentication, and test operation IDs;
+- `services`: application services, dependencies, and endpoints;
+- `data`: isolation and allowed/prohibited mutations;
+- `authentication`: account pool, method, and safe credential references;
+- `configuration`: `.env` metadata and non-secret references;
+- `preflight`: non-destructive checks;
+- `authorization`: the scope that one user confirmation will cover.
 
-The check must verify:
+Do not create a second generic `facts` entry for information already represented in `test_context`.
+Use `facts` only for a user-confirmed residual fact with no structured home. Cite repository paths
+in the chat candidate summary only; never put paths, source revisions, branches, or candidate labels
+in the Profile.
 
-- `.env` exists as a regular file, or is absent and needs bootstrap;
-- every required variable explicitly provided or confirmed by the user for this environment is
-  present and non-empty; Bruce must not infer the required-variable list from source code, config
-  files, or `.env.example`;
-- `.env` is ignored by Git and is not already tracked;
-- the file is readable only by the current user (owner-only permissions, normally `0600`).
+## Compact confirmation
 
-When `.env` is absent or required variables are missing:
+Ask for one compact confirmation or correction covering:
 
-1. Report only the candidate/missing variable names and their inferred or user-confirmed purposes;
-   never report existing values. Candidate names found in the repository remain candidates until the
-   user confirms their scope.
-2. If `.env` is absent, proactively create a project-root template using
-   `scripts/create_local_env.py <project-root> --template` plus one `--required NAME` for each safe
-   candidate name. It must add only `.env` and `.bruce-env-*` ignore entries when absent, create an owner-only
-   `0600` regular file atomically, and write names with empty values. It must never generate a secret,
-   copy an example value, or overwrite an existing `.env`.
-3. Tell the user that the template has been created and ask them to add the required local account,
-   password, token, API-key, or other credential values **directly in `.env`** (or through a hidden
-   local prompt). Do not ask them to paste values into chat, and do not print, read back, store in the
-   Profile, or expose values in logs.
-4. Once the user confirms which candidate names belong to this environment, use the hidden-prompt
-   `scripts/create_local_env.py <project-root> --required NAME` only to fill missing confirmed values
-   if the user explicitly chooses that route. Preserve unrelated entries and never pass values as
-   command-line arguments.
-5. Re-run the metadata-only check against the confirmed variable names. If the file is tracked, not
-   ignored, unreadable, or missing a confirmed value, retain `needs_input` (or report a security
-   error) instead of treating the Profile as ready.
+1. environment identity and safety scope;
+2. the Agent workflow and operation IDs;
+3. test-data isolation, cleanup, and permitted mutations;
+4. authentication/account/credential references;
+5. service endpoints and dependencies;
+6. the operations covered by Profile confirmation versus escalation-required operations.
 
-The local `.env` is the explicitly approved Phase 1 secret sink for this Skill. It is not part of the
-static Environment Profile and does not turn Bruce into a general Secret Manager. Browser cookies,
-SSO sessions, private keys, and other credentials that cannot be safely represented as local
-variables must remain user-managed or use a separately confirmed provider. A successful `.env`
-check proves only local configuration presence, not that an account works or that a service is
-available; runtime preflight remains required.
+Accepted or corrected candidates become the corresponding `test_context` declarations. Do not turn
+runtime observations, account availability, build results, or deployment results into static facts.
 
-## User declaration and security boundaries
+## Local `.env`
 
-Environment Profile facts are user-confirmed environment information. Use `source.kind: user` for
-Profile facts, including a fact the user accepted after seeing a repository candidate. Do not promote
-repository paths, source code, test scenario files, Git revisions, branch names, candidate labels, or
-runtime observations into this Profile.
+For a local environment, check only the project-root `.env` using
+`scripts/check_local_env.py` or an equivalent metadata-only check. Do not search parent directories,
+home directories, shell history, or unrelated repositories.
 
-A user may provide a safe pointer to a runbook or project instruction, but that pointer is not an
-Environment Profile fact inferred from the repository. Bruce must not generate `source_of_truth`
-from files it happened to inspect. The `source_of_truth` field is not part of the Environment Profile
-contract.
+The Profile may record `.env` path, required variable **names**, ignored/untracked status, and owner-only
+`0600` requirements. It must never record values. If `.env` is absent, create an empty-value template
+with `scripts/create_local_env.py <project-root> --template`; it must be atomic, non-overwriting,
+owner-only `0600`, and Git-ignored. Tell the user to add values directly in `.env`, never in chat.
 
-Repository implementation details belong to architecture/codebase documentation or the
-requirement-scoped Verification Profile. Runtime availability, selected accounts, build/deployment
-results, and other dynamic observations belong to Verification Run/Checkpoint.
-
-Never write secret values to the Profile or repeat them in output. This includes API keys, passwords,
-cookies, JWTs, SSO tickets, private keys, and credential-bearing connection strings. The only local
-persistence exception is the user-authorized project-root `.env` bootstrap described above; those
-values must not be copied into the Profile, confirmation summary, runtime evidence, logs, screenshots,
-or model-facing tool output. Record only safe references such as `env:VARIABLE_NAME`, a user-managed
-browser session, or an operator-provided credential handle. Keep `secret_value_persisted: false`,
-`expose_to_model: false`, and `redact_logs: true` for Profile credential entries.
+A successful metadata check proves only local configuration presence. It does not prove authentication,
+provider access, database availability, or service readiness.
 
 ## Generation procedure
 
-1. Obtain the environment identity, purpose, and intended scope. Never silently select production.
-2. Run the bounded Repository-assisted candidate discovery above. Use `$inspect-parallel` only where
-   its independent read-only shards are warranted; otherwise inspect directly.
-3. For local scope, metadata-check `.env`. If it is absent, create the secure empty-value template
-   from candidate variable names and tell the user to populate local account/credential values outside
-   chat. Do not count candidate names as confirmed required variables yet.
-4. Present one compact candidate confirmation summary rather than a long domain-by-domain
-   questionnaire. Include only material candidates, explicit uncertainties, `not-in-scope` options,
-   `.env` template status, and the small number of user decisions still needed.
-5. Convert only user-accepted or user-corrected candidates into Profile facts with `source.kind: user`.
-   Keep dynamic command results, service availability, selected accounts, and runtime observations in
-   Verification Run/Checkpoint.
-6. For confirmed local variable names, run the metadata-only check. If values remain missing, write a
-   `needs_input` draft and point the user to the existing `.env`; do not delay profile drafting by
-   asking for secret values in chat.
-7. Define freshness/invalidation for changes to the user-confirmed declaration, topology,
-   operations, endpoints, dependencies, account policy, credential references, `.env` variable scope,
-   or local file security conditions.
-8. Generate the profile with `profile_state: draft`, `needs_input`, or `ready_for_confirmation` and
-   `confirmation.state: pending`. Validate it, then return a concise summary of user-confirmed facts,
-   safe references, candidate decisions, security policy, preflight, and unresolved questions.
-9. Wait for explicit confirmation of the exact profile revision and content hash. A vague “continue”,
-   “looks good”, or “try it” is not confirmation. A material edit increments `profile_revision` and
-   resets `confirmation.state` to `pending`.
-10. After exact confirmation, offer `$environment-operations` as a separate explicit opt-in. It
-    generates an executable project-local Skill and bounded runner from the confirmed operations; it
-    does not generate an operations manifest or run operations automatically.
+1. Obtain environment identity, purpose, scope, and intended Agent test scope.
+2. Run bounded candidate discovery; use `$inspect-parallel` only when justified.
+3. Check or safely bootstrap the project-root `.env`; never read or print secret values.
+4. Present one compact candidate confirmation request, including the authorization scope.
+5. Generate the Profile using the compact `test_context` structure and one top-level `operations` catalog.
+6. Set `profile_state` to `draft`, `needs_input`, or `ready_for_confirmation` and
+   `confirmation.state: pending`.
+7. Validate the Profile and show the exact `profile_id`, `profile_revision`, and `content_hash`.
+   Report unresolved questions explicitly; a generated Profile starts with `confirmation.state: pending`
+   and may be `ready_for_confirmation` or `needs_input`.
+8. Wait for explicit exact confirmation. A vague “continue”, “looks good”, or “try it” is not
+   confirmation. Any material change increments the revision and resets confirmation.
+9. After confirmation, the user may separately request `$environment-operations` to generate the
+   bounded executable project Skill. Generation does not execute any operation.
 
-## Confirmation and use rules
+## Output contract
 
-The profile is usable as a controlled Bruce input only when all of the following hold:
+Use [profile-schema.md](references/profile-schema.md) and
+[environment-profile.yaml](templates/environment-profile.yaml). New Profiles should contain:
+
+- identity, declaration, project, and environment scope;
+- one compact `test_context` for workflow, authorization, services, data, authentication,
+  configuration, and preflight;
+- one top-level `operations` catalog with exact commands and evidence requirements;
+- freshness and security rules.
+
+Do not emit `operation_manifest`, `confirmation_summary`, or a duplicated top-level inventory of
+facts. Do not add a capabilities catalog by default.
+
+## Confirmation and runtime boundary
+
+The usable-state predicate is:
 
 ```text
 profile_state == confirmed
@@ -192,50 +152,30 @@ confirmation.confirmed_revision == profile_revision
 confirmation.confirmed_content_hash == content_hash
 ```
 
-A profile may be `ready_for_confirmation` while still having `confirmation.state: pending`. If a
-required fact is missing, use `needs_input`; if a previously confirmed fact or referenced contract
-changes, mark the profile `stale` and require reconfirmation.
-
-Confirmation means that the user accepts the recorded environment facts and boundaries. It does not
-prove current availability, authorize an unlisted operation, or produce a Design or Completion
-verdict. Bruce must still run the required runtime preflight before controlled verification.
-
-## Output
-
-Create or update the requested Environment Profile, normally at:
-
-```text
-<project-root>/.bruce/environments/<environment-id>.profile.yaml
-```
-
-The output must include:
-
-- profile identity, revision, content hash, lifecycle state, and confirmation metadata;
-- project and environment identity, scope, safety classification, and user declaration metadata;
-- user-confirmed facts and safe references; it must not contain repository implementation paths,
-  repository-candidate labels, or a generated `source_of_truth` list;
-- application deployment topology, build strategy, lifecycle operations, dependency/middleware,
-  network, identity, data, configuration, and preflight declarations;
-- confirmed operation declarations that can be compiled into an executable project-local Skill by
-  the explicit `$environment-operations` Skill;
-- dependency/middleware, network, identity/account-pool, and safe Credential references;
-- user-confirmed capabilities and their evidence boundaries;
-- non-destructive preflight checks and required runtime evidence;
-- freshness/invalidation rules, security policy, unresolved facts, and minimal user questions.
-
-Return a short confirmation summary after writing the draft. Report `Environment Profile: draft`,
-`needs_input`, `ready_for_confirmation`, `confirmed`, `stale`, or `rejected` as a profile lifecycle
-state only. Never report `Design: pass` or `Completion: pass|issues|blocked` from this skill.
-
-Use [profile-schema.md](references/profile-schema.md) for field semantics and
-[environment-profile.yaml](templates/environment-profile.yaml) as the output shape. The template is
-an unconfirmed static profile, not a live run record.
+Confirmation authorizes only the declared `test_context` scope. It is not proof of current runtime
+availability, build success, deployment success, authentication success, test success, or completion.
+Current results, screenshots, logs, selected account instances, source/deployed revisions, stage
+status, blockers, and repair rounds belong in Verification Run/Checkpoint or the requirement-scoped
+Verification Profile.
 
 ## Does not own
 
-This skill does not own requirements or acceptance criteria, requirement-scoped verification plans,
-Verification Run or Checkpoint state, Design Gate, Completion Gate, project adapters, schedulers,
-CNB/CI execution, deployment, database reads or writes, browser or client operation, external Secret
-Manager administration, or external runtime state. It owns only the narrow local `.env` template/bootstrap described above;
-it does not provide general credential retrieval or authorization.
-It never executes a build, deploy, login, SQL statement, client test, or environment operation on the project's behalf. `$environment-operations` is a separate explicit Skill and does not auto-run when this Profile is generated.
+## Security and non-ownership
+
+Never persist or expose passwords, API keys, cookies, JWTs, SSO tickets, private keys, or credential-
+bearing URLs. Keep credential references safe and retain:
+
+```yaml
+security:
+  persist_secrets: false
+  expose_secrets_to_model: false
+  redact_logs: true
+  credential_values_allowed: false
+  credential_refs_only: true
+```
+
+This Skill does not own requirement acceptance, application code changes, runtime results, database
+administration, external Secret Manager administration, or Completion decisions. Never report
+`Design: pass` or `Completion: pass|issues|blocked` from this Skill. It does not execute
+build, deployment, login, SQL, browser, or test operations. `$environment-operations` is the separate
+explicit execution capability and must honor the Profile authorization scope.

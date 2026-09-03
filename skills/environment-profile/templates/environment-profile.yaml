@@ -1,4 +1,4 @@
-# Static, reusable Environment Profile. New profiles are unconfirmed by default.
+# Agent test/verification environment contract. New profiles are unconfirmed by default.
 version: 1
 profile_kind: environment
 profile_id: null
@@ -26,81 +26,70 @@ environment:
   kind: null
   production: false
   shared: false
-  purposes: []
   purpose: null
-  allowed_operations: []
-  prohibited_operations: []
 
-facts: []
-unresolved_facts: []
-
-local_env:
-  path: .env
-  required: false
-  ignored_by_vcs: required
-  file_mode: "0600"
-  required_variables: []
-
-build:
-  strategy: null
-  executor: null
-  working_directory: null
-  operations: []
-  artifact_expectations: []
-  trigger:
+# One compact context for everything an Agent needs to test and verify the project.
+test_context:
+  scope: local-development-and-integration-testing
+  authorization:
+    # One exact Profile confirmation authorizes the listed scopes for the Agent.
+    mode: profile-confirmed
+    approved_scopes: []
+    escalation_required_for:
+      - production-access
+      - remote-deployment
+      - database-drop
+      - destructive-data-reset
+      - credential-rotation
+  workflow:
+    build_operation: null
+    deploy_operation: null
+    test_data:
+      prepare_operation: null
+      cleanup_operation: null
+      isolation: null
+      strategy: null
+    authenticate_operation: null
+    test_operation: null
+  services:
+    application: []
+    dependencies: []
+    endpoints: []
+  data:
+    allowed_mutations: []
+    prohibited_mutations:
+      - database-drop
+      - direct-sql
+  authentication:
+    account_pool: null
+    credential_refs: []
     method: null
-    authorization_required: true
-  terminal_states: [success, failed, canceled, unknown]
-  required_evidence: []
-  invariants:
-    - trigger-accepted-is-not-build-success
+  configuration:
+    env_file:
+      path: .env
+      required: false
+      required_variables: []
+      file_mode: "0600"
+      ignored_by_vcs: required
+    references: {}
+  preflight: []
 
-deployment:
-  mode: null
-  owner: null
-  strategy: null
-  executor: null
-  application_services: []
-  targets: []
-  terminal_states: [deployed, failed, rolled_back, unknown]
-  required_evidence: []
-  invariants:
-    - build-success-is-not-deployment-success
-    - deployment-success-is-not-user-verification
-
-lifecycle:
-  prepare: []
-  start: []
-  stop: []
-  status: []
-  logs: []
-
-dependencies: []
-network:
-  access_scope: null
-  endpoints: []
-identities: []
-data_policy: {}
-configuration: {}
+# One executable catalog. Routine entries may use authorization: profile-confirmed.
 operations: []
 
-account_pools: []
-credentials: []
-capabilities: []
-preflight: []
-
 freshness:
-  basis: user-declaration-and-selected-reference-revisions
+  basis: user-declaration-and-test-context
   invalidate_on:
     - user-declaration-change
     - environment-scope-change
+    - test-context-change
     - endpoint-change
+    - dependency-change
     - account-policy-change
     - credential-source-change
-    - selected-capability-change
     - local-env-variable-scope-change
     - local-env-security-change
-    - topology-change
+    - operation-set-change
   revalidation_required: true
 
 security:
@@ -109,15 +98,3 @@ security:
   redact_logs: true
   credential_values_allowed: false
   credential_refs_only: true
-
-confirmation_summary:
-  unresolved_questions: []
-  user_must_confirm:
-    - profile-identity-and-revision
-    - environment-scope-and-safety
-    - user-declaration-and-user-facts
-    - environment-topology-and-operation-boundaries
-    - build-and-deployment-path
-    - accounts-and-credential-references
-    - skills-and-preflight
-    - freshness-and-security-policy

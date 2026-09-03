@@ -23,6 +23,7 @@ CRITICAL_CATEGORIES = {
     "production-access", "credential-rotation",
 }
 STOP_CATEGORIES = {"stop", "down", "cleanup"}
+OPERATION_AUTHORIZATIONS = {"none", "profile-confirmed", "explicit-per-invocation"}
 
 
 def _load_validator():
@@ -261,6 +262,7 @@ EXPECTED_CONTENT_HASH = {content_hash!r}
 EXPECTED_PROFILE_FILE_SHA256 = {profile_file_sha256!r}
 SECRET_ASSIGNMENT = re.compile(r"(?i)^(?:[A-Z0-9_]*(?:PASSWORD|PASSWD|TOKEN|API_KEY|SECRET)[A-Z0-9_]*)=")
 CRITICAL_CATEGORIES = {sorted(CRITICAL_CATEGORIES)!r}
+OPERATION_AUTHORIZATIONS = {{"none", "profile-confirmed", "explicit-per-invocation"}}
 
 
 def fail(message: str) -> int:
@@ -313,6 +315,19 @@ def read_dotenv(path: Path, required: list[str]) -> dict[str, str]:
     return values
 
 
+def profile_authorizes(operation: dict[str, Any], profile: dict[str, Any]) -> bool:
+    if operation.get("authorization") != "profile-confirmed":
+        return False
+    context = profile.get("test_context", {{}})
+    policy = context.get("authorization", {{}}) if isinstance(context, dict) else {{}}
+    if not isinstance(policy, dict) or policy.get("mode") != "profile-confirmed":
+        return False
+    approved = policy.get("approved_scopes", [])
+    if not isinstance(approved, list):
+        return False
+    return operation.get("category") in approved or operation.get("operation_id") in approved
+
+
 def redact(text: str, env_values: dict[str, str]) -> str:
     result = text
     for value in sorted((v for v in env_values.values() if v), key=len, reverse=True):
@@ -345,12 +360,30 @@ def main() -> int:
             return fail("operation executor is not a supported local executor")
         risk = operation.get("risk", "guarded")
         category = operation.get("category", "")
-        if risk in {{"guarded", "critical"}} and not args.confirm:
-            return fail("guarded or critical operation requires --confirm")
+        authorization = operation.get("authorization", "explicit-per-invocation")
+        if authorization not in OPERATION_AUTHORIZATIONS:
+            return fail("operation authorization mode is invalid")
+        context = profile.get("test_context", {{}})
+        auth_policy = context.get("authorization", {{}}) if isinstance(context, dict) else {{}}
+        escalation = auth_policy.get("escalation_required_for", []) if isinstance(auth_policy, dict) else []
+        if not isinstance(escalation, list):
+            return fail("test_context escalation policy is invalid")
+        requires_invocation_confirmation = authorization == "explicit-per-invocation" or category in escalation or args.operation in escalation
+        if risk in {{"guarded", "critical"}} and requires_invocation_confirmation and not args.confirm:
+            return fail("operation requires --confirm")
+        if risk in {{"guarded", "critical"}} and authorization == "none":
+            return fail("guarded or critical operation has no authorization")
+        if authorization == "profile-confirmed" and not profile_authorizes(operation, profile):
+            return fail("operation is not covered by the confirmed test_context authorization policy")
         if risk == "critical" or category in CRITICAL_CATEGORIES:
             if not args.authorize_critical:
                 return fail("critical operation requires --authorize-critical")
         env_config = profile.get("local_env", {{}})
+        context = profile.get("test_context", {{}})
+        if isinstance(context, dict):
+            configured = context.get("configuration", {{}})
+            if isinstance(configured, dict) and isinstance(configured.get("env_file"), dict):
+                env_config = configured["env_file"]
         env_values: dict[str, str] = {{}}
         if isinstance(env_config, dict) and env_config.get("path") == ".env":
             env_values = read_dotenv(PROJECT_ROOT / ".env", env_config.get("required_variables", []))

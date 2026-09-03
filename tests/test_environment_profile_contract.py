@@ -34,23 +34,22 @@ class EnvironmentProfileContractTest(unittest.TestCase):
         body = read("skills/environment-profile/SKILL.md")
         normalized = " ".join(body.split())
         for phrase in (
-            "reusable **Environment Profile**",
-            "user-provided and user-confirmed environment information",
-            "user-confirmed environment declaration",
-            "Repository-assisted candidate discovery",
-            "candidates only",
+            "Agent testing and verification",
+            "authorization contract",
+            "Candidate discovery",
+            "Repository inspection is used only to form candidates",
             "$inspect-parallel",
             "confirmation",
             "state: pending",
             "ready_for_confirmation",
             "needs_input",
-            "unresolved questions",
+            "user-owned data or authorization boundaries",
             "account pools",
             "credential references",
-            "secret values",
-            "runtime preflight",
-            "stale",
-            "does not execute the environment",
+            "never record values",
+            "preflight",
+            "exact confirmation",
+            "does not execute build",
         ):
             self.assertIn(phrase, normalized)
 
@@ -72,13 +71,13 @@ class EnvironmentProfileContractTest(unittest.TestCase):
         for phrase in (
             "confirmation",
             "state: pending",
-            "Repository and project-document sources are not valid Environment Profile fact sources",
-            "accepted after Bruce presents repository-derived candidates",
-            "empty values for safe candidate variable names",
-            "runtime preflight",
-            "secret value",
+            "Repository inspection produces candidates only",
+            "An optional `facts` list",
+            "empty values only",
+            "preflight",
+            "never stores passwords",
             "Verification Run/Checkpoint",
-            "completion verdict",
+            "Completion verdict",
             "profile_state",
         ):
             self.assertIn(phrase, normalized)
@@ -174,12 +173,44 @@ class EnvironmentProfileContractTest(unittest.TestCase):
         self.assertTrue(any("Environment Profile fact source must be user" in error for error in errors))
         self.assertTrue(any("secret-bearing field" in error or "secret-like value" in error for error in errors))
 
-    def test_template_declares_environment_topology_and_operation_declarations(self) -> None:
+    def test_template_declares_compact_agent_test_context(self) -> None:
         template = yaml.safe_load(read("skills/environment-profile/templates/environment-profile.yaml"))
-        for key in ("deployment", "build", "lifecycle", "dependencies", "network", "identities", "data_policy", "configuration", "operations"):
+        for key in ("test_context", "operations", "freshness", "security"):
             self.assertIn(key, template)
+        context = template["test_context"]
+        for key in ("scope", "authorization", "workflow", "services", "data", "authentication", "configuration", "preflight"):
+            self.assertIn(key, context)
+        self.assertEqual("profile-confirmed", context["authorization"]["mode"])
         self.assertNotIn("operation_manifest", template)
+        self.assertNotIn("confirmation_summary", template)
+        self.assertNotIn("capabilities", template)
         self.assertNotIn("operations.yaml", read("skills/environment-profile/templates/environment-profile.yaml"))
+
+    def test_profile_contract_uses_one_confirmed_scope_for_routine_operations(self) -> None:
+        body = " ".join(read("skills/environment-profile/SKILL.md").split())
+        self.assertIn("one confirmation, one test scope", body)
+        self.assertIn("must not ask the user to approve every build", body)
+        self.assertIn("profile-confirmed", body)
+
+        validator = load_validator()
+        profile = {
+            "version": 1,
+            "profile_kind": "environment",
+            "profile_id": "profile-authorized",
+            "profile_revision": 1,
+            "content_hash": "sha256:abc",
+            "profile_state": "draft",
+            "confirmation": {"state": "pending"},
+            "declaration": {"source": "user", "statement": "user-declared environment"},
+            "test_context": {
+                "authorization": {"mode": "profile-confirmed", "approved_scopes": ["build"]},
+            },
+            "operations": [{
+                "operation_id": "build", "category": "build", "executor": "local-process",
+                "authorization": "profile-confirmed", "risk": "guarded", "argv": ["make", "build"],
+            }],
+        }
+        self.assertEqual([], validator.validate_profile(profile))
 
     def test_validator_rejects_unsafe_profile_operations(self) -> None:
         validator = load_validator()

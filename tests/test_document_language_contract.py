@@ -35,6 +35,8 @@ class DocumentLanguageContractTest(unittest.TestCase):
         policy = read("skills/bruce/references/document-language.md")
         for token in ("Given", "When", "Then", "Evidence", "historical artifacts"):
             self.assertIn(token, policy)
+        self.assertIn("headings", policy)
+        self.assertIn("Simplified Chinese", policy)
 
 
 if __name__ == "__main__":

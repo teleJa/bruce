@@ -50,6 +50,16 @@ DECLARATION_KEYS = {"source", "statement", "provided_at"}
 FACT_KEYS = {"fact_id", "value", "source", "confirmation_required", "runtime_preflight_required"}
 FACT_SOURCE_KEYS = {"kind", "statement", "provided_at"}
 LOCAL_ENV_KEYS = {"path", "required", "ignored_by_vcs", "file_mode", "required_variables"}
+TEST_CONTEXT_KEYS = {"scope", "authorization", "workflow", "services", "data", "authentication", "configuration", "preflight"}
+TEST_AUTHORIZATION_KEYS = {"mode", "approved_scopes", "escalation_required_for"}
+TEST_WORKFLOW_KEYS = {"build_operation", "deploy_operation", "test_data", "authenticate_operation", "test_operation"}
+TEST_DATA_KEYS = {"prepare_operation", "cleanup_operation", "isolation", "strategy"}
+TEST_SERVICES_KEYS = {"application", "dependencies", "endpoints"}
+TEST_CONFIGURATION_KEYS = {"env_file", "references"}
+TEST_ENV_FILE_KEYS = {"path", "required", "required_variables", "file_mode", "ignored_by_vcs"}
+TEST_DATA_POLICY_KEYS = {"allowed_mutations", "prohibited_mutations"}
+OPERATION_AUTHORIZATIONS = {"none", "profile-confirmed", "explicit-per-invocation"}
+BUILD_KEYS = {"strategy", "operation_id", "artifact_expectations"}
 CREDENTIAL_KEYS = {
     "credential_id", "kind", "source_ref", "owner", "scope", "preflight_method",
     "secret_value_persisted", "expose_to_model", "redact_logs",
@@ -166,6 +176,80 @@ def validate_profile(data: Any) -> list[str]:
                     errors.append(f"credentials[{index}].expose_to_model must be false")
                 if credential.get("redact_logs") is not True:
                     errors.append(f"credentials[{index}].redact_logs must be true")
+        test_context = data.get("test_context")
+        profile_authorization_mode = None
+        approved_scopes: set[str] = set()
+        if test_context is not None:
+            if not isinstance(test_context, dict):
+                errors.append("Environment Profile test_context must be a mapping")
+            else:
+                for key in set(test_context) - TEST_CONTEXT_KEYS:
+                    errors.append(f"test_context field is not allowed: {key}")
+                authorization = test_context.get("authorization", {})
+                if not isinstance(authorization, dict):
+                    errors.append("test_context.authorization must be a mapping")
+                else:
+                    for key in set(authorization) - TEST_AUTHORIZATION_KEYS:
+                        errors.append(f"test_context.authorization field is not allowed: {key}")
+                    profile_authorization_mode = authorization.get("mode")
+                    if profile_authorization_mode not in {"profile-confirmed", "per-invocation"}:
+                        errors.append("test_context.authorization.mode must be profile-confirmed or per-invocation")
+                    for key in ("approved_scopes", "escalation_required_for"):
+                        value = authorization.get(key, [])
+                        if not isinstance(value, list) or not all(isinstance(item, str) and item.strip() for item in value):
+                            errors.append(f"test_context.authorization.{key} must be a list of non-empty strings")
+                    approved_scopes = set(authorization.get("approved_scopes", [])) if isinstance(authorization.get("approved_scopes", []), list) else set()
+                workflow = test_context.get("workflow", {})
+                if not isinstance(workflow, dict):
+                    errors.append("test_context.workflow must be a mapping")
+                else:
+                    for key in set(workflow) - TEST_WORKFLOW_KEYS:
+                        errors.append(f"test_context.workflow field is not allowed: {key}")
+                    for key in ("build_operation", "deploy_operation", "authenticate_operation", "test_operation"):
+                        value = workflow.get(key)
+                        if value is not None and (not isinstance(value, str) or not value.strip()):
+                            errors.append(f"test_context.workflow.{key} must be a non-empty operation ID when provided")
+                    test_data = workflow.get("test_data", {})
+                    if not isinstance(test_data, dict):
+                        errors.append("test_context.workflow.test_data must be a mapping")
+                    else:
+                        for key in set(test_data) - TEST_DATA_KEYS:
+                            errors.append(f"test_context.workflow.test_data field is not allowed: {key}")
+                        for key in ("prepare_operation", "cleanup_operation"):
+                            value = test_data.get(key)
+                            if value is not None and (not isinstance(value, str) or not value.strip()):
+                                errors.append(f"test_context.workflow.test_data.{key} must be a non-empty operation ID when provided")
+                services = test_context.get("services", {})
+                if services is not None and not isinstance(services, dict):
+                    errors.append("test_context.services must be a mapping")
+                elif isinstance(services, dict):
+                    for key in set(services) - TEST_SERVICES_KEYS:
+                        errors.append(f"test_context.services field is not allowed: {key}")
+                configuration = test_context.get("configuration", {})
+                if configuration is not None and not isinstance(configuration, dict):
+                    errors.append("test_context.configuration must be a mapping")
+                elif isinstance(configuration, dict):
+                    for key in set(configuration) - TEST_CONFIGURATION_KEYS:
+                        errors.append(f"test_context.configuration field is not allowed: {key}")
+                    env_file = configuration.get("env_file")
+                    if env_file is not None:
+                        if not isinstance(env_file, dict):
+                            errors.append("test_context.configuration.env_file must be a mapping")
+                        else:
+                            for key in set(env_file) - TEST_ENV_FILE_KEYS:
+                                errors.append(f"test_context.configuration.env_file field is not allowed: {key}")
+                            if env_file.get("path") != ".env":
+                                errors.append("test_context.configuration.env_file.path must be .env")
+                data_policy = test_context.get("data")
+                if data_policy is not None:
+                    if not isinstance(data_policy, dict):
+                        errors.append("test_context.data must be a mapping")
+                    else:
+                        for key in set(data_policy) - TEST_DATA_POLICY_KEYS:
+                            errors.append(f"test_context.data field is not allowed: {key}")
+                preflight = test_context.get("preflight")
+                if preflight is not None and not isinstance(preflight, list):
+                    errors.append("test_context.preflight must be a list")
         local_env = data.get("local_env")
         if environment_kind == "local" and not isinstance(local_env, dict):
             errors.append("local Environment Profile requires local_env mapping")
@@ -187,6 +271,31 @@ def validate_profile(data: Any) -> list[str]:
                 for index, name in enumerate(required_variables):
                     if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
                         errors.append(f"local_env.required_variables[{index}] must be a valid environment variable name")
+        build = data.get("build")
+        if isinstance(build, dict):
+            for key in set(build) - BUILD_KEYS:
+                errors.append(f"build field is not allowed: {key}")
+            operation_id = build.get("operation_id")
+            if operation_id is not None and (not isinstance(operation_id, str) or not operation_id.strip()):
+                errors.append("build.operation_id must be a non-empty string when provided")
+            artifact_expectations = build.get("artifact_expectations", [])
+            if not isinstance(artifact_expectations, list) or not all(isinstance(item, str) and item.strip() for item in artifact_expectations):
+                errors.append("build.artifact_expectations must be a list of non-empty strings")
+        elif build is not None:
+            errors.append("Environment Profile build must be a mapping")
+        lifecycle = data.get("lifecycle")
+        if isinstance(lifecycle, dict):
+            lifecycle_keys = {"prepare", "start", "stop", "status", "logs"}
+            for key in set(lifecycle) - lifecycle_keys:
+                errors.append(f"lifecycle field is not allowed: {key}")
+            for phase in lifecycle_keys:
+                value = lifecycle.get(phase, [])
+                if not isinstance(value, list) or not all(isinstance(item, str) and item.strip() for item in value):
+                    errors.append(f"lifecycle.{phase} must be a list of non-empty operation IDs")
+        elif lifecycle is not None:
+            errors.append("Environment Profile lifecycle must be a mapping")
+        if "confirmation_summary" in data:
+            errors.append("Environment Profile must not persist confirmation_summary; generate it for display")
         operations = data.get("operations", [])
         if not isinstance(operations, list):
             errors.append("Environment Profile operations must be a list")
@@ -213,10 +322,18 @@ def validate_profile(data: Any) -> list[str]:
                 minimum_risk = "read-only" if category in {"status", "health-check", "inspect-declared-resources", "logs", "preflight"} else "guarded"
                 if risk == "read-only" and minimum_risk != "read-only":
                     errors.append(f"operations[{index}] category requires at least guarded risk")
-                if risk == "guarded" and operation.get("authorization") in (None, "none"):
-                    errors.append(f"operations[{index}] guarded operation requires per-invocation authorization")
+                authorization_mode = operation.get("authorization")
+                if authorization_mode not in OPERATION_AUTHORIZATIONS:
+                    errors.append(f"operations[{index}].authorization must be none, profile-confirmed, or explicit-per-invocation")
+                if risk == "guarded" and authorization_mode == "none":
+                    errors.append(f"operations[{index}] guarded operation requires profile-confirmed or explicit-per-invocation authorization")
+                if authorization_mode == "profile-confirmed":
+                    if profile_authorization_mode != "profile-confirmed":
+                        errors.append(f"operations[{index}] profile-confirmed authorization requires test_context.authorization.mode=profile-confirmed")
+                    if category not in approved_scopes and operation.get("operation_id") not in approved_scopes:
+                        errors.append(f"operations[{index}] is not covered by test_context.authorization.approved_scopes")
                 if category in OPERATION_CRITICAL_CATEGORIES:
-                    if operation.get("authorization") != "explicit-per-invocation":
+                    if authorization_mode != "explicit-per-invocation":
                         errors.append(f"operations[{index}] critical operation requires explicit authorization")
                     if risk != "critical":
                         errors.append(f"operations[{index}] critical operation risk must be critical")

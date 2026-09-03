@@ -1,4 +1,4 @@
 interface:
   display_name: "Environment Profile"
-  short_description: "Generate reusable environment profiles safely"
-  default_prompt: "Use $environment-profile to record a user-provided and unconfirmed Environment Profile without scanning repository implementation files or executing the project environment."
+  short_description: "Generate Agent test environments with confirmed scope"
+  default_prompt: "Use $environment-profile to generate a compact Agent test and verification Environment Profile with one confirmed scope for build, test data, authentication, and evidence; do not execute operations."

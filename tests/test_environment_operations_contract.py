@@ -120,6 +120,51 @@ class EnvironmentOperationsContractTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unowned"):
                 generator.generate(profile, root, root / ".codex/skills", None, False)
 
+    def test_profile_confirmed_operations_do_not_prompt_again(self) -> None:
+        generator = load_generator()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            profile = confirmed_profile(root, command=[sys.executable, "-c", "print('ok')"])
+            data = yaml.safe_load(profile.read_text(encoding="utf-8"))
+            data["test_context"] = {
+                "authorization": {
+                    "mode": "profile-confirmed",
+                    "approved_scopes": ["build"],
+                    "escalation_required_for": ["database-drop"],
+                },
+                "configuration": {
+                    "env_file": {"path": ".env", "required": False, "required_variables": [], "file_mode": "0600", "ignored_by_vcs": "required"},
+                },
+            }
+            data["operations"][0]["authorization"] = "profile-confirmed"
+            profile.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+            output = generator.generate(profile, root, root / ".codex/skills", None, False)
+            result = subprocess.run([sys.executable, str(output / "scripts/run_operation.py"), "--operation", "local-build"], cwd=root, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn('"exit_code": 0', result.stdout)
+
+    def test_profile_escalation_overrides_routine_profile_authorization(self) -> None:
+        generator = load_generator()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            profile = confirmed_profile(root, command=[sys.executable, "-c", "print('ok')"])
+            data = yaml.safe_load(profile.read_text(encoding="utf-8"))
+            data["test_context"] = {
+                "authorization": {
+                    "mode": "profile-confirmed",
+                    "approved_scopes": ["build"],
+                    "escalation_required_for": ["build"],
+                },
+            }
+            data["operations"][0]["authorization"] = "profile-confirmed"
+            profile.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+            output = generator.generate(profile, root, root / ".codex/skills", None, False)
+            blocked = subprocess.run([sys.executable, str(output / "scripts/run_operation.py"), "--operation", "local-build"], cwd=root, capture_output=True, text=True)
+            self.assertEqual(2, blocked.returncode)
+            self.assertIn("requires --confirm", blocked.stderr)
+            executed = subprocess.run([sys.executable, str(output / "scripts/run_operation.py"), "--operation", "local-build", "--confirm"], cwd=root, capture_output=True, text=True)
+            self.assertEqual(0, executed.returncode, executed.stderr)
+
     def test_generated_runner_loads_dotenv_without_printing_values(self) -> None:
         generator = load_generator()
         with tempfile.TemporaryDirectory() as directory:

@@ -113,6 +113,34 @@ class PostToolReviewHookTest(unittest.TestCase):
         }
         self.assertIsNone(self.run_hook(payload))
 
+    def test_read_only_shell_redirections_do_not_fake_a_review_write(self) -> None:
+        for command in (
+            "ls -la design-review.md 2>&1 || true",
+            "find . -name design-review.md 2>/dev/null",
+            "echo 'example > design-review.md'",
+        ):
+            with self.subTest(command=command):
+                payload = {
+                    "tool_name": "Bash",
+                    "success": True,
+                    "cwd": "/tmp/sample-repo",
+                    "tool_input": {"command": command},
+                }
+                self.assertIsNone(self.run_hook(payload))
+
+    def test_structured_write_content_does_not_become_a_write_target(self) -> None:
+        payload = {
+            "tool_name": "Write",
+            "success": True,
+            "cwd": "/tmp/sample-repo",
+            "tool_input": {
+                "file_path": "docs/notes.md",
+                "content": "See design-review.md for the decision.",
+            },
+        }
+
+        self.assertIsNone(self.run_hook(payload))
+
     def test_bash_write_to_planning_document_triggers_reminder(self) -> None:
         payload = {
             "tool_name": "Bash",
@@ -123,6 +151,23 @@ class PostToolReviewHookTest(unittest.TestCase):
             },
         }
         self.assertIn("Bruce Design Gate reminder", self.additional_context(payload))
+
+    def test_in_place_shell_edit_to_planning_document_triggers_reminder(self) -> None:
+        for command in (
+            "sed -i '' 's/old/new/' docs/change/example/plan.md",
+            "perl -pi -e 's/old/new/' docs/change/example/plan.md",
+        ):
+            with self.subTest(command=command):
+                payload = {
+                    "tool_name": "Bash",
+                    "success": True,
+                    "cwd": "/tmp/sample-repo",
+                    "tool_input": {"command": command},
+                }
+                self.assertIn(
+                    "Bruce Design Gate reminder",
+                    self.additional_context(payload),
+                )
 
     def test_task_contract_edit_triggers_design_gate_reminder(self) -> None:
         reminder = self.additional_context(
@@ -212,6 +257,85 @@ class PostToolReviewHookTest(unittest.TestCase):
         self.assertIsNotNone(output)
         self.assertEqual("block", output["decision"])
         self.assertIn("missing candidates", output["reason"])
+
+    def test_assigned_python_path_resolves_the_nested_write_target(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            change = root / "docs/change/example"
+            change.mkdir(parents=True)
+            (change / "design-review.md").write_text(
+                "# Design Review\n\n## Verdict\n\nDesign: pass\n",
+                encoding="utf-8",
+            )
+            payload = {
+                "tool_name": "Bash",
+                "success": True,
+                "cwd": str(root),
+                "tool_input": {
+                    "command": (
+                        "python3 -c \"from pathlib import Path; "
+                        "d = Path('docs/change/example'); "
+                        "(d / 'design-review.md').write_text('...')\""
+                    )
+                },
+            }
+
+            output = self.run_hook(payload)
+
+        self.assertIsNotNone(output)
+        self.assertEqual("block", output["decision"])
+        self.assertIn("docs/change/example/design-review.md", output["reason"])
+        self.assertNotIn(
+            "\ndesign-review.md: design-review.md was referenced by a write",
+            output["reason"],
+        )
+
+    def test_unresolved_python_path_does_not_fall_back_to_repo_root(self) -> None:
+        payload = {
+            "tool_name": "Bash",
+            "success": True,
+            "cwd": "/tmp/sample-repo",
+            "tool_input": {
+                "command": (
+                    "python3 -c \"from pathlib import Path; "
+                    "(change_dir / 'design-review.md').write_text('...')\""
+                )
+            },
+        }
+
+        self.assertIsNone(self.run_hook(payload))
+
+    def test_direct_joined_python_write_uses_the_resolved_nested_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            change = root / "docs/change/example"
+            change.mkdir(parents=True)
+            (change / "design-review.md").write_text(
+                "# Design Review\n\n## Verdict\n\nDesign: pass\n",
+                encoding="utf-8",
+            )
+            payload = {
+                "tool_name": "Bash",
+                "success": True,
+                "cwd": str(root),
+                "tool_input": {
+                    "command": (
+                        "python3 -c \"from pathlib import Path; "
+                        "(Path('docs/change/example') / 'design-review.md').write_text('...')\""
+                    )
+                },
+            }
+
+            output = self.run_hook(payload)
+
+        self.assertIsNotNone(output)
+        self.assertEqual("block", output["decision"])
+        self.assertIn("docs/change/example/design-review.md", output["reason"])
+        self.assertIn("missing candidates", output["reason"])
+        self.assertNotIn(
+            "\ndesign-review.md: design-review.md was referenced by a write",
+            output["reason"],
+        )
 
     def test_string_nonzero_shell_result_stays_quiet(self) -> None:
         payload = {

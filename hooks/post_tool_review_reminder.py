@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path, PurePosixPath
@@ -109,12 +110,13 @@ def _build_output(payload: dict[str, Any]) -> dict[str, Any] | None:
     if not _tool_succeeded(payload):
         return None
 
-    paths = _extract_paths(payload)
-    wrote_files = _may_have_written_files(tool_name, payload)
-    if wrote_files:
-        design_reviews = _design_reviews_to_validate(payload, paths)
+    written_paths = _extract_written_paths(tool_name, payload)
+    if written_paths:
+        design_reviews = _design_reviews_to_validate(payload, written_paths)
         if design_reviews:
-            written_reviews = {path for path in paths if _is_design_review_path(path)}
+            written_reviews = {
+                path for path in written_paths if _is_design_review_path(path)
+            }
             stale_reviews = [path for path in design_reviews if path not in written_reviews]
             if stale_reviews:
                 joined = ", ".join(stale_reviews)
@@ -125,30 +127,117 @@ def _build_output(payload: dict[str, Any]) -> dict[str, Any] | None:
                 )
             return _validate_design_reviews(payload, design_reviews)
 
-    categories = _classify_paths(paths)
-    if "planning" in categories and wrote_files:
+    categories = _classify_paths(written_paths)
+    if "planning" in categories:
         return _context_output(f"<system-reminder>{REMINDER}</system-reminder>")
     return None
 
 
-def _may_have_written_files(tool_name: str, payload: dict[str, Any]) -> bool:
+def _extract_written_paths(tool_name: str, payload: dict[str, Any]) -> set[str]:
+    raw_paths: set[str] = set()
+    tool_input = payload.get("tool_input")
+
     if tool_name in EDIT_TOOLS:
-        return True
-    if tool_name not in SHELL_TOOLS:
-        return False
-    command = _shell_command(payload)
+        if isinstance(tool_input, dict):
+            _collect_paths(tool_input, raw_paths)
+            for key in ("patch", "diff"):
+                value = tool_input.get(key)
+                if isinstance(value, str):
+                    raw_paths.update(_patch_paths_from_text(value))
+    elif tool_name in SHELL_TOOLS:
+        raw_paths.update(_shell_write_paths(_shell_command(payload)))
+
+    return _normalize_paths(payload, raw_paths)
+
+
+def _shell_write_paths(command: str) -> set[str]:
     if not command:
-        return False
-    return bool(
-        re.search(
-            r"(?:^|[;&|]\s*)(?:cat|printf|echo)\b[^\n]*(?:>|>>)|"
-            r"(?:>|>>)\s*[^\n]+|"
-            r"\b(?:tee|touch|cp|mv|install|sed\s+-i|perl\s+-pi)\b|"
-            r"\b(?:write_text|write_bytes)\s*\(",
-            command,
-            flags=re.IGNORECASE | re.MULTILINE,
-        )
+        return set()
+
+    paths: set[str] = set()
+    try:
+        lexer = shlex.shlex(command, posix=True, punctuation_chars="<>|&;")
+        lexer.commenters = ""
+        tokens = list(lexer)
+    except ValueError:
+        tokens = []
+    for index, token in enumerate(tokens[:-1]):
+        if token not in {">", ">>", "&>", "&>>"}:
+            continue
+        target = tokens[index + 1]
+        if _is_real_file_target(target):
+            paths.add(target)
+
+    command_pattern = re.compile(
+        r"(?:^|[;&|]\s*)(?:sudo\s+)?"
+        r"(?P<command>tee|touch|cp|mv|install|sed|perl)\b"
+        r"(?P<arguments>[^\n;&|]*)",
+        flags=re.IGNORECASE | re.MULTILINE,
     )
+    for match in command_pattern.finditer(command):
+        try:
+            arguments = shlex.split(match.group("arguments"))
+        except ValueError:
+            continue
+        name = match.group("command").lower()
+        if name == "sed" and not any(value.startswith("-i") for value in arguments):
+            continue
+        if name == "perl" and not any(
+            value.startswith("-") and "i" in value[1:] for value in arguments
+        ):
+            continue
+        operands = [value for value in arguments if not value.startswith("-")]
+        candidates = operands if name in {"tee", "touch"} else operands[-1:]
+        paths.update(target for target in candidates if _is_real_file_target(target))
+
+    direct_path_write = re.compile(
+        r'''Path\(\s*["'](?P<path>[^"']+)["']\s*\)\s*
+            \.\s*write_(?:text|bytes)\s*\(''',
+        flags=re.VERBOSE,
+    )
+    joined_path_write = re.compile(
+        r'''(?:\(\s*)?Path\(\s*["'](?P<parent>[^"']+)["']\s*\)\s*
+            /\s*["'](?P<name>[^"']+)["']\s*(?:\))?\s*
+            \.\s*write_(?:text|bytes)\s*\(''',
+        flags=re.VERBOSE,
+    )
+    paths.update(match.group("path") for match in direct_path_write.finditer(command))
+    paths.update(
+        (PurePosixPath(match.group("parent")) / match.group("name")).as_posix()
+        for match in joined_path_write.finditer(command)
+    )
+    path_assignments = {
+        match.group("variable"): match.group("path")
+        for match in re.finditer(
+            r'''\b(?P<variable>[A-Za-z_]\w*)\s*=\s*
+                Path\(\s*["'](?P<path>[^"']+)["']\s*\)''',
+            command,
+            flags=re.VERBOSE,
+        )
+    }
+    variable_path_write = re.compile(
+        r'''(?:\(\s*)?(?P<variable>[A-Za-z_]\w*)\s*
+            /\s*["'](?P<name>[^"']+)["']\s*(?:\))?\s*
+            \.\s*write_(?:text|bytes)\s*\(''',
+        flags=re.VERBOSE,
+    )
+    paths.update(
+        (PurePosixPath(path_assignments[match.group("variable")]) / match.group("name")).as_posix()
+        for match in variable_path_write.finditer(command)
+        if match.group("variable") in path_assignments
+    )
+    return paths
+
+
+def _is_real_file_target(target: str) -> bool:
+    normalized = target.strip().strip('"').strip("'")
+    return bool(normalized) and normalized not in {
+        "&1",
+        "&2",
+        "/dev/null",
+        "/dev/stdout",
+        "/dev/stderr",
+    }
 
 
 def _shell_command(payload: dict[str, Any]) -> str:
@@ -379,15 +468,10 @@ def _bool_value(value: Any) -> bool | None:
     return None
 
 
-def _extract_paths(payload: dict[str, Any]) -> set[str]:
-    paths: set[str] = set()
-    _collect_paths(payload, paths)
-    for text in _collect_text(payload):
-        paths.update(_paths_from_text(text))
-
+def _normalize_paths(payload: dict[str, Any], paths: set[str]) -> set[str]:
     effective_cwd = _effective_cwd(payload)
     raw_cwd = payload.get("cwd") if isinstance(payload.get("cwd"), str) else ""
-    cwd_candidates = {raw_cwd.rstrip("/",)} if raw_cwd else set()
+    cwd_candidates = {raw_cwd.rstrip("/")} if raw_cwd else set()
     if effective_cwd is not None:
         cwd_candidates.add(str(effective_cwd).rstrip("/"))
     return {
@@ -422,49 +506,15 @@ def _collect_paths(value: Any, paths: set[str]) -> None:
             _collect_paths(item, paths)
 
 
-def _collect_text(value: Any) -> list[str]:
-    texts: list[str] = []
-    if isinstance(value, dict):
-        for key, nested in value.items():
-            if str(key).lower() in {
-                "patch",
-                "diff",
-                "content",
-                "command",
-                "cmd",
-                "input",
-            } and isinstance(nested, str):
-                texts.append(nested)
-            else:
-                texts.extend(_collect_text(nested))
-    elif isinstance(value, list):
-        for item in value:
-            texts.extend(_collect_text(item))
-    return texts
-
-
-def _paths_from_text(text: str) -> set[str]:
-    patch_paths: set[str] = set()
+def _patch_paths_from_text(text: str) -> set[str]:
+    paths: set[str] = set()
     for pattern in (
         r"^\*\*\* (?:Add|Update|Delete) File: (.+)$",
         r"^\+\+\+ b/(.+)$",
         r"^--- a/(.+)$",
     ):
         for match in re.finditer(pattern, text, flags=re.MULTILINE):
-            patch_paths.add(match.group(1).strip())
-    if patch_paths:
-        return patch_paths
-
-    paths: set[str] = set()
-    pattern = re.compile(
-        r"(?P<path>(?:\.?/)?(?:[\w.-]+/)+[\w.@+\- 一-龥]+"
-        r"(?:\.[A-Za-z0-9]+|评审结果\.md)|(?:CONTEXT|README|AGENTS)\.md)"
-    )
-    for match in pattern.finditer(text):
-        paths.add(match.group("path").strip())
-    for filename in PLANNING_FILENAMES:
-        if re.search(rf"(?<![\w.-]){re.escape(filename)}(?![\w.-])", text):
-            paths.add(filename)
+            paths.add(match.group(1).strip())
     return paths
 
 

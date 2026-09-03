@@ -23,6 +23,9 @@ SUPPORTING_SKILLS = (
     "verification-profile",
     "environment-profile",
     "environment-operations",
+    "test-dispatch",
+    "api-test-orchestration",
+    "browser-ui-verification",
 )
 
 LEGACY_MARKERS = (

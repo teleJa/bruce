@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Dispatch"
+  short_description: "Dispatch isolated API and UI verification tracks"
+  default_prompt: "Use $test-dispatch to dispatch one versioned API/UI scenario with isolated evidence and Bruce routing."

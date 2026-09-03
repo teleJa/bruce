@@ -46,6 +46,7 @@ requirements:
 environment_refs: []
 account_requirements: []
 skill_selections: []
+scenario_refs: []
 acceptance: {}
 blocking_rules: {}
 resume_rules: {}
@@ -77,13 +78,17 @@ acceptance:
     source: requirements.md#AC-02
     actors: [new-sso-user]
     environments: [multica-local, multica-sharkcloud-test]
-    skills: [chrome:control-chrome]
+    skills: [test-dispatch, api-test-orchestration, browser-ui-verification]
+    scenarios: [SSO-WORKSPACE-001@1]
     verification_stages:
       - stage_id: transaction-integration
         executor: project-adapter
         environment: multica-local
         mode: sync
         depends_on: []
+        scenario_id: SSO-WORKSPACE-001
+        scenario_version: 1
+        tracks: [api]
         preconditions: [test-database-available]
         expected: identity-user-member-onboarding-atomic
         evidence_required: [command-result, database-assertions]
@@ -95,6 +100,9 @@ acceptance:
         environment: multica-sharkcloud-test
         mode: sync
         depends_on: [build-deploy]
+        scenario_id: SSO-WORKSPACE-001
+        scenario_version: 1
+        tracks: [ui]
         account: new-sso-user
         preconditions: [deployed-revision-matches, unused-sso-subject-confirmed]
         expected: workspace-route-without-onboarding
@@ -112,9 +120,31 @@ acceptance:
         action: stop-and-notify-user
 ```
 
+
 Each material Acceptance must appear in `requirements.acceptance_ids` and in at least one acceptance
 mapping. A stage is evidence for its mapped Acceptance; passing one stage does not close the entire
 Acceptance unless all required stages and evidence are satisfied.
+
+## Shared Scenario and track references
+
+The requirement Profile may select shared Scenario v1 documents without copying their complete
+steps or runtime results:
+
+```yaml
+scenario_refs:
+  - scenario_id: SSO-WORKSPACE-001
+    scenario_version: 1
+    path: docs/test/scenarios/sso-workspace-001.yaml
+    environment_profile: multica-sharkcloud-test
+    tracks: [api, ui]
+    used_for: [AC-02, AC-03]
+```
+
+`scenario_id + scenario_version` is the immutable coordination key for API/UI evidence. The
+Requirement Verification Profile records the selected scenario, tracks, and Acceptance mapping only.
+The current API/UI Track Result, `overall_status`, command/action output, account instance, and
+evidence revision belong to Verification Run/Checkpoint. A Track Result with
+`overall_status=passed` is not a Completion verdict.
 
 ## Environment, account, and Skill selection
 
@@ -130,10 +160,18 @@ account_requirements:
     required_initial_state: local_identity_absent
     used_for: [AC-02, AC-03]
 skill_selections:
-  - skill_id: chrome:control-chrome
-    purpose: real-sso-login-and-visible-route
-    evidence_boundary: current-provider-browser-evidence
+  - skill_id: test-dispatch
+    purpose: lock-scenario-and-isolate-tracks
+    evidence_boundary: scenario-and-track-result
     used_for: [AC-02, AC-03]
+  - skill_id: api-test-orchestration
+    purpose: api-state-transition-and-authoritative-readback
+    evidence_boundary: redacted-api-track-evidence
+    used_for: [AC-02]
+  - skill_id: browser-ui-verification
+    purpose: real-provider-page-actions-and-visible-state
+    evidence_boundary: current-provider-browser-evidence
+    used_for: [AC-03]
 ```
 
 ## Waiting, blocking, and resume

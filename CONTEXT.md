@@ -52,6 +52,18 @@ _Avoid_: Runtime state, component ledger, second evidence store
 A stable behavior contract expressed as concrete `Given`, `When`, `Then`, and `Evidence`, with every material outcome mapped to a feasible verification layer.
 _Avoid_: Natural-language completion claim, mocked-only proof, reduced passing check
 
+**Shared Verification Scenario**:
+A versioned, requirement-scoped business-flow contract keyed by `scenario_id + scenario_version`, with independent API/UI steps, namespaces, evidence requirements, and status semantics.
+_Avoid_: Environment inventory, runtime result, model router, parallel Completion verdict
+
+**Track Result**:
+Current evidence for one exact Scenario version and one API/UI track, including mode, namespace, commands/actions, assertions, evidence, blockers, and unverified gates. Its derived `overall_status` is not `Completion`.
+_Avoid_: Static Profile fact, hidden runtime ledger, final completion decision
+
+**Test Dispatch**:
+The supporting capability that locks a shared Scenario version, selects `api`/`ui`/`both`, isolates write paths, routes delegated concerns through Bruce Functional Agent Profiles, and aggregates track states without owning browser actions or Completion.
+_Avoid_: Generic test runner, private model router, browser runtime, second gate
+
 **UI Surface Contract**:
 A technology-neutral product-surface contract keyed by stable `surface_id`, recording region hierarchy, required states, interaction transitions, observable fields, layout invariants, viewports, evidence methods, and generic implementation mappings. It is a design/evidence contract, not a React/Vue/DOM tree or a second verdict authority.
 _Avoid_: Framework AST contract, visual-token validator replacement, prototype screenshot or DOM text as runtime proof
@@ -87,5 +99,8 @@ Native Subagent delegation is contract-driven rather than personality-driven. Se
 - **Verified**: Design Gate owns persisted-design readiness, including governing UI prototypes, and its single verdict (`skills/design-gate/SKILL.md`).
 - **Verified**: Goal Execution Mode is profile-independent, native-Goal-backed persistence rather than another gate (`skills/goal-execution/SKILL.md:8-18`).
 - **Verified**: Completion Gate owns the single completion verdict and treats independence as an internal mode (`skills/completion-gate/SKILL.md:6-9`, `skills/completion-gate/SKILL.md:57-89`).
+- **Verified**: shared Scenario/Track Result contracts lock exact versions, isolate API/UI namespaces and write paths, and aggregate track state without emitting Completion (`skills/test-dispatch/references/scenario-schema.md`, `skills/test-dispatch/references/track-result-schema.md`).
+- **Verified**: API orchestration keeps project routes and commands repository-grounded, bounds asynchronous polling, and requires authoritative readback and redacted evidence (`skills/api-test-orchestration/SKILL.md`).
+- **Verified**: browser UI verification keeps real page actions with the configured host Provider and rejects subagent/API shortcuts and silent Provider fallback (`skills/browser-ui-verification/SKILL.md`, `skills/browser-ui-verification/references/host-boundary.md`).
 - **Verified**: L0-L4 recovery applies to the smallest supported dependency or incident boundary (`skills/bruce/references/failure-recovery.md:3-25`).
 - **Verified**: Codex and Bruce ownership boundaries are defined in `skills/bruce/references/plugin-boundary.md:3-38`.

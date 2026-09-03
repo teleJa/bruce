@@ -1,0 +1,4 @@
+interface:
+  display_name: "Browser UI Verification"
+  short_description: "Run real UI acceptance with fail-closed host evidence"
+  default_prompt: "Use $browser-ui-verification to run a shared UI scenario only through Bruce's configured host browser provider and return fail-closed track evidence."

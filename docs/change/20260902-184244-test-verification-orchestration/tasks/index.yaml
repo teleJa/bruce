@@ -1,0 +1,103 @@
+version: 1
+execution: sequential
+tasks:
+  - task_id: T-001
+    title: 冻结共享 Scenario 与轨道结果契约
+    contract_revision: 1
+    path: tasks/T-001-freeze-scenario-track-contracts.md
+    depends_on: []
+    acceptance_ids: [TVO-01, TVO-04, TVO-07]
+    allowed_paths:
+      - skills/test-dispatch/references/**
+      - skills/test-dispatch/scripts/**
+      - tests/test_test_dispatch_contract.py
+    excluded_paths:
+      - skills/test-dispatch/SKILL.md
+      - skills/api-test-orchestration/**
+      - skills/browser-ui-verification/**
+    parallel_safe: false
+  - task_id: T-002
+    title: 增加通用 API 编排验证 Skill
+    contract_revision: 1
+    path: tasks/T-002-add-api-test-orchestration.md
+    depends_on: [T-001]
+    acceptance_ids: [TVO-01, TVO-02]
+    allowed_paths:
+      - skills/api-test-orchestration/**
+      - tests/test_api_test_orchestration_contract.py
+    excluded_paths:
+      - skills/test-dispatch/SKILL.md
+      - skills/browser-ui-verification/**
+      - backend/**
+      - frontend/**
+    parallel_safe: false
+  - task_id: T-003
+    title: 增加主 Agent 页面验收 Skill
+    contract_revision: 1
+    path: tasks/T-003-add-browser-ui-verification.md
+    depends_on: [T-001]
+    acceptance_ids: [TVO-01, TVO-03]
+    allowed_paths:
+      - skills/browser-ui-verification/**
+      - tests/test_browser_ui_verification_contract.py
+    excluded_paths:
+      - skills/test-dispatch/SKILL.md
+      - skills/api-test-orchestration/**
+      - scripts/browser_provider.py
+      - skills/bruce/references/model-profiles.yaml
+    parallel_safe: false
+  - task_id: T-004
+    title: 增加测试轨道调度与模型路由约束
+    contract_revision: 1
+    path: tasks/T-004-add-test-dispatch-routing.md
+    depends_on: [T-001, T-002, T-003]
+    acceptance_ids: [TVO-04, TVO-05]
+    allowed_paths:
+      - skills/test-dispatch/**
+      - tests/test_test_dispatch_contract.py
+      - tests/test_functional_agent_profiles.py
+    excluded_paths:
+      - skills/bruce/references/model-profiles.yaml
+      - scripts/functional_agent_profiles.py
+      - skills/browser-ui-verification/**
+      - skills/api-test-orchestration/**
+    parallel_safe: false
+  - task_id: T-005
+    title: 接入 Verification Profile、Loop 与 Completion Gate
+    contract_revision: 1
+    path: tasks/T-005-integrate-verification-completion.md
+    depends_on: [T-004]
+    acceptance_ids: [TVO-06, TVO-07]
+    allowed_paths:
+      - skills/verification-profile/SKILL.md
+      - skills/verification-profile/references/profile-schema.md
+      - skills/verification-profile/templates/verification-profile.yaml
+      - skills/bruce/references/verification-loop.md
+      - skills/completion-gate/SKILL.md
+      - tests/test_verification_profile_contract.py
+      - tests/test_validation_loop_contract.py
+      - tests/test_completion_contract.py
+    excluded_paths:
+      - skills/environment-profile/**
+      - skills/environment-operations/**
+      - skills/bruce/references/model-profiles.yaml
+      - scripts/functional_agent_profiles.py
+    parallel_safe: false
+  - task_id: T-006
+    title: 更新插件文档、metadata 与全量回归
+    contract_revision: 1
+    path: tasks/T-006-update-docs-and-regression.md
+    depends_on: [T-005]
+    acceptance_ids: [TVO-08]
+    allowed_paths:
+      - README.md
+      - CONTEXT.md
+      - .codex-plugin/plugin.json
+      - tests/test_supporting_skill_contracts.py
+      - tests/test_agents_metadata.py
+      - tests/test_package.py
+    excluded_paths:
+      - .bruce/config.yaml
+      - hooks/**
+      - scripts/refresh_local_plugin.py
+    parallel_safe: false

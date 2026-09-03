@@ -243,6 +243,19 @@ class CompletionContractTest(unittest.TestCase):
         ):
             self.assertNotIn(marker, self.skill)
 
+    def test_completion_consumes_track_results_and_keeps_single_completion_authority(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for phrase in (
+            "Scenario and Track Result evidence",
+            "one exact `scenario_id + scenario_version`",
+            "distinct namespaces and non-overlapping `allowed_paths`",
+            "`overall_status=passed` is only the Test Dispatch aggregation state",
+            "not `Completion: pass`",
+            "do not modify aggregation rules to manufacture a pass",
+        ):
+            self.assertIn(phrase, normalized)
+
+
 
 if __name__ == "__main__":
     unittest.main()

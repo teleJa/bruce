@@ -35,14 +35,15 @@ Consume one or more user-identified Environment Profiles. Each referenced Enviro
 have `confirmation.state=confirmed`, matching `profile_revision` and `content_hash`, unless this
 skill is only producing an incomplete draft that explicitly lists the missing confirmation.
 
-Environment Profiles provide reusable facts such as:
+Environment Profiles provide one confirmed Agent test context, including:
 
-- build and deployment strategy;
-- service, database, browser, Desktop, and client targets;
-- account pools and required initial-state predicates;
-- safe Credential references, not secret values;
-- available Skills/capabilities and their evidence boundaries;
-- preflight, authorization, freshness, and stop rules.
+- the build/deploy/start/test-data/authentication workflow;
+- application, database, middleware, browser, Desktop, and client targets;
+- account pools, required initial-state predicates, and safe credential references;
+- the operations and authorization scopes the Agent may use without repeated user prompts;
+- preflight, freshness, and stop/escalation rules. Do not copy the full environment context into this
+Profile; reference the exact Environment Profile revision and select only the operations needed by
+the requirement.
 
 If the project environment is undocumented, report the smallest user questions needed to complete
 an Environment Profile. Do not invent endpoints, commands, account state, credentials, or deployment
@@ -53,15 +54,20 @@ behavior.
 1. Read the supplied `requirements.md` and preserve its content hash, path, Objective, Scope,
    Actors, confirmed decisions, exclusions, Acceptance IDs, and constraints.
 2. Read the referenced Environment Profiles and verify their confirmation and revision. Record the
-   environment revision used by this requirement; do not copy the entire environment definition.
+   environment revision used by this requirement and select the needed workflow operations, account
+   requirements, and evidence capabilities; do not copy the entire environment definition. Routine
+   operations already authorized by `test_context.authorization` must not trigger a second user
+   approval during execution.
 3. For every material Acceptance, define the verification stages, selected environment/profile,
-   account requirement, selected Skill/capability, required preconditions, evidence, expected
-   result, failure diagnosis, allowed repair scope, and next action.
-4. Keep requirement-level `acceptance_ids` and scenario mappings in this Profile. Do not write them
-   into an Environment Profile.
+   account requirement, selected Skill/capability, shared Scenario `scenario_id + scenario_version`,
+   API/UI tracks, required preconditions, evidence, expected result, failure diagnosis, allowed repair
+   scope, and next action.
+4. Keep requirement-level `acceptance_ids`, `scenario_refs`, and API/UI track mappings in this
+   Profile. Do not write them into an Environment Profile.
 5. Distinguish static strategy from dynamic execution. The Profile describes what to do; the current
-   source revision, actual account binding, build/deployment identity, evidence, and stage result
-   belong in Verification Run/Checkpoint.
+   source revision, actual account binding, build/deployment identity, Track Result, `overall_status`,
+   evidence revision, and stage result belong in Verification Run/Checkpoint. A Track Result pass is
+   evidence only and never a parallel Completion decision.
 6. Define `waiting_external` for planned asynchronous build/deployment or external results and
    `waiting_user` for prepared user testing or operational actions. Define `blocked` only when safe
    continuation is not possible.
@@ -101,6 +107,7 @@ requirements:
 environment_refs: []
 account_requirements: []
 skill_selections: []
+scenario_refs: []
 acceptance: {}
 blocking_rules: {}
 resume_rules: {}
@@ -110,8 +117,10 @@ completion:
 ```
 
 Each `acceptance` entry must trace to `requirements.path` and contain a concrete verification and
-repair mapping. A Profile with missing environment, account, credential-source, or evidence facts
-must remain `draft`/`needs_input` or `issues`; it cannot be confirmed as complete.
+repair mapping. Where a shared Scenario is used, the entry and its stages must repeat the exact
+`scenario_id + scenario_version` and selected `api`/`ui` tracks. A Profile with missing environment,
+account, credential-source, scenario, or evidence facts must remain `draft`/`needs_input` or `issues`;
+it cannot be confirmed as complete.
 
 ## Confirmation and freshness
 
@@ -122,6 +131,8 @@ must remain `draft`/`needs_input` or `issues`; it cannot be confirmed as complet
   reset confirmation to `pending`.
 - A confirmed Profile can be consumed only when all referenced revisions and hashes still match.
 - Runtime preflight remains mandatory after confirmation.
+- A missing, stale, or conflicting Scenario/Track Result mapping keeps the affected Acceptance
+  incomplete or blocked; it cannot be repaired by changing the aggregate to `passed`.
 
 ## Security
 
@@ -154,6 +165,7 @@ acceptance_coverage:
 environment_refs: []
 account_requirements: []
 skill_selections: []
+scenario_refs: []
 waiting_external: []
 waiting_user: []
 blockers: []

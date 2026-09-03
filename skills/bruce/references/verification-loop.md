@@ -54,6 +54,36 @@ an input condition, not a separate Gate. Runtime capability preflight remains re
 A Requirement Verification Profile must cite the exact `requirements.md` path and content hash. Its
 Acceptance mappings are requirement-scoped; reusable Environment Profiles must not receive those IDs.
 
+## Shared Scenario and Track Result consumption
+
+When a Requirement Verification Profile selects `test-dispatch`, `api-test-orchestration`, or
+`browser-ui-verification`, the Verification Loop consumes the shared Scenario and one Track Result
+per selected track. The Scenario is the static business-flow contract; the Track Result is current
+execution evidence. Preserve the exact `scenario_id + scenario_version`, selected execution mode,
+data namespace, allowed/evidence paths, commands or real browser actions, assertions, blockers, and
+`unverified_gates`.
+
+Before a result can support an acceptance row, check that:
+
+- every required track has exactly one result with the same Scenario ID/version;
+- API/UI namespaces and write paths are distinct;
+- `basis_revision`, Profile revision/hash, and `evidence_revision` match the current run basis;
+- `passed` has the required evidence and assertions, with no blockers or unverified gates; and
+- UI `passed` includes real actions from the configured Browser Provider plus the visible result and
+  required screenshot/geometry evidence, while API `passed` includes the declared invocation and
+  authoritative readback when persistence is required.
+
+The aggregator's `overall_status=passed` is only a scenario/track evidence state. It is not
+`Completion: pass`, and it must not be copied into a Profile as a runtime fact. A missing/stale
+result, version/path/namespace conflict, unavailable Provider/operation/account, or incomplete
+evidence keeps the affected acceptance `incomplete` or `blocked`; do not change the aggregate to
+force a pass. The deterministic `validate_track_results_for_context` helper (or
+`skills/test-dispatch/scripts/validate_evidence.py`) checks the current Scenario/Profile/basis/evidence
+context before a result reaches the Gate. Dynamic results remain in Verification Run/Checkpoint and
+are rerun with a new evidence revision after repair. See [Scenario v1](../../test-dispatch/references/scenario-schema.md),
+[Track Result v1](../../test-dispatch/references/track-result-schema.md), and
+[Evidence status](../../test-dispatch/references/evidence-status.md).
+
 ## Capability preflight
 
 Before the first batch that depends on a browser, database, model, external service, or another

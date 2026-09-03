@@ -52,6 +52,34 @@ class VerificationProfileContractTest(unittest.TestCase):
             self.assertIn(phrase, normalized)
         self.assertIn("Do not put these in the static Profile", schema)
 
+    def test_profile_can_bind_shared_scenarios_and_three_test_skills_without_runtime_results(self) -> None:
+        skill = " ".join(read("skills/verification-profile/SKILL.md").split())
+        schema = " ".join(read("skills/verification-profile/references/profile-schema.md").split())
+        template = yaml.safe_load(read("skills/verification-profile/templates/verification-profile.yaml"))
+        for phrase in (
+            "shared Scenario `scenario_id + scenario_version`",
+            "API/UI track mappings",
+            "Track Result",
+            "`overall_status`",
+            "never a parallel Completion decision",
+        ):
+            self.assertIn(phrase, skill)
+        for phrase in (
+            "scenario_refs",
+            "test-dispatch",
+            "api-test-orchestration",
+            "browser-ui-verification",
+            "scenario_id + scenario_version",
+            "overall_status=passed",
+            "not a Completion verdict",
+        ):
+            self.assertIn(phrase, schema)
+        self.assertEqual([], template["scenario_refs"])
+        self.assertNotIn("track_results", template)
+        self.assertNotIn("overall_status", template)
+        self.assertNotIn("Completion", template)
+
+
 
 if __name__ == "__main__":
     unittest.main()

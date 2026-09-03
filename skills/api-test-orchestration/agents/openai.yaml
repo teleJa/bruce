@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Test Orchestration"
+  short_description: "Run bounded, evidence-backed API verification orchestration"
+  default_prompt: "Use $api-test-orchestration to design or execute a bounded API verification track without browser actions or business-code changes."

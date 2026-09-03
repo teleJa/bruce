@@ -108,6 +108,26 @@ verification path as an executable acceptance basis. Pending, stale, or unresolv
 affected acceptance incomplete or blocked according to the external-state rules. Profile confirmation
 is not a Completion result, and a Profile/Adapter/Skill cannot produce `Completion: pass`.
 
+### Scenario and Track Result evidence
+
+When Test Dispatch is part of the task, consume the shared Scenario and the required API/UI Track
+Results as evidence inputs. Verify one exact `scenario_id + scenario_version` across all required
+tracks, distinct namespaces and non-overlapping `allowed_paths`, current Profile/basis/evidence
+revisions, and the mode-specific evidence contract. A `passed` Track Result must have its required
+assertions and evidence with no blockers or `unverified_gates`; UI also needs real actions from the
+configured Browser Provider, and API also needs the declared invocation and authoritative persistence
+readback when required.
+
+`overall_status=passed` is only the Test Dispatch aggregation state. It is not `Completion: pass` and
+must never become a second verdict or be written back as a runtime fact in a static Profile. Before
+using a result, apply the deterministic Track Result context check so Profile ID/revision/hash, basis
+revision, evidence revision, Scenario version, selected tracks, Provider, and visual scope match the
+current review basis. Any Scenario version conflict, namespace/path collision, stale or missing evidence, unavailable Provider
+or Environment operation, or unresolved account/authorization condition keeps the affected review
+row `incomplete`, `issues`, or `blocked` according to the external-state rules. Preserve each track's
+evidence and send repairs through the original Scenario and related regressions with a new evidence
+revision; do not modify aggregation rules to manufacture a pass.
+
 ### Acceptance evidence
 
 Map every acceptance condition to current, reproducible evidence at the required layer. A unit test

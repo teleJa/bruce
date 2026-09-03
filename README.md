@@ -67,6 +67,13 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Verification is layered across unit/component, real integration/API/database, and real use. Web
   acceptance records the selected Provider, target/session, actions, visible result, capture time,
   basis revision, and artifact path or hash. See `skills/bruce/references/browser-provider.md`.
+- Shared user-facing verification can use [`test-dispatch`](skills/test-dispatch/SKILL.md) to lock one
+  Scenario ID/version and isolate `api`/`ui` tracks. [`api-test-orchestration`](skills/api-test-orchestration/SKILL.md)
+  covers project-grounded API state transitions, bounded polling, permissions, idempotency, and
+  authoritative readback. [`browser-ui-verification`](skills/browser-ui-verification/SKILL.md) keeps real
+  page actions with the configured host Browser Provider; subagents and API shortcuts cannot replace
+  them. Track `overall_status` is evidence for Verification Run/Checkpoint and never a second
+  `Completion` verdict.
 - An L1 failed scenario enters a bounded repair loop: fix, inspect the change, rerun the unchanged scenario,
   then run related regressions. Two unsuccessful complete rounds escalate to L2 replanning; L0,
   L2, L3, and L4 retain their retry, replan, decision, and incident-freeze semantics.

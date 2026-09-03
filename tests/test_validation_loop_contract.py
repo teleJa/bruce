@@ -166,6 +166,19 @@ class ValidationLoopContractTest(unittest.TestCase):
         ):
             self.assertIn(phrase, normalized)
 
+    def test_loop_consumes_versioned_track_results_without_becoming_completion(self) -> None:
+        normalized = " ".join(self.policy.split())
+        for phrase in (
+            "Shared Scenario and Track Result consumption",
+            "exact `scenario_id + scenario_version`",
+            "API/UI namespaces and write paths are distinct",
+            "`overall_status=passed` is only a scenario/track evidence state",
+            "not `Completion: pass`",
+            "Dynamic results remain in Verification Run/Checkpoint",
+        ):
+            self.assertIn(phrase, normalized)
+
+
 
 if __name__ == "__main__":
     unittest.main()

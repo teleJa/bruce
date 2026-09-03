@@ -18,6 +18,7 @@ requirements:
 environment_refs: []
 account_requirements: []
 skill_selections: []
+scenario_refs: []
 acceptance: {}
 blocking_rules:
   notification_required: true

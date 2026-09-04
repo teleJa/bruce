@@ -534,5 +534,34 @@ Create a new revision when scope changes.
         self.assertIn("prototype existence", skill)
 
 
+    def test_chinese_section_headings_are_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            change = self.make_change(Path(directory))
+            review = change / "design-review.md"
+            text = review.read_text(encoding="utf-8")
+            text = text.replace("# Design Review", "# 设计评审")
+            text = text.replace("## Candidate Matrix", "## 候选工件矩阵")
+            text = text.replace("## Readiness", "## 就绪检查")
+            text = text.replace("## Validation", "## 验证")
+            text = text.replace("## Verdict", "## 结论")
+            review.write_text(text, encoding="utf-8")
+            result = self.run_validator(change)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_chinese_candidate_matrix_alias_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            change = self.make_change(Path(directory))
+            review = change / "design-review.md"
+            text = review.read_text(encoding="utf-8")
+            text = text.replace("# Design Review", "# 设计评审")
+            text = text.replace("## Candidate Matrix", "## 候选矩阵")
+            text = text.replace("## Readiness", "## 就绪度")
+            text = text.replace("## Validation", "## 校验")
+            text = text.replace("## Verdict", "## 评审结论")
+            review.write_text(text, encoding="utf-8")
+            result = self.run_validator(change)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

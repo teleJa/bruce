@@ -33,7 +33,7 @@ class DocumentReviewContractTest(unittest.TestCase):
         gate = read("skills/design-gate/SKILL.md")
         template = read("skills/design-gate/templates/design-review.md")
         self.assertIn("exactly one same-directory `design-review.md`", gate)
-        self.assertIn("Candidate Matrix", template)
+        self.assertTrue("Candidate Matrix" in template or "候选工件矩阵" in template or "候选矩阵" in template)
         self.assertIn("Review mode: <main-agent|independent>", template)
         self.assertIn("Behavior implementation: <yes|no>", template)
         self.assertIn("Public/cross-component contract change: <yes|no>", template)

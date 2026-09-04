@@ -1,4 +1,4 @@
-# Design Review
+# 设计评审
 
 - Objective: <objective>
 - Scope: <allowed and excluded scope>
@@ -9,7 +9,7 @@
 - Database/persistence design change: <yes|no>
 - Governing UI prototype: <yes|no>
 
-## Candidate Matrix
+## 候选工件矩阵
 
 | Candidate | Applicability | Delivery | Path | Repository-backed evidence |
 |---|---|---|---|---|
@@ -21,7 +21,7 @@
 | Test design | required\|skipped | generated\|missing\|skipped | <path or none> | <evidence> |
 | UI prototype | required\|skipped | generated\|missing\|skipped | <prototype-manifest.md path or none> | <evidence> |
 
-## Readiness
+## 就绪检查
 
 - Facts and consistency: <pass|blocked with evidence>
 - Acceptance and verification coverage: <pass|blocked with evidence>
@@ -35,11 +35,11 @@
 - Evidence boundary: <checked and unchecked facts>
 - Smallest next action: <none or action>
 
-## Validation
+## 验证
 
 - Command: `python3 <plugin-root>/skills/design-gate/scripts/validate_design_review.py --change-dir <change-directory>`
 - Result: <pass with current command evidence>
 
-## Verdict
+## 结论
 
 Design: <pass|blocked>

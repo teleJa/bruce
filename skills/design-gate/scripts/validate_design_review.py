@@ -33,6 +33,15 @@ READINESS_FIELDS = (
     "Smallest next action",
 )
 
+SECTION_SPECS = (
+    ("Candidate Matrix", ("Candidate Matrix", "候选工件矩阵", "候选矩阵")),
+    ("Readiness", ("Readiness", "就绪检查", "就绪度", "就绪评估")),
+    ("Validation", ("Validation", "验证", "校验")),
+    ("Verdict", ("Verdict", "结论", "评审结论")),
+)
+SECTION_DICT = dict(SECTION_SPECS)
+
+
 NONE_PATHS = {"none", "n/a", "not-applicable", "not applicable", "无"}
 WEAK_EVIDENCE = {"none", "n/a", "not-applicable", "not applicable", "无", "无需", "不适用"}
 PLACEHOLDER = re.compile(
@@ -56,9 +65,14 @@ def _field(text: str, label: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
-def _section(text: str, title: str) -> str:
+def _section(text: str, title_or_aliases: str | tuple[str, ...]) -> str:
+    if isinstance(title_or_aliases, str):
+        aliases = (title_or_aliases,)
+    else:
+        aliases = title_or_aliases
+    escaped = "|".join(re.escape(a) for a in aliases)
     match = re.search(
-        rf"(?ms)^## {re.escape(title)}\s*$\n(.*?)(?=^## |\Z)",
+        rf"(?ms)^## (?:{escaped})\s*$\n(.*?)(?=^## |\Z)",
         text,
     )
     return match.group(1) if match else ""
@@ -73,8 +87,11 @@ def _parse_candidate_rows(text: str) -> tuple[dict[str, CandidateRow], list[str]
     rows: dict[str, CandidateRow] = {}
     in_matrix = False
 
+    matrix_aliases = SECTION_DICT["Candidate Matrix"]
+    escaped_matrix = "|".join(re.escape(a) for a in matrix_aliases)
+    matrix_header_re = re.compile(rf"^## (?:{escaped_matrix})\s*$")
     for raw_line in text.splitlines():
-        if raw_line.strip() == "## Candidate Matrix":
+        if matrix_header_re.match(raw_line.strip()):
             in_matrix = True
             continue
         if in_matrix and raw_line.startswith("## "):
@@ -343,19 +360,27 @@ def validate_change_dir(change_dir: Path) -> list[str]:
     if PLACEHOLDER.search(text):
         errors.append("design-review.md contains unresolved placeholders")
 
-    section_names = ("Candidate Matrix", "Readiness", "Validation", "Verdict")
-    for section_name in section_names:
-        count = len(re.findall(rf"(?m)^## {re.escape(section_name)}\s*$", text))
-        if count != 1:
-            errors.append(f"design-review.md must contain exactly one ## {section_name} section")
-    header_positions = [text.find(f"## {name}") for name in section_names]
-    if all(position >= 0 for position in header_positions) and header_positions != sorted(header_positions):
-        errors.append("Design Review sections must appear in Candidate Matrix, Readiness, Validation, Verdict order")
+    section_matches: list[tuple[str, re.Match[str]]] = []
+    for canonical_name, aliases in SECTION_SPECS:
+        escaped = "|".join(re.escape(a) for a in aliases)
+        matches = list(re.finditer(rf"(?m)^## (?:{escaped})\s*$", text))
+        if len(matches) != 1:
+            errors.append(f"design-review.md must contain exactly one ## {canonical_name} section")
+        else:
+            section_matches.append((canonical_name, matches[0]))
 
-    preamble = text.split("## Candidate Matrix", 1)[0]
-    readiness_text = _section(text, "Readiness")
-    validation_text = _section(text, "Validation")
-    verdict_text = _section(text, "Verdict")
+    if len(section_matches) == len(SECTION_SPECS):
+        header_positions = [m.start() for _, m in section_matches]
+        if header_positions != sorted(header_positions):
+            errors.append("Design Review sections must appear in Candidate Matrix, Readiness, Validation, Verdict order")
+        preamble = text[:header_positions[0]]
+    else:
+        matrix_match = re.search(rf"(?m)^## (?:{'|'.join(re.escape(a) for a in SECTION_DICT['Candidate Matrix'])})\s*$", text)
+        preamble = text[:matrix_match.start()] if matrix_match else text
+
+    readiness_text = _section(text, SECTION_DICT["Readiness"])
+    validation_text = _section(text, SECTION_DICT["Validation"])
+    verdict_text = _section(text, SECTION_DICT["Verdict"])
 
     decision_fields = (
         "Behavior implementation",

@@ -126,8 +126,10 @@ An independent design review uses the `reviewer` Profile with a clean-context Ta
    names the inspected exact snapshot. Pending or blocked Visual checks, unavailable Visual evidence,
    and every mismatched pair cannot govern implementation. `manual-confirmed + manual-only` cannot
    override `exact_token_assertions = blocked`; deterministic assertions must be `clear` first.
-6. Write the review's natural-language fields in the user's language, using Simplified Chinese for
-   a Chinese request; preserve candidate names, paths, statuses, and verdict tokens.
+6. Write the review's natural-language fields and Markdown section titles in the user's language
+   following [document-language.md](../bruce/references/document-language.md), using Simplified Chinese
+   by default for Chinese requests (e.g. `# 设计评审`, `## 候选工件矩阵`, `## 就绪检查`, `## 验证`, `## 结论`);
+   preserve machine tokens including candidate names, paths, statuses, and verdict tokens.
 7. Persist or update exactly one same-directory `design-review.md` using
    [design-review.md](templates/design-review.md). Reuse it on re-review.
 8. Run `python3 <plugin-root>/skills/design-gate/scripts/validate_design_review.py --change-dir

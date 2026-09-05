@@ -31,6 +31,9 @@ acceptance:
   failed: []
   unexecuted: []
 findings: []
+# L1 findings retain failure_id, l1_repair_rounds, original scenario and evidence refs.
+# Missing historical counts are unknown; recover before repairing, never reset on resume.
+# repair_loop is the Completion-only global budget; batch repairs use local L1 counts.
 repair_loop:
   max_rounds: 5
   current_round: 0

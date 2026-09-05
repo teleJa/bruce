@@ -218,7 +218,8 @@ acceptance:
   passed: []
   failed: []
   unexecuted: []
-findings: []
+findings: [] # L1 rows retain failure_id, l1_repair_rounds and original-scenario evidence refs.
+# Global Completion counter only; never replace missing per-failure history with zero.
 repair_loop:
   max_rounds: 5
   current_round: 0
@@ -250,9 +251,10 @@ After the packet, repair compatible findings together, then rerun only affected 
 unchanged original failure, and related regressions. A row is `stale` when its evidence revision
 differs from the current review basis, a changed path intersects its affected scope, or impact cannot
 be determined. Rerun stale rows, the unchanged original failure, and related regressions before
-dependent tasks continue. The initial packet is review round 0; subsequent repair rounds read
-`workflow.repair_loop.max_rounds` from `.bruce/config.yaml` (default 5). A repair may reveal a new
-finding, so each round may scan again, but the configured limit still bounds the loop.
+dependent tasks continue. Batch repairs use the per-failure L1 budget and any smaller declared batch
+budget from [failure-recovery.md](failure-recovery.md); they never consume the Completion-only
+`workflow.repair_loop.max_rounds`. Preserve stable failure ids and counts when later entering Completion.
+A new finding gets its own evidence and local count, not a reset of an existing failure or global budget.
 
 ## Independent review
 

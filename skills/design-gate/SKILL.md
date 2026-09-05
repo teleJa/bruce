@@ -51,8 +51,8 @@ include/exclude scope, acceptance, verification, and revisions; missing declared
 
 Record `Behavior implementation: yes|no`, `Public/cross-component contract change: yes|no`,
 `Database/persistence design change: yes|no`, `Governing UI prototype: yes|no`, and the independent
-`Complex acceptance: yes|no`. Complex acceptance is determined by the `write-tests` trigger contract,
-not by plan persistence. A A behavior change always requires an independent Test design artifact (`test-plan.md`). `Complex acceptance:
+`Complex acceptance: yes|no`. Complex acceptance is determined by the applicable expanded-template criteria in `write-tests`,
+not by plan persistence or the mandatory invocation for behavior changes. A behavior change always requires an independent Test design artifact (`test-plan.md`). `Complex acceptance:
 yes` requires expanded scenario matrices and evidence layers; `no` permits a minimal independent plan.
 A `yes` contract, persistence, or governing-prototype decision requires its corresponding candidate. Historical reviews without
 Complex acceptance remain readable; the validator cannot infer semantic complexity from file presence.

@@ -75,7 +75,9 @@ checkpoint state holds current progress and references evidence without copying 
 
 `workflow.repair_loop.max_rounds` controls the Completion Gate repair loop only. The initial review
 scan is round 0; a repair loop may run at most this many subsequent repair rounds. It must be an integer from 1 through 5. Generic L0/L1 failure-recovery retry budgets remain governed by
-`references/failure-recovery.md` and are not silently widened by this setting.
+`references/failure-recovery.md` and are not silently widened by this setting. That reference owns
+counter identity and precedence: batch repairs use only local budgets; Completion repairs spend both
+local and global budgets, and the first exhausted limit stops affected work.
 
 `workflow.review.max_wait_seconds` and `workflow.review.max_no_progress_polls` bound asynchronous
 reviewer polling. They must be bounded integers: `max_wait_seconds` is 1 through 60 and `max_no_progress_polls` is 1 through 2. After the configured number of no-progress polls,

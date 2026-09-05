@@ -13,8 +13,12 @@ SPEC = importlib.util.spec_from_file_location('workflow_behavior_fixture', HELPE
 fixture = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(fixture)
 CASES = {'local_fix', 'design_only', 'repair_original', 'pause',
-         'environment_unavailable', 'stale_evidence'}
-REPAIRS = {'local_fix', 'repair_original', 'stale_evidence'}
+         'environment_unavailable', 'stale_evidence', 'unknown_external_result', 'dirty_worktree'}
+REPAIRS = {'local_fix', 'repair_original', 'stale_evidence', 'dirty_worktree'}
+PLAN = ('# Minimal synthetic test plan\n\nAC-1: correct arithmetic.\n'
+        'Given: frozen test_calculator.py. When: add(a, b). Then: expected sum.\n'
+        'Command: python -B -m unittest -v test_calculator\n'
+        'Evidence: original four tests exit 0. Limits: fixture, not actor evidence.\n')
 
 
 class WorkflowBehaviorTests(unittest.TestCase):
@@ -26,16 +30,20 @@ class WorkflowBehaviorTests(unittest.TestCase):
         self.manifest = self.base / 'evaluator.json'
 
     def prepare(self, case='local_fix'):
-        return fixture.prepare(case, self.actor, self.manifest,
-                               ROOT / 'skills/bruce/SKILL.md')
+        result = fixture.prepare(case, self.actor, self.manifest,
+                                 ROOT / 'skills/bruce/SKILL.md')
+        if case in REPAIRS:
+            (self.actor / 'test-plan.md').write_text(PLAN)
+        return result
 
     def check(self, **kwargs):
         return fixture.check(self.actor, self.manifest, **kwargs)
 
     def repair(self):
         (self.actor / 'calculator.py').write_text('def add(a, b):\n    return a + b\n')
+        (self.actor / 'test-plan.md').write_text(PLAN)
 
-    def test_exactly_six_synthetic_cases(self):
+    def test_eight_synthetic_cases(self):
         specs = json.loads(fixture.SCENARIOS.read_text())
         self.assertEqual(set(specs), CASES)
         for case in CASES:
@@ -57,6 +65,7 @@ class WorkflowBehaviorTests(unittest.TestCase):
             with self.subTest(case=case):
                 actor, manifest = self.base / case, self.base / (case + '.json')
                 fixture.prepare(case, actor, manifest)
+                (actor / 'test-plan.md').write_text(PLAN)
                 (actor / 'calculator.py').write_text('def add(a, b):\n    return a + b\n')
                 result = fixture.check(actor, manifest)
                 self.assertTrue(result['automated_checks_passed'], result)
@@ -72,6 +81,7 @@ class WorkflowBehaviorTests(unittest.TestCase):
             with self.subTest(case=case):
                 actor, manifest = self.base / case, self.base / (case + '.json')
                 fixture.prepare(case, actor, manifest)
+                (actor / 'test-plan.md').write_text(PLAN)
                 result = fixture.check(actor, manifest)
                 self.assertFalse(result['automated_checks_passed'])
                 self.assertEqual(result['commands'][0]['exit_code'], 1)
@@ -288,6 +298,85 @@ class WorkflowBehaviorTests(unittest.TestCase):
         result = cli('prepare', 'local_fix', self.actor, '--manifest', self.manifest)
         self.assertEqual(result.returncode, 2)
         self.assertIn('error', json.loads(result.stdout))
+
+    def test_required_plan_missing_empty_or_directory_blocks_commands(self):
+        self.prepare()
+        self.repair()
+        plan = self.actor / 'test-plan.md'
+        plan.unlink()
+        for kind in ('missing', 'empty', 'directory'):
+            with self.subTest(kind=kind):
+                if kind == 'empty':
+                    plan.write_text(' \n')
+                elif kind == 'directory':
+                    plan.unlink()
+                    plan.mkdir()
+                with patch.object(fixture.subprocess, 'run') as run:
+                    result = self.check()
+                    run.assert_not_called()
+                self.assertFalse(result['automated_checks_passed'])
+
+    def test_legacy_manifest_without_created_stays_compatible(self):
+        self.prepare()
+        self.repair()
+        data = json.loads(self.manifest.read_text())
+        data.pop('created')
+        self.manifest.write_text(json.dumps(data))
+        (self.actor / 'test-plan.md').unlink()
+        self.assertTrue(self.check()['automated_checks_passed'])
+
+    def test_creation_allowlist_rejects_unsafe_or_overlapping_names(self):
+        self.prepare()
+        data = json.loads(self.manifest.read_text())
+        for value in ('test-plan.md', [None], [''], ['..'], ['/outside'], ['a/b'],
+                      ['a\\b'], ['calculator.py'], ['plan.md', 'plan.md']):
+            with self.subTest(value=value):
+                data['created'] = value
+                self.manifest.write_text(json.dumps(data))
+                with patch.object(fixture.subprocess, 'run') as run:
+                    with self.assertRaises(ValueError):
+                        self.check()
+                    run.assert_not_called()
+
+    def test_unknown_external_result_is_not_replayed_by_checker(self):
+        self.prepare('unknown_external_result')
+        with patch.object(fixture.subprocess, 'run') as run:
+            result = self.check()
+            run.assert_not_called()
+        self.assertTrue(result['automated_checks_passed'])
+        self.assertEqual(result['status'], 'needs_manual_review')
+        self.assertFalse((self.actor / 'replayed.txt').exists())
+        (self.actor / 'replayed.txt').write_text('unexpected replay')
+        self.assertFalse(self.check()['automated_checks_passed'])
+
+    def test_dirty_user_work_is_frozen_during_repair(self):
+        self.prepare('dirty_worktree')
+        draft = self.actor / 'user_draft.md'
+        before = draft.read_bytes()
+        self.repair()
+        self.assertTrue(self.check()['automated_checks_passed'])
+        self.assertEqual(draft.read_bytes(), before)
+        draft.write_text('unauthorized edit')
+        with patch.object(fixture.subprocess, 'run') as run:
+            self.assertFalse(self.check()['automated_checks_passed'])
+            run.assert_not_called()
+
+    def test_command_cannot_empty_required_plan(self):
+        self.prepare()
+        (self.actor / 'calculator.py').write_text(
+            "from pathlib import Path\nPath('test-plan.md').write_text('')\n"
+            'def add(a, b):\n    return a + b\n')
+        result = self.check()
+        self.assertEqual(result['commands'][0]['exit_code'], 0)
+        self.assertFalse(result['automated_checks_passed'])
+
+    def test_repair_requests_authorize_only_minimal_test_plan(self):
+        specs = json.loads(fixture.SCENARIOS.read_text())
+        for case in REPAIRS:
+            with self.subTest(case=case):
+                self.assertEqual(specs[case]['created'], ['test-plan.md'])
+                self.assertIn('test-plan.md', specs[case]['request'])
+                self.assertNotIn('Do not create docs', specs[case]['request'])
 
 
 if __name__ == '__main__':

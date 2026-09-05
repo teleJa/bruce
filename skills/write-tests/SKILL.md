@@ -1,6 +1,6 @@
 ---
 name: write-tests
-description: Use when acceptance crosses multiple component or contract boundaries; needs state, repeat use, retry, concurrency, partial failure, recovery, permission, rollback, or cross-object consistency coverage; requires real integration, deployment, runtime evidence, or multiple verification layers; shares behavior scenarios or regression sources across tasks; or changes a stateful UI with repeat entry, mutable data, or lifecycle-sensitive interaction. 中文请求默认产出 Simplified Chinese（简体中文）test-plan.md。
+description: Use for every behavior change to create an independent test-plan.md; use the minimal template for simple acceptance and the expanded template only for applicable state, concurrency, permission, cross-component or real-runtime evidence needs. Also use when the user explicitly requests test design. 中文请求默认产出 Simplified Chinese（简体中文）test-plan.md。
 ---
 
 # Write tests
@@ -14,7 +14,9 @@ description: Use when acceptance crosses multiple component or contract boundari
 
 ## Invocation decision
 
-在行为实现前应用 frontmatter trigger contract。对任何 resolved Bruce profile 都执行判断；profile 本身既不是必要条件，也不是充分条件。
+在行为实现前应用 [artifact-policy.md](../bruce/references/artifact-policy.md) 的测试设计决策表。
+对任何 resolved Bruce profile 都执行判断；profile 本身既不是必要条件，也不是充分条件。
+Frontmatter 仅摘要该表，不维护另一套调用条件；下列复杂度条件只决定模板深度，不能跳过行为变更的测试设计。
 工件适用性遵循 [artifact-policy.md](../bruce/references/artifact-policy.md)：任何行为变更都必须调用本 Skill，
 并独立持久化 `test-plan.md`。简单任务使用最小场景、命令和证据；复杂验收再扩展矩阵、多层验证和回归覆盖。
 `plan.md` 或任务合同可以引用场景，但不能替代独立测试计划。仅当 Design Gate 独立必需时，在其候选矩阵中记录
@@ -24,7 +26,7 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 
 ### 通用触发条件
 
-以下任一条件成立时触发测试设计：
+所有行为变更均触发测试设计。以下任一条件成立时使用扩展模板，仅填写适用模块：
 
 - 验收跨越多个组件、API、服务、数据库或其他合同边界；
 - 需要验证 state、repeat use、retry、concurrency、partial failure、recovery、permission、rollback；
@@ -34,7 +36,7 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 
 ### UI 触发条件
 
-对于 UI 变更，以下任一条件成立时触发：
+对于 UI 变更，以下任一条件成立时扩展生命周期/视觉证据模块：
 
 - modal、drawer、picker、tab、editor 或 paginated/list surface 可以关闭后再次进入；
 - 展示或可选择的数据可能在 surface 关闭期间或两次进入之间变化；
@@ -95,7 +97,10 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
    的验证。当验收断言涉及权威 API、持久化结果或真实用户视角时，必须在对应层级取证；mock 或 DOM 文本不得替代
    被要求的更高层级证据。未涉及的验证层级不强制要求。
 8. 有计划时将场景映射到 task id；不要求每个非功能任务都制造 synthetic scenario。
-9. 使用 [test-plan.md](templates/test-plan.md) 持久化 `test-plan.md`。
+9. 按权威决策表选择模板并统一持久化为 `test-plan.md`：简单验收使用
+   [test-plan-minimal.md](templates/test-plan-minimal.md)，复杂验收使用 [test-plan.md](templates/test-plan.md)。
+   最小模板保留验收、前提、Given/When/Then、命令、预期证据、适用性理由和限制；不复制空矩阵。
+   扩展模板只保留适用模块；不适用的一致性检查保留分类和一句理由，不生成空的权威状态/冲突矩阵。
 10. 中文请求时，`test-plan.md` 的标题、说明、矩阵字段、场景名称、Given/When/Then/Evidence 内容、Limits、Self-check
     和其他自然语言字段默认全部使用简体中文；保留 `Given`、`When`、`Then`、`Evidence`、scenario id、命令、路径、API
     名称和其他稳定 machine-facing tokens，不要为了中文化而翻译它们。
@@ -105,8 +110,9 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 
 ## Output
 
-产出包含以下内容的中文测试设计：验收映射、前置条件、按比例确定视觉验证范围、生命周期矩阵、
-（一致性适用时）一致性与权威状态矩阵、冲突/权限视角场景、命令、已知限制和文档检查结果。
+产出独立 `test-plan.md` 和文档检查结果。默认最小内容为验收映射、前提、Given/When/Then、命令、
+预期证据及限制；仅在适用时增加视觉、生命周期、一致性与权威状态、冲突/权限场景矩阵。
+实际要求的证据层级不因模板更短而降低。
 
 ## Does not own
 

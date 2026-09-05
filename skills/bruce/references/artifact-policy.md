@@ -17,6 +17,24 @@
 测试命令和预期证据。`plan.md` 和任务合同可以引用测试场景，但不能替代 `test-plan.md`。
 简单验收使用最小测试计划；复杂验收再增加矩阵、状态路径和多层证据。
 
+## 测试设计决策表
+
+按表中顺序匹配；本表是入口、Skill 描述和模板选择的单一权威，不从 profile 或已有计划推导调用。
+复杂验收指 `write-tests` 中适用的状态、权限、跨边界、多层真实证据等扩展条件，不指文件数或耗时。
+若纯文案/图标/颜色/layout-only 不改变行为且无上述验证边界，按无行为变更处理；真实视觉验收仍独立判断。
+
+| Rule | 行为变更 | 用户/现有计划显式要求 | 复杂验收 | 调用 write-tests | 模板 |
+|---|---|---|---|---|---|
+| TEST-01 | yes | any | no | required | minimal |
+| TEST-02 | yes | any | yes | required | expanded |
+| TEST-03 | no | yes | no | required | minimal |
+| TEST-04 | no | yes | yes | required | expanded |
+| TEST-05 | no | no | any | skipped | none |
+
+minimal 使用 `write-tests/templates/test-plan-minimal.md`，expanded 使用兼容的 `test-plan.md` 模板；
+最终文件统一为独立 `test-plan.md`。最小内容不取消真实测试，也不因存在该文件自动创建 plan、tasks/ 或 Gate；
+Design Gate 仍按下游设计决策/合同的独立条件判断，只有现有测试命令和断言的执行清单不构成新设计决定。
+
 ## 计划与任务包
 
 简单计划可以独立存在，不要求 `Task package` 节、省略理由、`tasks/index.yaml` 或 checkpoint 文件。

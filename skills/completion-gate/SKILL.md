@@ -86,6 +86,13 @@ independent reviewer. Start one only when the repair changes an independence-tri
 risk trigger, or when critical risk or the user explicitly requires it. This repair path does not
 create a per-finding review chain.
 
+Use [failure-recovery.md](../bruce/references/failure-recovery.md) as the budget authority. Import each
+unresolved finding's stable `failure_id` and `l1_repair_rounds` from existing checkpoint/evidence; unknown
+counts require recovery, not zero initialization. A Completion repair consumes both its global round
+and each affected failure's local L1 round. Stop at whichever limit applies first; two unsuccessful
+complete repairs of the same failure become L2 even when global rounds remain. Do not reset local
+counts on batch handoff, resume, or recurrence. Batch repairs do not spend this global budget.
+
 The initial matrix scan is repair round 0. Read `workflow.repair_loop.max_rounds` from the resolved
 `.bruce/config.yaml` (default: 5) and allow at most that many subsequent repair rounds. Each round
 scans the current affected matrix as broadly as practical, reports all currently observable findings,

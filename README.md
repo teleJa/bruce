@@ -142,12 +142,20 @@ definition to be reviewed in `/hooks`; users can decline or disable it there.
 [`artifact-policy.md`](skills/bruce/references/artifact-policy.md) owns independent artifact and Design
 Gate predicates. A plan can stand alone; it does not automatically create task files. Every behavior change must create
 an independent `test-plan.md` with scenarios, commands, and evidence; its depth is proportional to acceptance complexity.
-The recovery reference owns checkpoint triggers; the verification reference owns evidence content.
+The authority includes a test-design decision table: every behavior change invokes `write-tests`,
+using the minimal template for simple acceptance and applicable modules from the expanded template otherwise.
+The recovery reference owns checkpoint triggers and local/global repair-budget precedence;
+the verification reference owns evidence content. Batch L1 repairs do not consume the Completion-only
+budget, and entering Completion or resuming never resets a repeated failure's local count.
 Completion reports are concise by default and expand when coverage, revisions, repairs, or the user
 needs detail. This changes presentation, not required verification or permission boundaries.
 
 Optional isolated behavior trials live in [`tests/fixtures/workflow_behavior/README.md`](tests/fixtures/workflow_behavior/README.md).
-They supplement deterministic tests and are not a new daily Gate or Agent runtime.
+They supplement deterministic tests and are not a new daily Gate or Agent runtime. Eight scenarios cover
+local fixes, design/pause boundaries, original/stale evidence, unavailable prerequisites, unknown external
+outcomes and unrelated user work. The optional `summarize` command aggregates explicitly supplied measurements;
+see [measurement boundaries](tests/fixtures/workflow_behavior/measurements.md). It never reads user sessions,
+launches actors, certifies evidence references, or treats fixture checks as real Agent success.
 
 ## Static validation
 

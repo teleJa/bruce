@@ -202,7 +202,8 @@ supporting skill only for a present need:
 - requirement-scoped verification and repair strategy from an explicit `requirements.md`: `verification-profile`;
 - a question-driven throwaway logic or UI-variant exploration: `explore-prototype`;
 - an explicitly requested or implementation-governing grounded UI prototype: `write-prototype`;
-- complex acceptance and regression design: `write-tests`;
+- every behavior change: `write-tests` with an independent `test-plan.md`; choose minimal or expanded
+  content from the decision table in `artifact-policy.md`, not from the execution profile;
 - an explicitly requested standalone plan review: `plan-review`;
 - readiness of persisted downstream design: `design-gate`;
 - only when the user explicitly requests native Goal creation or continuation: `goal-execution`;

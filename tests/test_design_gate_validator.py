@@ -331,16 +331,15 @@ Create a new revision when scope changes.
         self.assertIn("allowed_paths must be a list", result.stderr)
         self.assertIn("excluded_paths must be a list", result.stderr)
 
-    def test_implementation_plan_requires_task_package_section(self) -> None:
+    def test_simple_plan_still_requires_independent_test_design(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            change = self.make_change(Path(directory))
+            change = self.make_change(Path(directory), contract_change="no")
             (change / "plan.md").write_text(
-                "# Plan\n\nA plan without the canonical task package section.\n",
+                "# Plan\n\nUpdate one local function and run its existing regression test.\n",
                 encoding="utf-8",
             )
             result = self.run_validator(change)
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("must include a Task package section", result.stderr)
+        self.assertEqual(0, result.returncode, result.stderr)
 
     def test_task_package_section_requires_declaration_or_omission_reason(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -381,18 +380,52 @@ Create a new revision when scope changes.
         self.assertNotEqual(0, result.returncode)
         self.assertIn("missing required artifact: Test design", result.stderr)
 
-    def test_required_plan_cannot_skip_test_design_even_if_behavior_is_no(self) -> None:
+    def test_behavior_change_requires_independent_test_design_even_for_simple_plan(self) -> None:
+        for behavior in ("yes",):
+            with self.subTest(behavior=behavior), tempfile.TemporaryDirectory() as directory:
+                result = self.run_validator(self.make_change(
+                    Path(directory), behavior=behavior, contract_change="no",
+                    test_applicability="skipped", test_delivery="skipped",
+                ))
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn("requires independent Test design", result.stderr)
+
         with tempfile.TemporaryDirectory() as directory:
-            result = self.run_validator(
-                self.make_change(
-                    Path(directory),
-                    behavior="no",
-                    test_applicability="skipped",
-                    test_delivery="skipped",
-                )
-            )
+            result = self.run_validator(self.make_change(
+                Path(directory), behavior="no", contract_change="no",
+                test_applicability="skipped", test_delivery="skipped",
+            ))
+            self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_complex_acceptance_cannot_skip_test_design(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            change = self.make_change(Path(directory), test_applicability="skipped", test_delivery="skipped")
+            review = change / "design-review.md"
+            review.write_text(review.read_text().replace("- Behavior implementation:", "- Complex acceptance: yes\n- Behavior implementation:"))
+            result = self.run_validator(change)
         self.assertNotEqual(0, result.returncode)
-        self.assertIn("requires Test design", result.stderr)
+        self.assertIn("Complex acceptance: yes requires Test design", result.stderr)
+
+    def test_complex_acceptance_flag_is_validated_when_present(self) -> None:
+        for value in ("no", "maybe", ""):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
+                change = self.make_change(Path(directory))
+                review = change / "design-review.md"
+                review.write_text(review.read_text().replace("- Behavior implementation:", f"- Complex acceptance: {value}\n- Behavior implementation:"))
+                result = self.run_validator(change)
+                if value == "no":
+                    self.assertEqual(0, result.returncode, result.stderr)
+                else:
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertIn("Complex acceptance must be yes or no", result.stderr)
+
+    def test_declared_task_package_is_checked_even_when_test_design_is_skipped(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            change = self.make_change(Path(directory), test_applicability="skipped", test_delivery="skipped")
+            (change / "plan.md").write_text("# Plan\n\n## Task package\n- Path: `tasks/`\n")
+            result = self.run_validator(change)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("task package declares tasks/", result.stderr)
 
     def test_contract_change_cannot_skip_api_contracts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

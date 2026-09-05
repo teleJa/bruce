@@ -8,6 +8,7 @@
 - Public/cross-component contract change: <yes|no>
 - Database/persistence design change: <yes|no>
 - Governing UI prototype: <yes|no>
+- Complex acceptance: <yes|no>
 
 ## 候选工件矩阵
 

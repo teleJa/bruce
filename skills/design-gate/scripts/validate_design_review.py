@@ -176,19 +176,16 @@ def _validate_task_package(change_dir: Path, plan_artifact: Path) -> list[str]:
     has_task_section = re.search(r"(?m)^## Task package\s*$", plan_text)
     if not declares_tasks:
         if not has_task_section:
-            return [
-                "generated implementation plan must include a Task package section and declare "
-                "tasks/ or record a concrete trivial documentation-only omission reason"
-            ]
+            return []
         omission_reason = _field(plan_text, "Omission reason") or ""
         if (
             not omission_reason
             or PLACEHOLDER.search(omission_reason)
-            or not re.search(r"trivial|documentation-only|文档|简单", omission_reason, re.IGNORECASE)
+            or not _has_real_evidence(omission_reason)
         ):
             return [
                 "implementation plan must declare tasks/ or record a concrete "
-                "trivial documentation-only omission reason"
+                "scope-backed omission reason"
             ]
         return []
 
@@ -459,13 +456,21 @@ def validate_change_dir(change_dir: Path) -> list[str]:
 
     plan = rows.get("Implementation plan")
     tests = rows.get("Test design")
-    if plan and plan.applicability.lower() == "required":
-        if not tests or tests.applicability.lower() != "required":
-            errors.append("a required persisted Implementation plan requires Test design")
-        elif plan.delivery.lower() == "generated":
-            plan_artifact = _resolve_artifact(change_dir, plan.path)
-            if plan_artifact is not None and plan_artifact.is_file():
-                errors.extend(_validate_task_package(change_dir, plan_artifact))
+    # Behavior changes always require an independently persisted test plan. Complexity controls
+    # the plan's depth, not whether the artifact exists. Historical reviews remain readable when
+    # they omit the new complexity field.
+    if re.search(r"(?m)^- Complex acceptance:", preamble):
+        complex_acceptance = (_field(preamble, "Complex acceptance") or "").lower()
+        if complex_acceptance not in {"yes", "no"}:
+            errors.append("Complex acceptance must be yes or no")
+        elif complex_acceptance == "yes" and (
+            not tests or tests.applicability.lower() != "required"
+        ):
+            errors.append("Complex acceptance: yes requires Test design")
+    if plan and plan.delivery.lower() == "generated":
+        plan_artifact = _resolve_artifact(change_dir, plan.path)
+        if plan_artifact is not None and plan_artifact.is_file():
+            errors.extend(_validate_task_package(change_dir, plan_artifact))
 
     decision_requirements = {
         "Public/cross-component contract change": "API/file contracts",
@@ -513,6 +518,12 @@ def validate_change_dir(change_dir: Path) -> list[str]:
         blockers = readiness.get("Blocking findings", "")
         if blockers and not _blocking_findings_clear(blockers):
             errors.append("Design: pass requires Blocking findings to be none")
+
+    if verdict == "pass" and decisions.get("Behavior implementation") == "yes":
+        if not tests or tests.applicability.lower() != "required":
+            errors.append("Behavior implementation: yes requires independent Test design")
+        elif tests.delivery.lower() != "generated":
+            errors.append("Behavior implementation: yes requires generated test-plan.md")
 
     return errors
 

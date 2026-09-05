@@ -45,19 +45,19 @@ class FailurePolicyContractTest(unittest.TestCase):
         self.assertIn("incident boundary", self.policy)
         self.assertIn("Only read-only diagnosis and proven-isolated work may continue", self.policy)
 
-    def test_long_running_work_has_a_checkpoint_interval(self) -> None:
+    def test_checkpoints_follow_material_events_not_elapsed_intervals(self) -> None:
         normalized = " ".join(self.policy.split())
         for phrase in (
-            "`max_tool_calls=40`",
-            "`max_elapsed=45m`",
-            "stop starting new work",
-            "run the batch checkpoint",
-            "Do not begin another behavior edit,",
-            "assistant message records the complete checkpoint schema",
-            "an `update_plan`, progress summary, or test output is not a checkpoint",
-            "reset never erases retry or repair counts",
+            "material task/batch handoff", "scope or contract revision change",
+            "environment or risk change", "evidence invalidation", "side-effect boundary",
+            "Elapsed time, tool-call count, profile, and user-turn boundaries alone do not require a checkpoint",
+            "Progress messages may omit checkpoint ids and empty matrices",
+            "never resets L0/L1 retry or repair counts",
         ):
-            self.assertIn(phrase, normalized)
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, normalized)
+        self.assertNotIn("max_tool_calls=40", normalized)
+        self.assertNotIn("max_elapsed=45m", normalized)
 
     def test_async_handles_have_a_bounded_lifecycle(self) -> None:
         normalized = " ".join(self.policy.split())

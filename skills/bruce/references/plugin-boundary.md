@@ -15,14 +15,17 @@
 - L0-L4 response to returned failures.
 - Acceptance coverage and the evidence-backed completion decision.
 
-## Goal audit boundary
+## Optional native Goal boundary
 
-When the user explicitly requests Goal or the task contract requires continuous/cross-turn
-persistence or auditable execution, `goal-execution` creates or resumes the native Goal regardless
-of the resolved profile and maintains
-`.goal/<goal-id>/execute_record.md`. Native Goal remains the execution-state truth; the Markdown file
-is the human audit source only. Goal execution records the Design and Completion results supplied by
-their owning gates and synchronizes native status; it never re-evaluates either decision.
+Only when the user explicitly requests native Goal does `goal-execution` adapt its host-owned lifecycle
+to existing Bruce evidence. Profile, duration, cross-turn recovery, audit needs, and ordinary continuation
+do not activate it. Ordinary execution, checkpoint recovery, and delegation do not require Goal tools.
+The adapter consumes the owning Gates' results without re-evaluating them and honors host pause,
+cancellation, permissions, and budget limits. Native Goal state is never inferred from local files.
+
+Do not create a Goal-specific audit record by default. A durable audit record is user-requested and
+should reference existing task progress and evidence, not mirror them. Historical
+`.goal/<goal-id>/execute_record.md` files remain optional references, not resume prerequisites.
 
 ## Approval versus business decision
 

@@ -10,7 +10,7 @@ Create the smallest plan that makes dependencies and verification unambiguous.
 ## Artifact placement
 
 Use the shared resolver in [artifact-placement.md](../bruce/references/artifact-placement.md). A
-cross-repository task keeps one `plan.md` and one `tasks/` package in the shared change directory;
+cross-repository task keeps one `plan.md` and, when independently needed, one `tasks/` package in the shared change directory;
 component ownership and repository paths stay inside the task contracts rather than becoming one plan
 or task package per repository. Read [task-contract.md](../bruce/references/task-contract.md).
 
@@ -40,12 +40,13 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
    conflict consequence, and the `test-plan.md` matrix/scenario references in the task contract. Keep
    detailed conflict matrices and per-scenario evidence in `test-plan.md`; do not create two independent
    detailed sources of truth. Do not leave these semantics implicit in implementation detail.
-3. When persisting an implementation plan, create one change-level `tasks/` package by default. Write
-   `tasks/index.yaml` for stable order, dependencies, acceptance ids, and path ownership, and write
-   one `T-<id>-<slug>.md` from [task.md](templates/task.md) for each frozen task contract. A trivial
-   documentation-only change may omit the package only with a concrete recorded reason.
-4. Keep a single `plan.md` in the shared change directory. It summarizes the task package; task-local
-   contract detail belongs in `tasks/`, not in one oversized plan or one plan per repository.
+3. Apply [artifact-policy.md](../bruce/references/artifact-policy.md) independently. A simple plan needs no `tasks/`, independent `test-plan.md`, omission record, or Design Gate solely because it is persisted;
+   behavior changes still include minimum test design, commands, and evidence in the plan or task contract.
+   When frozen per-task boundaries, handoff, or delivery tracking require a package, create one
+   change-level `tasks/` package with `tasks/index.yaml` using
+   [tasks-index.yaml](templates/tasks-index.yaml) and [task.md](templates/task.md). Preserve stable order, ownership, acceptance ids, and revisions.
+4. Keep one `plan.md`. Without a package it holds the executable steps and verification directly;
+   with a package it summarizes and references frozen contracts instead of copying them.
 5. Mark `parallel_safe` only when dependencies and file ownership prove it. Bruce executes tasks
    sequentially by default; do not select a model, process, isolation mechanism, or scheduler.
 6. Ensure every acceptance item maps to a task and verification, dependencies exist and are acyclic,
@@ -53,22 +54,23 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
    relationship or permission-projected state, also ensure the plan identifies the invariant and
    authority that govern the state; otherwise return a planning gap instead of allowing the UI to
    define the business rule implicitly.
-7. Persist the result using [plan.md](templates/plan.md), [tasks-index.yaml](templates/tasks-index.yaml),
-   and [task.md](templates/task.md). Keep live status, checkpoint state, and approval outside the
-   frozen task contracts; use the change-level `checkpoint.yaml` during execution.
+7. Persist the result using [plan.md](templates/plan.md), removing inapplicable optional sections.
+   Only use task-package templates when that package is needed. Keep live status and approval outside
+   frozen contracts; checkpoint triggers remain owned by the shared recovery policy.
 8. Write natural-language fields in the user's language, using Simplified Chinese for a Chinese
    request; keep stable machine-facing tokens unchanged as specified by the language rule.
 9. Inspect the plan and task-package diff and check requirement/acceptance coverage, task boundaries,
    dependencies, file/interface joins, Given/When/Then evidence anchors, omissions, placeholders,
    links, and path ownership. Repair issues and return `Document check: clear|issues`. When the plan
-   will govern implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.
+   contains a governing design decision or downstream contract, tell Bruce that `design-gate` is
+   required under the shared artifact policy; an execution checklist alone does not require it.
 
 ## Output
 
 Return exactly one outcome:
 
-- `Plan: ready`: persist one minimal executable plan plus its frozen `tasks/` package and summarize
-  the dependency order, high-risk steps, verification anchors, task-package path, and
+- `Plan: ready`: persist one minimal executable plan, plus a task package only when independently
+  required; summarize dependency order, risks, verification anchors, any task-package path, and
   `Document check: clear|issues` result.
 - `Missing planning evidence`: do not create or update `plan.md`; return the unresolved questions
   and smallest bounded inspection scopes to Bruce for evidence collection before retrying this skill.

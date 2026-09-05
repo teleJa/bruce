@@ -19,18 +19,18 @@ class ResumeContractTest(unittest.TestCase):
         self.assertIn("Optional human-readable snapshot", template)
         self.assertIn("Reinspect", template)
 
-    def test_unfinished_full_cross_turn_resume_requires_goal_and_resume_checkpoint(self) -> None:
-        workflow = read("skills/bruce/SKILL.md")
-        failure = read("skills/bruce/references/failure-recovery.md")
-        goal = read("skills/goal-execution/SKILL.md")
-        for source in (workflow, failure, goal):
-            normalized = " ".join(source.split())
-            self.assertIn("unfinished `full` task", normalized)
-            self.assertIn("user-turn boundary", normalized)
-            self.assertIn("Resume checkpoint", normalized)
-        self.assertIn("enter or resume `goal-execution`", workflow)
-        self.assertIn("does not reset interval counters", goal)
-        self.assertIn("does not authorize\nunmapped inspection", goal)
+    def test_resume_uses_one_policy_and_only_expands_when_state_changes(self) -> None:
+        workflow = " ".join(read("skills/bruce/SKILL.md").split())
+        policy = " ".join(read("skills/bruce/references/failure-recovery.md").split())
+        self.assertIn("single authority for recovery", workflow)
+        self.assertIn("lightweight consistency check", policy)
+        self.assertIn("alone does not require a `Resume checkpoint`", policy)
+        for trigger in ("context is missing", "materially changed", "evidence became stale", "unknown result"):
+            with self.subTest(trigger=trigger):
+                self.assertIn(trigger, policy)
+        self.assertIn("Ordinary recovery does not require Goal", policy)
+        self.assertIn("retry or repair counts or authorizes unmapped inspection", policy)
+        self.assertNotIn("first enter or resume `goal-execution`", workflow)
 
     def test_legacy_artifacts_are_not_resume_truth(self) -> None:
         policy = read("skills/bruce/references/failure-recovery.md")

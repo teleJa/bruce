@@ -6,10 +6,9 @@ creating a second workflow, scheduler, or evidence store.
 
 ## When to create it
 
-Create `tasks/` by default when Bruce persists an implementation plan, a handoff, or a multi-step
-requirement. It is especially useful for `full` or `guarded` work, cross-component changes, long-running
-work, and any request that benefits from explicit sequential tracking. A genuinely trivial,
-documentation-only change may omit it, but the plan or design review must record the concrete reason.
+Apply the independent `tasks/` predicate in [artifact-policy.md](artifact-policy.md). A plan may stand
+alone; multiple operation steps do not themselves require frozen per-task files. When a package is
+needed, the following contents and validation rules apply.
 
 The package normally contains:
 

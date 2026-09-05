@@ -35,7 +35,7 @@ Return:
 
 - source path or thread id, snapshot boundary, line count, and source SHA-256;
 - event/turn/time statistics and parsing errors;
-- checkpoint-protocol statistics: valid/incomplete checkpoints, work-interval overruns, missing
+- checkpoint-protocol statistics: valid/incomplete checkpoints, advisory interval measurements, explicitly triggered missing
   checkpoints, and clearly labelled suspected `update_plan` substitutions or single-finding churn;
 - Bruce-specific findings with source line references;
 - evidence coverage: designed, executed, passed, blocked, unexecuted;
@@ -44,8 +44,8 @@ Return:
 
 Doctor findings are diagnostic inputs only. Do not emit or change `Design: pass`,
 `Completion: pass|issues|blocked`, or native Goal status on Doctor's authority. If a completion
-decision is needed, hand the current evidence to `completion-gate`; if Goal persistence is needed,
-hand the result to `goal-execution` according to its own explicit predicate.
+decision is needed, hand the current evidence to `completion-gate`. Only an explicit user request to
+use native Goal may route to `goal-execution`; diagnostic findings or audit needs do not activate it.
 
 ## Does not own
 

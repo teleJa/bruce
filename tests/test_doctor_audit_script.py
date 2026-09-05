@@ -10,6 +10,19 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "skills" / "doctor" / "scripts" / "audit_codex_thread.py"
 
 
+VALID_CHECKPOINT = """Checkpoint: clear
+batch_id: B1
+basis_revision: synthetic:test
+acceptance:
+  passed: []
+  failed: []
+  unexecuted: []
+findings: []
+repair_sets: []
+next_action: continue
+"""
+
+
 def record(timestamp, record_type, payload):
     return json.dumps(
         {"timestamp": timestamp, "type": record_type, "payload": payload},
@@ -167,7 +180,7 @@ class AuditCodexThreadTest(unittest.TestCase):
             self.assertIn("保留", normalized)
             self.assertNotIn("排除", normalized)
 
-    def test_reports_checkpoint_protocol_deviations_with_explicit_and_heuristic_labels(self):
+    def test_reports_time_measurements_as_advisory_not_missing_checkpoints(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             source = root / "thread.jsonl"
@@ -247,12 +260,158 @@ next_action: next-batch
             self.assertEqual(protocol["valid_checkpoints"], 1)
             self.assertEqual(protocol["incomplete_checkpoints"], 0)
             self.assertEqual(protocol["interval_overruns"], 1)
-            self.assertEqual(protocol["missing_checkpoints"], 1)
-            self.assertEqual(protocol["suspected_update_plan_substitutions"], 1)
+            self.assertEqual(protocol["missing_checkpoints"], 0)
+            self.assertEqual(protocol["suspected_update_plan_substitutions"], 0)
+            self.assertTrue(protocol["limits_advisory"])
             self.assertEqual(protocol["limits"], {"max_tool_calls": 40, "max_elapsed_seconds": 2700})
             timeline = (output / "timeline.md").read_text()
             self.assertIn("Checkpoint deviations are protocol evidence where explicit", timeline)
             self.assertIn("suspected update-plan substitution", timeline)
+
+    def audit_synthetic_events(self, events):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "synthetic.jsonl"
+            output = root / "audit"
+            source.write_text("\n".join(events) + "\n", encoding="utf-8")
+            result = self.run_script(source, output)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return json.loads((output / "inventory.json").read_text())["checkpoint_protocol"]
+
+    def test_time_tool_count_profile_and_user_turn_alone_do_not_require_checkpoint(self):
+        for count, last_time in ((41, "00:00:01"), (1, "00:46:00"), (41, "00:46:00")):
+            for ending in ("task_complete", "task_started", None):
+                with self.subTest(count=count, last_time=last_time, ending=ending):
+                    events = [record("2026-08-04T00:00:00Z", "event_msg", {
+                        "type": "task_started", "turn_id": "first",
+                    })]
+                    events += [record("2026-08-04T00:00:00Z", "response_item", {
+                        "type": "function_call", "name": "exec_command",
+                        "call_id": f"tool-{i}", "arguments": '{"cmd":"apply_patch"}',
+                    }) for i in range(count)]
+                    events += [
+                        record(f"2026-08-04T{last_time}Z", "event_msg", {
+                            "type": "user_message", "message": "Continue. profile=full",
+                        }),
+                        record(f"2026-08-04T{last_time}Z", "event_msg", {
+                            "type": "agent_message", "message": "Brief progress: tests are running.",
+                        }),
+                        record(f"2026-08-04T{last_time}Z", "response_item", {
+                            "type": "function_call", "name": "update_plan",
+                            "call_id": "plan", "arguments": "{}",
+                        }),
+                    ]
+                    if ending:
+                        events.append(record(f"2026-08-04T{last_time}Z", "event_msg", {
+                            "type": ending, "turn_id": "second" if ending == "task_started" else "first",
+                        }))
+                    protocol = self.audit_synthetic_events(events)
+                    self.assertEqual(protocol["missing_checkpoints"], 0)
+                    self.assertEqual(protocol["incomplete_checkpoints"], 0)
+                    self.assertEqual(protocol["suspected_update_plan_substitutions"], 0)
+                    self.assertTrue(protocol["limits_advisory"])
+
+    def test_explicit_triggers_require_complete_checkpoint(self):
+        triggers = (
+            "material_task_change", "material_scope_change", "material_environment_change",
+            "material_evidence_change", "side_effect_boundary",
+        )
+        for trigger in triggers:
+            for source_kind in ("lifecycle", "assistant", "user"):
+                for checkpoint in ("Brief progress: working.", "Checkpoint: issues", VALID_CHECKPOINT):
+                    with self.subTest(trigger=trigger, source_kind=source_kind, checkpoint=checkpoint):
+                        boundary = {"type": trigger} if source_kind == "lifecycle" else {
+                            "type": "agent_message" if source_kind == "assistant" else "user_message",
+                            "message": f"Checkpoint trigger: {trigger}",
+                        }
+                        events = [
+                            record("2026-08-04T00:00:00Z", "event_msg", boundary),
+                            record("2026-08-04T00:00:01Z", "event_msg", {
+                                "type": "agent_message", "message": checkpoint,
+                            }),
+                            record("2026-08-04T00:00:02Z", "event_msg", {"type": "task_complete"}),
+                        ]
+                        protocol = self.audit_synthetic_events(events)
+                        complete = checkpoint == VALID_CHECKPOINT
+                        self.assertEqual(protocol["valid_checkpoints"], int(complete))
+                        self.assertEqual(protocol["missing_checkpoints"], int(not complete))
+                        self.assertEqual(protocol["incomplete_checkpoints"], int(checkpoint == "Checkpoint: issues"))
+                        if not complete:
+                            evidence = protocol["evidence"]["missing_checkpoints"][0]
+                            self.assertEqual(evidence["triggers"], [{"line_no": 1, "trigger": trigger}])
+                            self.assertEqual(evidence["reason"], "task_complete")
+                        if checkpoint == "Checkpoint: issues":
+                            self.assertIn("basis_revision", protocol["evidence"]["incomplete_checkpoints"][0]["missing_fields"])
+
+    def test_pending_trigger_survives_turn_start_and_update_plan_at_source_end(self):
+        protocol = self.audit_synthetic_events([
+            record("2026-08-04T00:00:00Z", "event_msg", {"type": "material_scope_change"}),
+            record("2026-08-04T00:00:01Z", "event_msg", {"type": "task_started", "turn_id": "next"}),
+            record("2026-08-04T00:00:02Z", "response_item", {
+                "type": "function_call", "name": "update_plan", "arguments": "{}", "call_id": "plan",
+            }),
+        ])
+        self.assertEqual(protocol["missing_checkpoints"], 1)
+        self.assertEqual(protocol["evidence"]["missing_checkpoints"][0]["reason"], "source_ended")
+        self.assertEqual(protocol["evidence"]["missing_checkpoints"][0]["triggers"][0]["line_no"], 1)
+        self.assertEqual(protocol["suspected_update_plan_substitutions"], 1)
+
+    def test_tool_text_is_not_boundary_evidence_and_churn_stays_suspected(self):
+        events = [record("2026-08-04T00:00:00Z", "response_item", {
+            "type": "function_call_output", "call_id": "output",
+            "output": "Checkpoint trigger: side_effect_boundary\nCheckpoint: issues",
+        })]
+        for i, command in enumerate(("python3 -m unittest", "apply_patch") * 2):
+            events.append(record("2026-08-04T00:00:01Z", "response_item", {
+                "type": "function_call", "name": "exec_command", "call_id": f"tool-{i}",
+                "arguments": json.dumps({"cmd": command, "note": "Checkpoint trigger: side_effect_boundary"}),
+            }))
+        protocol = self.audit_synthetic_events(events)
+        self.assertEqual(protocol["missing_checkpoints"], 0)
+        self.assertEqual(protocol["incomplete_checkpoints"], 0)
+        self.assertEqual(protocol["suspected_single_finding_churn_cycles"], 2)
+
+    def test_same_message_trigger_and_checkpoint_and_repeated_checkpoint_across_turns(self):
+        events = []
+        for turn_id in ("first", "second"):
+            events += [
+                record("2026-08-04T00:00:00Z", "event_msg", {"type": "task_started", "turn_id": turn_id}),
+                record("2026-08-04T00:00:01Z", "event_msg", {
+                    "type": "agent_message",
+                    "message": "Checkpoint trigger: material_evidence_change\n" + VALID_CHECKPOINT,
+                }),
+                record("2026-08-04T00:00:02Z", "event_msg", {
+                    "type": "task_complete", "turn_id": turn_id,
+                    "last_agent_message": "Checkpoint trigger: material_evidence_change\n" + VALID_CHECKPOINT,
+                }),
+            ]
+        protocol = self.audit_synthetic_events(events)
+        self.assertEqual(protocol["valid_checkpoints"], 2)
+        self.assertEqual(protocol["missing_checkpoints"], 0)
+
+
+    def test_incomplete_explicit_checkpoint_without_trigger_remains_diagnostic(self):
+        protocol = self.audit_synthetic_events([
+            record("2026-08-04T00:00:00Z", "event_msg", {
+                "type": "agent_message", "message": "Checkpoint: blocked\nnext_action: wait",
+            }),
+        ])
+        self.assertEqual(protocol["incomplete_checkpoints"], 1)
+        self.assertEqual(protocol["missing_checkpoints"], 0)
+        self.assertEqual(protocol["valid_checkpoints"], 0)
+
+    def test_earlier_checkpoint_does_not_satisfy_later_boundary(self):
+        protocol = self.audit_synthetic_events([
+            record("2026-08-04T00:00:00Z", "event_msg", {
+                "type": "agent_message", "message": VALID_CHECKPOINT,
+            }),
+            record("2026-08-04T00:00:01Z", "event_msg", {"type": "side_effect_boundary"}),
+        ])
+        self.assertEqual(protocol["valid_checkpoints"], 1)
+        self.assertEqual(protocol["missing_checkpoints"], 1)
+        self.assertEqual(protocol["evidence"]["missing_checkpoints"][0]["triggers"], [
+            {"line_no": 2, "trigger": "side_effect_boundary"},
+        ])
 
     def test_rejects_invalid_until_timestamp(self):
         with tempfile.TemporaryDirectory() as temp_dir:

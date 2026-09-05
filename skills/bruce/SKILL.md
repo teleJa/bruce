@@ -1,6 +1,6 @@
 ---
 name: bruce
-description: Use when the user asks Bruce to implement, fix, refactor, or deliver a software change with proportional planning, one design-readiness decision before implementation when needed, one evidence-backed completion decision, optional native Goal persistence, and bounded L0-L4 failure handling.
+description: Use when the user asks Bruce to implement, fix, refactor, or deliver a software change with proportional planning, one design-readiness decision before implementation when needed, one evidence-backed completion decision, Goal-independent execution and recovery, and bounded L0-L4 failure handling.
 ---
 
 # Bruce workflow
@@ -14,13 +14,13 @@ design-only: confirmed analysis -> task contract -> necessary design artifacts -
 implementation: confirmed design -> scoped inspect -> implement -> targeted verification -> Completion Gate
 ```
 
-Bruce has two decisions and one optional execution mode:
+Bruce has two decisions; ordinary execution does not require Goal:
 
 - `design-gate` is the only implementation-entry decision for persisted downstream design.
 - `completion-gate` is the only completion decision for an implementation task.
 - A batch checkpoint is progress feedback, not a third decision or an overall completion result.
-- `goal-execution` adds persistence and an audit record; it never decides design readiness or
-  completion.
+- Native Goal is an explicit user-selected host capability, not the engine for ordinary execution,
+  recovery, delegation, or evidence recording. `goal-execution` is only its compatibility adapter.
 
 Keep Bruce as workflow guidance. Let Codex own commands, files, tools, permissions, task context,
 native Goal state, and subagent lifecycle. Read
@@ -108,9 +108,9 @@ Keep the contract in the current task unless the user requests a persistent plan
   alone does not force a browser, but a visible Web outcome always requires one real interaction
   and visual-evidence pass before completion. Provider capability requirements and fail-closed rules
   are defined in [browser-provider.md](references/browser-provider.md).
-- `tasks`: for a persisted implementation plan, handoff, or multi-step requirement, create one
-  change-level `tasks/` package containing frozen task contracts. A trivial documentation-only change
-  may omit it only with a recorded reason. Read [task-contract.md](references/task-contract.md).
+- `tasks`: select a change-level frozen task package only when its independent predicate in
+  [artifact-policy.md](references/artifact-policy.md) applies; otherwise keep steps in the current
+  contract or plan. Read [task-contract.md](references/task-contract.md) for package contents.
 - `batches`: required before implementation for a `full` or `critical` task that spans two or more
   independently delivered components or a propagated cross-component contract. Each batch is a closed,
   verifiable delivery boundary, not a remaining-work bucket. Record its stable `batch_id`, included
@@ -160,8 +160,8 @@ language controls natural-language prose; stable machine-facing contract tokens 
 
 ### Task package and checkpoint
 
-When a change package persists an implementation plan, derive one change-level `tasks/` directory
-before implementation. `tasks/index.yaml` records stable ids, dependency order, acceptance ids, and
+When the independent task-package predicate applies, derive one change-level `tasks/` directory
+before its frozen tasks execute. `tasks/index.yaml` records stable ids, dependency order, acceptance ids, and
 path ownership; each `T-<id>-<slug>.md` freezes one task contract. Do not create one plan or task
 package per repository, and do not silently widen a frozen task. A contract change creates a new
 revision or superseding task.
@@ -174,15 +174,16 @@ task-local verification is incomplete; `verified` means task-local acceptance pa
 `completion.state` may be `not_started`, `reviewing`, `repairing`, `ready`, or `decided`;
 `completion.result` remains empty until the single Completion Gate returns `pass`, `issues`, or
 `blocked`. It is progress feedback only: it is not a third decision, a Goal ledger, or a second
-evidence store. Native Goal state remains authoritative for Goal lifecycle; the checkpoint is
-authoritative only for change/task progress, and `.goal/<goal-id>/execute_record.md` is an audit record
-that may reference it. Recovery never infers Goal state from a checkpoint, and checkpoint state never
-overrides either Gate. Tasks execute sequentially by default; `depends_on` prepares future scheduling
-but does not activate parallel execution.
+evidence store. The checkpoint is authoritative only for change/task progress and never overrides
+either Gate. Recovery uses current workspace and evidence, not an audit ledger. Native Goal, when
+explicitly requested, remains authoritative only for its own lifecycle. No Goal-specific audit record
+is required; existing records are optional references. Tasks execute sequentially by default;
+`depends_on` prepares future scheduling but does not activate parallel execution.
 
-A long-running task may span multiple checkpoints without being split or restarted. Use a progress
-checkpoint at a meaningful milestone, task transition, environment/risk change, or work-interval
-boundary. Resume the same `task_id` and contract revision when the task remains in scope.
+A long-running task may span multiple checkpoints without being split or restarted. Use
+[failure-recovery.md](references/failure-recovery.md) as the single authority for checkpoint and resume
+triggers, and [verification-loop.md](references/verification-loop.md) for their evidence content.
+Do not expand a routine progress message into a full checkpoint.
 
 ## 3. Select only necessary capabilities
 
@@ -204,17 +205,16 @@ supporting skill only for a present need:
 - complex acceptance and regression design: `write-tests`;
 - an explicitly requested standalone plan review: `plan-review`;
 - readiness of persisted downstream design: `design-gate`;
-- explicit Goal intent or a task-contract need for continuous/cross-turn persistence or an audit
-  record: `goal-execution`;
+- only when the user explicitly requests native Goal creation or continuation: `goal-execution`;
+- boundary-clear implementation delegation, with sequential fallback and no Goal prerequisite:
+  `spawn-execute`;
 - final completion decision for every implementation task: `completion-gate`.
 
 A resolved profile does not itself invoke Goal, Design Gate, test design, prototype generation, or `environment-operations`. Executable environment Skill generation remains an explicit user-selected capability and never auto-executes operations.
-A required persisted implementation plan does invoke `write-tests`; plan verification bullets do not
-replace the resulting `test-plan.md`. Run `design-gate` only when a requirement, architecture, API
-contract, table design, implementation
-plan, test design, or confirmed UI prototype will govern downstream implementation. It owns artifact
-completeness and document readiness and returns one implementation-entry result:
-`Design: pass|blocked`.
+Use [artifact-policy.md](references/artifact-policy.md) as the single authority for artifact and
+Design Gate applicability. A persisted plan alone does not invoke `write-tests`, create `tasks/`, or
+require a Design Gate. When independently required, `design-gate` owns artifact completeness and
+document readiness and returns one implementation-entry result: `Design: pass|blocked`.
 
 Every public or cross-component API, event, or file-contract change uses `write-architecture` and
 must generate or update `api-contracts.md` before behavior implementation.
@@ -263,9 +263,18 @@ change directory. A prose verdict, plan status, or file presence without validat
 implementation entry. If scope changes a design decision, rerun Design Gate before continuing
 affected implementation.
 
-Enter `goal-execution` only for explicit Goal intent or a resolved task-contract need for
-continuous/cross-turn persistence or an audit record. `spawn-execute` is an optional delegation
-helper under an active Goal, not a scheduler or completion authority.
+Continue ordinary implementation within the authorized scope until acceptance is met or a user pause,
+host limit, authorization or scope change, exhausted repair budget, or real blocker requires stopping.
+A milestone or progress checkpoint alone is not a reason to return control. Continue with the next
+in-scope action after recording required progress; do not require Goal or a separate continuation
+phrase. This is an execution discipline and does not promise background or automatic cross-turn execution.
+Honor design-only stops, explicit user handoffs, permissions, and the existing L0-L4 boundaries.
+
+Enter `goal-execution` only when the user explicitly requests native Goal creation or continuation.
+Profile, duration, cross-turn recovery, audit needs, and phrases such as `continue nonstop`, `继续开发`,
+or `持续推进直到完成` do not imply that request. Without it, do not call Goal tools or create a
+Goal-specific audit record. `spawn-execute` is an optional helper for ordinary bounded delegation,
+not a scheduler or completion authority.
 
 For behavior changes, start with the smallest failing test or reproducible scenario when feasible.
 Reproduce bugs before fixing them and establish a characterization baseline before refactoring.
@@ -281,20 +290,10 @@ Read [failure-recovery.md](references/failure-recovery.md) whenever a command, t
 subagent fails. Apply L0-L4 to the smallest affected boundary. Retry only within the documented
 budget, repair only after a real change, and never replay an unknown external side effect.
 
-Resume non-Goal work from the conversation, current plan, tool results, and actual workspace. Resume
-Goal-backed work from native Goal plus those current facts; never derive Goal status from its audit
-record. An unfinished `full` task that resumes after a user-turn boundary requires continuous/cross-turn
-persistence: enter or resume `goal-execution` before implementation or verification continues. Use
-[handoff.md](templates/handoff.md) only when the user explicitly requests durable transfer.
-
-For that cross-turn `full` resume, do not treat “继续” or an equivalent continuation request as permission
-to reopen code discovery. First establish the native Goal and current workspace basis, then return a
-`Resume checkpoint` before any new code inspection, behavior edit, or verification. It records the
-current `batch_id`, basis revision or working-tree basis, latest checkpoint or its absence, known
-findings and repair set, allowed paths/direct call sites, deferred concerns, next evidence action, and
-stop condition. New inspection is allowed only when it maps to a current acceptance id, known failing
-matrix row, or declared direct call site; otherwise record it as deferred and proceed to the checkpoint,
-declared repair set, or completion path.
+Resume using [failure-recovery.md](references/failure-recovery.md), the single authority for recovery
+checks and `Resume checkpoint` triggers. Reuse current context and evidence; a new user turn or a
+`full` profile alone does not require a structured resume ceremony. Recovery does not require Goal.
+Use [handoff.md](templates/handoff.md) only when the user explicitly requests durable transfer.
 
 ## 6. Decide completion and report
 
@@ -306,7 +305,7 @@ After implementation and targeted verification, invoke `completion-gate`. It per
 author checks, evidence checks, scope checks, design-to-diff checks, and any risk-triggered independent
 review internally. No caller repeats those checks or combines their internal labels.
 
-When the contract declares multiple delivery batches, when Goal execution spans a long-running or
+When the contract declares multiple delivery batches, when execution spans a long-running or
 cross-component task, or before crossing an external verification or side-effect boundary, run a
 batch checkpoint after the current batch. The checkpoint reviews only that batch's bounded matrix and
 returns `Checkpoint: clear|issues|blocked`; it never returns `Completion`, starts a per-finding review
@@ -342,8 +341,9 @@ missing authority, unsafe external state, or unresolved L2-L4 conditions return 
 Do not use `implemented`, `verified`, `reviewing`, or `repairing` as completion verdicts: those are
 progress states recorded in the checkpoint and never replace the single terminal Completion field.
 
-For Goal-backed work, pass the single completion result and evidence summary to `goal-execution`.
-Goal execution records the result and synchronizes native Goal status without re-evaluating it.
+Only for an explicitly requested native Goal, pass the single completion result and existing evidence
+references to `goal-execution` for host-state synchronization. Ordinary completion never requires Goal
+tools, a Goal status transition, or an extra audit log.
 
 Report changed files, acceptance evidence, the Design Gate result when applicable, the Completion
 Gate result, residual risks, and authorized delivery actions that were intentionally not performed.

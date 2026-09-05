@@ -6,14 +6,12 @@ from tests._support import ROOT, read
 
 
 class WorkflowRoutingContractTest(unittest.TestCase):
-    def test_main_workflow_has_two_decisions_and_one_optional_mode(self) -> None:
+    def test_main_workflow_has_two_decisions_without_goal_dependency(self) -> None:
         skill = read("skills/bruce/SKILL.md")
         self.assertIn("design-only:", skill)
         self.assertIn("implementation:", skill)
-        self.assertIn("Completion Gate", skill)
-        self.assertIn("one optional execution mode", skill)
-        self.assertIn("two decisions and one optional execution mode", skill)
-        self.assertNotIn("small-scope combined", skill)
+        self.assertIn("Bruce has two decisions; ordinary execution does not require Goal", skill)
+        self.assertNotIn("two decisions and one optional execution mode", skill)
         for name in ("`design-gate`", "`completion-gate`", "`goal-execution`"):
             self.assertIn(name, skill)
 
@@ -79,10 +77,16 @@ class WorkflowRoutingContractTest(unittest.TestCase):
     def test_goal_route_is_explicit_and_profile_independent(self) -> None:
         workflow = read("skills/bruce/SKILL.md")
         goal = read("skills/goal-execution/SKILL.md")
-        normalized = " ".join(goal.split())
-        self.assertIn("Enter only for explicit Goal intent", normalized)
-        self.assertIn("resolved task contract requires continuous/cross-turn", normalized)
-        self.assertIn("Profile, complexity, duration, risk, or subagent use alone does not", normalized)
+        for path in (
+            "skills/bruce/SKILL.md",
+            "skills/goal-execution/SKILL.md",
+            "skills/bruce/references/plugin-boundary.md",
+        ):
+            with self.subTest(path=path):
+                normalized = " ".join(read(path).split())
+                self.assertIn("user explicitly requests native Goal", normalized)
+                self.assertNotIn("task-contract need for continuous", normalized)
+                self.assertNotIn("task contract requires continuous/cross-turn", normalized)
         self.assertIn(".goal/<goal-id>/execute_record.md", goal)
         self.assertTrue((ROOT / "skills/goal-execution/SKILL.md").is_file())
         self.assertNotIn("a `full` profile by default", workflow)

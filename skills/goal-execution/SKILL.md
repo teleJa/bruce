@@ -1,93 +1,76 @@
 ---
 name: goal-execution
-description: Use only for explicit Goal intent or when the resolved task contract requires continuous or cross-turn persistence or an auditable execution record. Maintain native Goal state and one execute_record.md without deciding design readiness or completion.
+description: Use only when the user explicitly requests native Goal creation or continuation, including /goal or this Skill. Adapt host Goal state to existing Bruce evidence; ordinary execution and recovery do not need Goal, and audit records are opt-in.
 ---
 
-# Goal execution mode
+# Native Goal adapter
 
-Add persistence to an otherwise unchanged Bruce workflow. Native Goal is the execution-state source;
-`.goal/<goal-id>/execute_record.md` is a human audit record.
-
-Goal execution is a mode, not a gate. It accepts Design and Completion results from their owners and
-does not re-check their internal criteria.
+Goal execution is a mode, not a gate, and is not a prerequisite for Bruce delivery. This compatibility
+adapter connects an explicitly requested host capability to existing Bruce evidence. Native Goal owns
+only its lifecycle; Bruce owns task progress, bounded execution, and acceptance. The adapter accepts
+Design and Completion results from their owners and does not re-check their internal criteria.
 
 ## Entry
 
-Enter only for explicit Goal intent or when the resolved task contract requires continuous/cross-turn
-persistence or an auditable execution record. An unfinished `full` task that resumes after a user-turn
-boundary is such a continuous/cross-turn persistence need. Profile, complexity, duration, risk, or
-subagent use alone does not enable this mode.
+Enter only when the user explicitly requests native Goal creation or continuation, including `/goal`
+or an explicit invocation of this Skill. A discussion, evaluation, or removal of Goal is not a request
+to run it. Profile, complexity, duration, risk, subagent use, cross-turn recovery, and audit needs
+do not enable this adapter. Requests such as `continue nonstop`, `继续开发`, and `持续推进直到完成`
+authorize ordinary scoped continuation, not implicit Goal creation.
 
-Before creating or resuming a Goal, use `get_goal` and prepare:
+For an explicit Goal request, use `get_goal` before creating or continuing it. Match the native
+objective and scope to the authorized task, its acceptance, constraints, and current workspace.
+Do not silently replace a conflicting unfinished Goal.
+Pass a token budget only when the user explicitly specified one.
+Honor host pause, cancellation, permissions, and budget limits; a continuation instruction does not
+bypass host-controlled state. If Goal tools are unavailable, report the explicit capability request
+as unavailable; do not claim it ran or silently replace it with a local loop. Independent ordinary
+work may continue only within its existing authorization and stop conditions.
 
-- objective, allowed/excluded scope, and constraints;
-- verifiable acceptance criteria and evidence paths;
-- profile and business risk;
-- `Design: pass` when Design Gate is required.
+Do not start Goal-backed implementation while a required Design result is absent or blocked.
+Use the ordinary Bruce resume procedure in [failure-recovery.md](../bruce/references/failure-recovery.md).
+The adapter does not add a second resume checkpoint or repeat inspection and verification.
 
-For an unfinished `full` task that resumes after a user-turn boundary, establish the Goal and current
-workspace basis, then return a `Resume checkpoint` before new code inspection, behavior edits, or
-verification. Record the current batch, basis revision or working-tree basis, latest checkpoint or its
-absence, known findings/repair set, allowed paths/direct call sites, deferred concerns, next evidence,
-and stop condition. A continuation request does not reset interval counters and does not authorize
-unmapped inspection.
+## Reuse progress and evidence
 
-Do not start Goal-backed implementation while a required Design result is absent or blocked. Do not
-silently replace a conflicting unfinished Goal. Pass a token budget only when the user explicitly
-specified one.
+Use the existing task contract, checkpoint, and verification evidence. Reference the Design result when applicable
+and the Completion result and evidence summary; do not duplicate their checks. Profile confirmation,
+capability preflight, event-driven checkpoints, and material live handles remain part of ordinary Bruce
+execution. Continuing native Goal does not reset L0/L1 retry or repair counts.
 
-## Audit record
+Do not create or maintain `execute_record.md` by default. Only when the user explicitly requests a durable audit record,
+reuse an existing suitable record or the requested path. A legacy `.goal/<goal-id>/execute_record.md`
+may be reused as a human-readable reference to current evidence; it is not required for native Goal
+or ordinary recovery. Do not mirror transcripts, checkpoints, or every Goal transition. An audit record
+never overrides native Goal state or either Gate result. Preserve historical records without silently
+rewriting or deleting them.
 
-Before Goal-backed verification consumes a Profile, record the exact Profile revision and
-confirmation snapshot. A pending or stale Profile keeps the affected work paused and is reported to
-the user; Goal mode does not confirm Profiles or bypass their user confirmation. User resume after a
-Profile update requires explicit confirmation of the new revision before verification resumes.
+## Synchronize owned results
 
-After Goal creation or resumption, create or reuse `.goal/<goal-id>/execute_record.md`. If no usable
-Goal id is returned, use a stable timestamp slug and record the native objective. Keep one record with:
+Ordinary implementation, recovery, delegation, and verification remain owned by Bruce and its selected
+capabilities. Synchronize only a matching, explicitly requested native Goal, using the owning Gate's
+current result and the host's lifecycle rules:
 
-- objective, acceptance, scope, and constraints;
-- current plan and material decisions;
-- Design result when applicable;
-- capability preflight results and dependent acceptance ids;
-- latest batch checkpoint, work-interval counters, and any material live tool handle;
-- executed verification and current outcomes;
-- Completion result and evidence summary when available;
-- blocking facts and exact unlock condition;
-- final conclusion.
+- `Completion: pass`: mark the Goal complete only if its entire objective and acceptance are achieved
+  and no required work remains. A passing subtask does not complete a broader Goal.
+- `Completion: issues`: preserve findings and use the ordinary bounded repair path; do not mark complete
+  or extend exhausted repair budgets to keep Goal running.
+- `Completion: blocked`: report the exact blocker; mark native status blocked only after the host's
+  blocked-status threshold is satisfied, never merely because a tool or one batch failed.
 
-Update it at creation, material decisions, verification, confirmed blocking, and closure. A
-change-level checkpoint may be referenced as task-progress evidence, but it never overrides native
-Goal state or either Gate result. Do not mirror every Goal transition or infer native status from the
-Markdown file.
-
-## Execute and synchronize
-
-Maintain the nearest executable plan with native planning tools. Use `spawn-execute` only for
-boundary-clear delegated work under the active Goal. Ordinary implementation and verification remain
-owned by Bruce and the selected capabilities.
-
-At each work-interval boundary, update the existing audit record and run the batch checkpoint before
-starting another interval. This rollover is execution persistence, not a Completion result, and it
-does not reset L0/L1 retry or repair counts.
-
-Continue until `completion-gate` returns one of its terminal results:
-
-- `Completion: pass`: record the result, then mark the native Goal complete.
-- `Completion: issues`: keep the Goal active and return the findings for repair.
-- `Completion: blocked`: record the blocker and keep the Goal active until the native blocked-status
-  threshold is satisfied; only then mark it blocked.
-
+For an explicitly design-only Goal, consume the Design Gate result and the confirmed design-only
+acceptance; do not start implementation or invoke Completion Gate to close that Goal.
 Do not independently inspect artifacts, author checks, review labels, or acceptance mappings to
-override the Completion result. If implementation changes invalidate Design readiness,
-`completion-gate` returns an issue and Bruce reruns `design-gate` before affected work continues.
+override the owning Gate's result. Native status synchronization creates no additional verdict.
 
 ## Output
 
-Return native Goal status, the audit-record path, the latest Design and Completion results, material
-evidence references, remaining work, and any blocking condition.
+Return the observed native Goal status, existing evidence references, the owning Gate result when
+available, remaining work, and any blocker. Include an audit path only when one was explicitly requested.
 
 ## Does not own
 
-Do not decide design readiness or completion, widen user authority, commit, push, publish, deploy,
-mutate infrastructure, implement a scheduler or alternate state machine, or create a second ledger.
+Do not create a scheduler, custom runtime, mandatory audit ledger, second evidence store, or background
+execution promise. Do not infer native Goal state from local Markdown or use Goal to bypass user pauses,
+permissions, scope, risk, verification, or host limits. This adapter does not authorize commit, push,
+publish, deployment, infrastructure mutation, or any other delivery side effect.

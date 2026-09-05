@@ -99,7 +99,11 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("Behavior implementation: <yes|no>", template)
         self.assertIn("Public/cross-component contract change: <yes|no>", template)
         self.assertIn("required/missing", body)
-        self.assertIn("Test design required", normalized)
+        self.assertIn("independent Test design artifact", normalized)
+        self.assertIn("Every behavior change requires", normalized)
+        self.assertIn("minimum scenarios", normalized)
+        self.assertIn("Complex acceptance: <yes|no>", template)
+        self.assertIn("artifact-policy.md", body)
         self.assertIn("validate_design_review.py", body)
 
     def test_cross_repository_artifact_placement_is_bounded_and_configurable(self) -> None:

@@ -1,4 +1,4 @@
 interface:
-  display_name: "Goal Execution"
-  short_description: "Persist Bruce delivery with native Goal state"
-  default_prompt: "Use $goal-execution to persist this Bruce delivery with native Goal state and one audit record."
+  display_name: "Native Goal Adapter"
+  short_description: "Connect explicitly requested native Goal to Bruce"
+  default_prompt: "Use $goal-execution for my explicitly requested native Goal, reusing existing task progress and evidence without an extra audit log."

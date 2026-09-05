@@ -72,8 +72,11 @@ transitive callers unless a propagated contract crosses that boundary. Mark ever
 `pass`, `incomplete`, or `finding`; do not return the terminal verdict while a material row is
 unexamined. Report all findings from the completed matrix together in one packet, grouped by severity
 and affected row. Do not stop after the first finding or issue an interim verdict. At minimum, each
-row records `batch_id`, `acceptance_id`, `path`, `required_layer`, `basis_revision`,
-`evidence_revision`, `evidence`, `result`, and `affected_scope`.
+row records acceptance, affected scope, required verification layer, current evidence, and result.
+For multi-batch or revision-sensitive work, also record `batch_id`, `acceptance_id`, `path`,
+`required_layer`, `basis_revision`, `evidence_revision`, `evidence`, `result`, and `affected_scope`.
+A simple task may use a compact acceptance-to-evidence mapping internally; do not invent batch ids
+or manufacture empty matrices. Coverage and required verification are unchanged by presentation.
 
 Repairable findings make the result `issues`. Any later change invalidates a row when its evidence
 revision differs from the current review basis, a changed path intersects its affected scope, or
@@ -269,17 +272,34 @@ Return exactly one terminal field:
 
 ## Output
 
-Return `Completion: pass|issues|blocked`, `review_mode: main-agent|independent`,
-`review_mode_reason`, the completed review matrix, consolidated findings packet, scenario-level
-acceptance evidence, design alignment, scope findings, repair-loop results, residual risks, and the
-smallest next action. Include the non-terminal `completion_state` (`reviewing`, `repairing`, `ready`,
-or `decided`) and `repair_round` in supporting evidence when applicable; never use them as aliases for
-`Completion`. Keep the result in the current task; `goal-execution` may record it when Goal mode is
-active.
+Default to a compact report: the single `Completion: pass|issues|blocked` result, key changes,
+acceptance-to-evidence references, residual risks or unverified scope, and the smallest next action.
+Natural-language bullets are sufficient; empty matrix, batch, design, and repair fields may be omitted.
+Select and record the required `review_mode`/`review_mode_reason` internally before reviewing; include
+them in expanded output and whenever independence or its unavailability matters to the user.
+
+Expand the existing report when multi-batch coverage, complex cross-boundary acceptance, stale evidence,
+multiple repair rounds, or an explicit user request needs matrix/revision detail. Presentation is not
+a new profile, Gate, or verdict. Compact output never skips material checks, hides findings/blockers,
+or substitutes a lower verification layer. Cite existing evidence rather than duplicating logs. Do not
+create a persistent report unless requested or already part of the confirmed handoff.
+
+### Compact output example
+
+```yaml
+Completion: pass
+changes:
+  - 修复局部计算错误，保留原有测试
+acceptance_evidence:
+  - acceptance_id: AC-1
+    evidence: python3 -m unittest，当前工作区检查通过
+residual_risks: []
+next_action: none
+```
 
 ### Output format example
 
-Use the stable top-level fields in the order shown below. `Completion` is the only terminal verdict;
+For expanded reports, use the stable top-level fields below. `Completion` is the only terminal verdict;
 all remaining fields are supporting evidence, context, or follow-up action rather than additional
 verdicts. Do not use aliases such as `completion_verdict`. Use `[]` for an empty collection rather
 than omitting the field or returning `null`. `review_mode: main-agent` requires

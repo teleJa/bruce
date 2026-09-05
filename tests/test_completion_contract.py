@@ -66,7 +66,7 @@ class CompletionContractTest(unittest.TestCase):
         self.assertIn("Map every acceptance condition", self.skill)
         self.assertIn("current, reproducible evidence", self.skill)
         self.assertIn("A unit test\ndoes not prove", self.skill)
-        self.assertIn("scenario-level\nacceptance evidence", self.skill)
+        self.assertIn("acceptance-to-evidence references", self.skill)
 
     def test_cross_object_consistency_requires_authority_and_conflict_evidence(self) -> None:
         normalized = " ".join(self.skill.split())
@@ -222,6 +222,21 @@ class CompletionContractTest(unittest.TestCase):
             "residual_risks",
         ):
             self.assertEqual([], example[field])
+
+    def test_compact_output_has_one_verdict_and_real_evidence_slot(self) -> None:
+        section = self.skill.split("### Compact output example", 1)[1].split("### Output format example", 1)[0]
+        match = re.search(r"```yaml\n(.*?)\n```", section, flags=re.DOTALL)
+        self.assertIsNotNone(match)
+        example = yaml.safe_load(match.group(1))
+        self.assertEqual("pass", example["Completion"])
+        self.assertTrue(example["changes"])
+        self.assertTrue(example["acceptance_evidence"])
+        self.assertTrue(example["acceptance_evidence"][0]["evidence"])
+        self.assertIn("residual_risks", example)
+        self.assertIn("next_action", example)
+        self.assertNotIn("review_matrix", example)
+        self.assertNotIn("batch_id", example)
+        self.assertEqual(1, len(re.findall(r"^Completion:", match.group(1), re.MULTILINE)))
 
     def test_output_mode_and_reason_pairing_is_explicit(self) -> None:
         normalized = " ".join(self.skill.split())

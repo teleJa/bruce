@@ -1,22 +1,26 @@
 ---
 name: spawn-execute
-description: Use only under an active goal-execution mode when boundary-clear Goal work benefits from Codex-native delegation or sequential fallback. Return task evidence to the parent without creating workflow state or deciding completion.
+description: Use when an authorized implementation task has boundary-clear work that benefits from Codex-native delegation or sequential fallback. Return task evidence to Bruce without requiring Goal, creating workflow state, or deciding completion.
 ---
 
 # Spawn and execute
 
-Execute a bounded slice of an active Goal without creating another runtime or verdict protocol.
+Execute a bounded slice of an authorized implementation task without creating another runtime or
+verdict protocol. Neither a native Goal nor `execute_record.md` is a prerequisite.
 
 ## Inputs
 
-- The active native Goal and `.goal/<goal-id>/execute_record.md` initialized by `goal-execution`.
+- The current authorized task contract and existing checkpoint when applicable.
 - Objective, scope, acceptance, constraints, profile, and risk.
 - The task slice, dependencies, file ownership, interfaces, and required verification.
 - Current workspace facts and unrelated changes that must be preserved.
 
 ## Procedure
 
-1. Confirm matching native Goal state and audit record exist. Otherwise return control to Bruce.
+1. Confirm the parent authorized implementation and froze the task slice, acceptance, allowed paths,
+   dependencies, and stop condition. If those inputs are incomplete, return control to Bruce without
+   creating a Goal or audit record. If delegation is unavailable or unsafe, use sequential execution
+   within the same scope.
 2. Delegate only boundary-clear, low-coupling work without hidden context. Keep shared-file and
    unresolved-contract work sequential.
 3. Give the executor objective, allowed/excluded files, dependencies, exact interfaces, acceptance,
@@ -33,7 +37,7 @@ Execute a bounded slice of an active Goal without creating another runtime or ve
 
 ## Output
 
-Return task evidence to `goal-execution` for audit recording and to Bruce for integration. Do not
+Return task evidence to Bruce for integration and its existing checkpoint when applicable. Do not
 return a Design or Completion verdict; the owning gates make those decisions against the integrated
 state.
 
@@ -45,4 +49,4 @@ This Skill is the `implementer` Profile consumer. Each bounded task must carry a
 
 Do not create or close native Goals, decide design readiness or completion, implement a scheduler,
 worker registry, process monitor, model selector, permission wrapper, second ledger, or global
-stop-on-first-failure policy. Do not infer Goal status from `execute_record.md`.
+stop-on-first-failure policy. Do not create a Goal-specific ledger or require Goal tools for delegation.

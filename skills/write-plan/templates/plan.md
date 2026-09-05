@@ -11,12 +11,13 @@
 
 ## Task package
 
+Remove this entire optional section when a separate frozen task package is not needed.
+
 - Path: `tasks/`
 - Index: `tasks/index.yaml`
 - Contract state: task files are frozen before their task starts
 - Status source: `checkpoint.yaml` or the current checkpoint message
 - Execution mode: `sequential`
-- Omission reason: <none, or concrete reason a trivial documentation-only change omits tasks/>
 
 ## Task summary
 
@@ -24,8 +25,9 @@
 |---|---|---|---|---|---|
 | T-001 | <short title> | <task ids or none> | <ids> | <paths> | <layer/check> |
 
-Detailed frozen contracts live in `tasks/T-<id>-<short-slug>.md`. Do not duplicate their full scope
-or acceptance here; update a task contract only through an explicit revision or superseding task.
+Without a task package, record executable steps and acceptance directly in this plan. When a package
+exists, detailed frozen contracts live in `tasks/T-<id>-<short-slug>.md`; reference them rather than
+duplicating their scope. Change a frozen contract only through an explicit revision or superseding task.
 
 ## Repository evidence
 

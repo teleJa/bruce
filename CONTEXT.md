@@ -5,12 +5,12 @@ Bruce Workflow defines the language for a proportional Codex-native software del
 ## Language
 
 **Task Contract**:
-The current task's objective, scope, acceptance, constraints, execution profile, business risk, and only the planning detail needed to make delivery verifiable.
+The current task's objective, scope, acceptance, constraints, execution profile, business risk, and only the planning detail needed to make delivery verifiable. Every behavior change includes an independent `test-plan.md` with observable assertions, commands, and expected evidence; complexity controls its depth, not whether it exists.
 _Avoid_: Prompt summary, fixed checklist, live workflow state
 
 **Task Contract Package**:
-For a persisted implementation plan, handoff, or multi-step requirement, one change-level `tasks/`
-directory containing frozen `T-<id>-<slug>.md` contracts plus `tasks/index.yaml`. Task files define
+An independently selected change-level `tasks/` directory for frozen task boundaries, per-task
+handoff, or separate delivery tracking, containing frozen `T-<id>-<slug>.md` contracts plus `tasks/index.yaml`. Task files define
 objective, include/exclude scope, dependencies, acceptance, verification, authorization, and stop
 conditions. Live task status belongs in `checkpoint.yaml` or the current checkpoint message; the package
 is not a scheduler, parallel executor, or second evidence store.
@@ -40,13 +40,13 @@ _Avoid_: Formal prototype evidence, production code, delegated product authority
 The `design-gate` skill makes the only implementation-entry decision for persisted requirements, architecture, contracts, schema design, plans, test designs, or UI prototypes that will govern downstream implementation. It returns `Design: pass|blocked` and persists one `design-review.md`.
 _Avoid_: Plan approval, separate artifact gate, independent-agent verdict
 
-**Goal Execution Mode**:
-An optional persistence mode entered only for explicit Goal intent or a task-contract need for continuous, cross-turn, or auditable execution. It is independent of execution profile and does not decide design readiness or completion.
-_Avoid_: Full profile, Goal gate, scheduler, completion authority
+**Native Goal Adapter**:
+The compatibility `goal-execution` Skill, entered only when the user explicitly requests native Goal creation or continuation. It is independent of execution profile and does not decide design readiness or completion. Ordinary execution, cross-turn recovery, checkpoint recording, and delegation do not require it. Continuation phrases and audit needs never activate it.
+_Avoid_: Default execution engine, full-profile prerequisite, Goal gate, scheduler, completion authority
 
-**Goal Audit Record**:
-The single `.goal/<goal-id>/execute_record.md` human audit record maintained while Goal Execution Mode is active; native Goal state remains the execution-state source of truth.
-_Avoid_: Runtime state, component ledger, second evidence store
+**Optional Audit Record**:
+A durable human-readable record created only at the user's explicit request, preferably referencing existing task progress and verification evidence. Legacy `.goal/<goal-id>/execute_record.md` files may be reused but are neither mandatory nor authoritative for native lifecycle or recovery.
+_Avoid_: Mandatory Goal log, transcript mirror, runtime state, second evidence store
 
 **Acceptance Scenario**:
 A stable behavior contract expressed as concrete `Given`, `When`, `Then`, and `Evidence`, with every material outcome mapped to a feasible verification layer.
@@ -90,14 +90,14 @@ Native Subagent delegation is contract-driven rather than personality-driven. Se
 
 ## Evidence Index
 
-- **Verified**: the workflow has two decisions and one optional execution mode (`skills/bruce/SKILL.md:18-24`).
+- **Verified**: the workflow has two decisions; ordinary execution, recovery, and delegation do not require Goal (`skills/bruce/SKILL.md`).
 - **Verified**: task contract, profile resolution, and profile/risk independence are defined in `skills/bruce/SKILL.md:38-63`.
-- **Verified**: persisted plans derive one sequential `tasks/` contract package while live status remains in the change-level checkpoint (`skills/bruce/references/task-contract.md`, `skills/write-plan/SKILL.md`).
+- **Verified**: artifact selection uses independent predicates; plans can stand alone and task packages remain sequential when needed (`skills/bruce/references/artifact-policy.md`, `skills/bruce/references/task-contract.md`).
 - **Verified**: capabilities are predicate-driven and do not cascade from profile selection (`skills/bruce/SKILL.md:69-93`).
 - **Verified**: `write-prototype` keeps provider execution host-owned and returns change-scoped brief, manifest, and snapshot evidence (`skills/write-prototype/SKILL.md`).
 - **Verified**: `explore-prototype` separates logic/UI exploration from formal prototype readiness and bounds optional generation delegation (`skills/explore-prototype/SKILL.md`).
 - **Verified**: Design Gate owns persisted-design readiness, including governing UI prototypes, and its single verdict (`skills/design-gate/SKILL.md`).
-- **Verified**: Goal Execution Mode is profile-independent, native-Goal-backed persistence rather than another gate (`skills/goal-execution/SKILL.md:8-18`).
+- **Verified**: the native Goal adapter requires an explicit request to use Goal, reuses ordinary recovery and evidence, and makes durable audit records opt-in (`skills/goal-execution/SKILL.md`).
 - **Verified**: Completion Gate owns the single completion verdict and treats independence as an internal mode (`skills/completion-gate/SKILL.md:6-9`, `skills/completion-gate/SKILL.md:57-89`).
 - **Verified**: shared Scenario/Track Result contracts lock exact versions, isolate API/UI namespaces and write paths, and aggregate track state without emitting Completion (`skills/test-dispatch/references/scenario-schema.md`, `skills/test-dispatch/references/track-result-schema.md`).
 - **Verified**: API orchestration keeps project routes and commands repository-grounded, bounds asynchronous polling, and requires authoritative readback and redacted evidence (`skills/api-test-orchestration/SKILL.md`).

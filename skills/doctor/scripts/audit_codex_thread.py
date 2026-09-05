@@ -186,6 +186,10 @@ def describe_event(
             base["role"] = role
             base["text"] = message
             return base, ""
+        if subtype in CHECKPOINT_TRIGGERS:
+            base["category"] = "lifecycle"
+            base["text"] = str(payload.get("message") or "")
+            return base, ""
         if subtype in {"task_started", "task_complete"}:
             base["category"] = "lifecycle"
             if subtype == "task_complete":
@@ -254,6 +258,29 @@ EDIT_COMMAND = re.compile(
 )
 
 
+# Only these explicit declarations are audited; tool names and prose are not
+# evidence that a material change or side-effect boundary occurred.
+CHECKPOINT_TRIGGERS = (
+    "material_task_change",
+    "material_scope_change",
+    "material_environment_change",
+    "material_evidence_change",
+    "side_effect_boundary",
+)
+CHECKPOINT_TRIGGER = re.compile(
+    r"(?im)^\s*Checkpoint trigger:\s*(" + "|".join(CHECKPOINT_TRIGGERS) + r")\s*$"
+)
+
+
+def checkpoint_triggers(event: dict[str, Any]) -> list[str]:
+    if event.get("category") not in {"assistant_message", "user_message", "lifecycle"}:
+        return []
+    triggers = CHECKPOINT_TRIGGER.findall(str(event.get("text") or ""))
+    if event.get("category") == "lifecycle" and event.get("event_type") in CHECKPOINT_TRIGGERS:
+        triggers.append(event["event_type"])
+    return list(dict.fromkeys(trigger.lower() for trigger in triggers))
+
+
 def checkpoint_from_text(text: str) -> dict[str, Any] | None:
     match = CHECKPOINT_STATUS.search(text)
     if match is None:
@@ -292,10 +319,12 @@ def interval_snapshot(interval: dict[str, Any], end_timestamp: str | None, end_l
 
 
 def analyze_checkpoint_protocol(normalized_path: Path) -> dict[str, Any]:
-    """Audit explicit checkpoint messages and bounded-work protocol evidence.
+    """Audit explicit event-triggered checkpoints; time/count limits are advisory.
 
-    Only explicit checkpoint-shaped assistant/lifecycle messages are treated as checkpoints.
-    `update_plan` and edit/verify cycles remain labelled suspected signals, not proof of a violation.
+    Only explicit checkpoint-shaped assistant/lifecycle messages are checkpoints.
+    Missing-checkpoint evidence requires an explicit trigger, never a user turn,
+    profile, elapsed time, tool count, or guessed tool side effect. Brief progress
+    messages are not incomplete checkpoints. Update-plan and churn stay suspected.
     """
     valid: list[dict[str, Any]] = []
     incomplete: list[dict[str, Any]] = []
@@ -306,7 +335,8 @@ def analyze_checkpoint_protocol(normalized_path: Path) -> dict[str, Any]:
     interval: dict[str, Any] | None = None
     last_timestamp: str | None = None
     last_line = 0
-    seen_checkpoint_text: set[str] = set()
+    seen_checkpoint_text: set[tuple[str | None, str]] = set()
+    pending_triggers: list[dict[str, Any]] = []
 
     def start_interval(timestamp: str | None, line_no: int) -> dict[str, Any]:
         return {
@@ -346,12 +376,21 @@ def analyze_checkpoint_protocol(normalized_path: Path) -> dict[str, Any]:
 
         if category == "lifecycle" and event_type == "task_started":
             if interval is not None:
-                snapshot = interval_snapshot(interval, timestamp, line_no)
-                if exceeds(snapshot):
-                    missing.append({**snapshot, "reason": "new_task_started_before_checkpoint"})
-                    record_churn(interval)
+                record_churn(interval)
             interval = start_interval(timestamp, line_no)
             continue
+
+        text = str(event.get("text") or "")
+        text_hash = str(event.get("text_sha256") or hashlib.sha256(text.encode()).hexdigest())
+        checkpoint_key = (event.get("turn_id"), text_hash)
+        # task_complete can mirror the last assistant checkpoint; its text is
+        # not a new boundary declaration.
+        mirrored_checkpoint = event_type == "task_complete" and checkpoint_key in seen_checkpoint_text
+        if not mirrored_checkpoint:
+            for trigger in checkpoint_triggers(event):
+                pending_triggers.append({"line_no": line_no, "trigger": trigger})
+                if interval is None:
+                    interval = start_interval(timestamp, line_no)
 
         if interval is None and category == "tool_call":
             interval = start_interval(timestamp, line_no)
@@ -360,7 +399,7 @@ def analyze_checkpoint_protocol(normalized_path: Path) -> dict[str, Any]:
             interval["tool_calls"] += 1
             if event.get("tool_name") == "update_plan":
                 snapshot = interval_snapshot(interval, timestamp, line_no)
-                if exceeds(snapshot) and line_no not in interval["substitution_lines"]:
+                if pending_triggers and line_no not in interval["substitution_lines"]:
                     substitutions.append(
                         {
                             "line_no": line_no,
@@ -380,11 +419,9 @@ def analyze_checkpoint_protocol(normalized_path: Path) -> dict[str, Any]:
                 interval["last_verify_line"] = line_no
 
         if category in {"assistant_message", "lifecycle"}:
-            text = str(event.get("text") or "")
             checkpoint = checkpoint_from_text(text)
-            text_hash = str(event.get("text_sha256") or "")
-            if checkpoint is not None and text_hash not in seen_checkpoint_text:
-                seen_checkpoint_text.add(text_hash)
+            if checkpoint is not None and checkpoint_key not in seen_checkpoint_text:
+                seen_checkpoint_text.add(checkpoint_key)
                 if interval is None:
                     interval = start_interval(timestamp, line_no)
                 snapshot = interval_snapshot(interval, timestamp, line_no)
@@ -398,6 +435,7 @@ def analyze_checkpoint_protocol(normalized_path: Path) -> dict[str, Any]:
                     incomplete.append({**record, "missing_fields": checkpoint["missing_fields"]})
                 else:
                     valid.append(record)
+                    pending_triggers.clear()
                     if exceeds(snapshot):
                         overruns.append({**snapshot, "checkpoint_line": line_no})
                     record_churn(interval)
@@ -405,19 +443,23 @@ def analyze_checkpoint_protocol(normalized_path: Path) -> dict[str, Any]:
 
         if interval is not None and category == "lifecycle" and event_type in {"task_complete", "turn_aborted"}:
             snapshot = interval_snapshot(interval, timestamp, line_no)
-            if exceeds(snapshot):
-                missing.append({**snapshot, "reason": event_type})
+            if pending_triggers:
+                missing.append({**snapshot, "reason": event_type, "triggers": list(pending_triggers)})
+                pending_triggers.clear()
             record_churn(interval)
             interval = None
 
     if interval is not None:
         snapshot = interval_snapshot(interval, last_timestamp, last_line)
-        if exceeds(snapshot):
-            missing.append({**snapshot, "reason": "source_ended"})
+        if pending_triggers:
+            missing.append({**snapshot, "reason": "source_ended", "triggers": list(pending_triggers)})
         record_churn(interval)
 
     return {
         "limits": {"max_tool_calls": 40, "max_elapsed_seconds": 45 * 60},
+        "limits_advisory": True,
+        "trigger_policy": "explicit_event_evidence",
+        "supported_triggers": list(CHECKPOINT_TRIGGERS),
         "valid_checkpoints": len(valid),
         "incomplete_checkpoints": len(incomplete),
         "interval_overruns": len(overruns),
@@ -770,11 +812,13 @@ def write_timeline(
         f"- Checkpoints: {checkpoint_protocol['valid_checkpoints']} valid, "
         f"{checkpoint_protocol['incomplete_checkpoints']} incomplete, "
         f"{checkpoint_protocol['missing_checkpoints']} missing",
-        f"- Work-interval deviations: {checkpoint_protocol['interval_overruns']} checkpointed overrun, "
+        f"- Advisory work-interval measurements: {checkpoint_protocol['interval_overruns']} checkpointed overrun, "
         f"{checkpoint_protocol['suspected_update_plan_substitutions']} suspected update-plan substitution, "
         f"{checkpoint_protocol['suspected_single_finding_churn_cycles']} suspected single-finding churn cycles",
         "",
-        "Checkpoint deviations are protocol evidence where explicit; update-plan substitution and churn are heuristic signals.",
+        "Checkpoint deviations are protocol evidence where explicit; missing checkpoints require an evidenced event trigger. "
+        "The 40-call/45-minute measurements are advisory, not mandatory checkpoint limits; "
+        "update-plan substitution and churn are suspected heuristic signals, not proven violations.",
         "Active time is an interval estimate derived from task lifecycle events; it is not model compute time.",
         "",
         "| Turn | Started | Completed | Duration ms | Tools | Patches | Errors | Objective |",

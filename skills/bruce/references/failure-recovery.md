@@ -24,28 +24,30 @@ dependency or incident boundary supported by current facts.
 - Do not weaken acceptance, replace the original failure with a smaller passing check, or claim a
   user-visible Web scenario passed from unit evidence alone.
 
-## Work interval
+## Event-driven checkpoints
 
-For multi-batch or long-running work, use `max_tool_calls=40` and `max_elapsed=45m` as a progress
-checkpoint interval unless the task contract records a smaller repository-driven limit. Count all tool
-invocations, including retries and polls. When either limit is reached, stop starting new work outside
-the current task, inspect live handles, record current evidence and remaining work, and run the batch
-checkpoint. The assistant message records the complete checkpoint schema before the next task or
-batch begins. Do not begin another behavior edit, dependent batch, or unrelated task until the checkpoint is
-recorded. A declared long-running operation that remains inside the frozen current task may
-continue after the progress checkpoint; the interval does not split, restart, or shorten that task; an
-`update_plan`, progress summary, or test output is not a checkpoint. Ordinary work returns control
-after the checkpoint. Explicit Goal or continuous execution may begin a new interval only after
-recording the checkpoint and resetting both counters; a reset never erases retry or repair counts.
+This section is the single authority for checkpoint and recovery triggers. Require a structured
+checkpoint at a material task/batch handoff, scope or contract revision change, environment or risk
+change, evidence invalidation, or before crossing an external verification or side-effect boundary.
+Record the affected scope, current basis, evidence and next safe action before dependent work proceeds.
+Use the schema in [verification-loop.md](verification-loop.md) only for these structured checkpoints.
 
-A long-running command may remain active across an interval when it is known, owned by the current
-task, and safe to leave running. Do not terminate it merely to satisfy the interval boundary.
+Elapsed time, tool-call count, profile, and user-turn boundaries alone do not require a checkpoint.
+For a long unchanged operation, give a brief progress update when useful; do not count calls merely
+to trigger a full schema. Progress messages may omit checkpoint ids and empty matrices.
+A progress update never substitutes for a checkpoint at an actual material boundary.
+Ordinary authorized implementation continues after the required checkpoint unless a user pause, host
+limit, scope/authority change, exhausted repair budget, or real blocker requires stopping.
+Checkpoint recording or continuation never resets L0/L1 retry or repair counts.
+
+A long-running command may remain active when it is known, owned by the current task, and safe to
+leave running. Do not terminate or restart it merely to produce progress feedback.
 
 ## Tool-handle lifecycle
 
 - Track each active async handle with its owning batch, command purpose, creation result, and latest
-  observed state in the current task; Goal mode records only material long-running handles in its
-  existing audit record.
+  observed state in the current task; record material long-running handles in the existing checkpoint
+  when applicable, without requiring a Goal or separate audit record.
 - Wait or write only through the latest live handle returned by that exact tool call. Mark it closed
   after completion, termination, rejection, or a definitive invalid-handle response, and never use it
   again.
@@ -57,18 +59,21 @@ task, and safe to leave running. Do not terminate it merely to satisfy the inter
 
 ## Resume sources
 
-For the same Codex task, inspect the current conversation, native plan, tool results, and actual
-workspace before continuing. Re-run verification whose preconditions changed, plus every original
-failed scenario and related regression required by an in-progress repair round.
+For the same Codex task, inspect the current conversation, native plan, tool results, task contract,
+existing checkpoint when present, and actual workspace. When context, basis, environment, and evidence
+remain usable, perform a lightweight consistency check and continue the existing next action.
+A `full` profile, a new user turn, or “继续” alone does not require a `Resume checkpoint`.
 
-For an unfinished `full` task after a user-turn boundary, first enter or resume `goal-execution` and
-return a `Resume checkpoint`. Establish only the native Goal, current workspace basis, live handles,
-and latest batch evidence before that checkpoint; do not start new code discovery, behavior edits, or
-verification first. The Resume checkpoint records the current batch, basis, latest checkpoint or its
-absence, known findings/repair set, allowed paths/direct call sites, deferred concerns, next evidence,
-and stop condition. A continuation request does not reset the work interval or authorize unmapped
-inspection.
+Require a structured `Resume checkpoint` when context is missing, the workspace/contract/environment
+materially changed, evidence became stale, or a prior operation has an unknown result. Establish the
+current basis, live handles, latest evidence, affected acceptance, known findings, allowed paths, and
+next safe action before new dependent inspection, edits, or verification. Unknown external side effects
+remain L4; do not replay them. Rerun checks whose preconditions changed, the unchanged original failed
+scenario, and required related regressions. Neither continuation nor checkpoint recording resets
+retry or repair counts or authorizes unmapped inspection.
 
-When the previous task context is unavailable, inspect the repository from the user's stated goal
-or an explicit handoff. Do not infer completion from old workflow artifacts. A handoff can list
-facts and decisions, but the receiving task must revalidate workspace and external state.
+Ordinary recovery does not require Goal or `execute_record.md`. Consult native Goal only for an
+explicitly requested Goal lifecycle; unavailable Goal tools do not block ordinary recovery.
+When prior context is unavailable, use the user objective or explicit handoff and current repository
+evidence. Do not infer completion from old workflow artifacts. Missing evidence means unknown, not
+verified. Preserve unrelated working-tree changes and do not reopen unrelated investigation.

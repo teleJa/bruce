@@ -21,7 +21,7 @@ class ContextContractTest(unittest.TestCase):
             "**Business Risk**",
             "**Prototype Design Capability**",
             "**Design Gate**",
-            "**Goal Execution Mode**",
+            "**Native Goal Adapter**",
             "**Completion Gate**",
             "**Failure Level**",
             "**Codex Host Authority**",
@@ -55,13 +55,15 @@ class ContextContractTest(unittest.TestCase):
         self.assertIn("Independence is risk- or user-triggered", normalized)
         self.assertIn("never adds another externally combined verdict", normalized)
 
-    def test_manifest_does_not_route_full_profile_to_goal(self) -> None:
-        description = self.manifest["description"]
-        long_description = self.manifest["interface"]["longDescription"]
-        self.assertIn("optional native Goal persistence", description)
-        self.assertIn("optional native Goal persistence", long_description)
-        self.assertNotIn("Goal-backed full delivery", description)
-        self.assertNotIn("routes full delivery", long_description)
+    def test_manifest_describes_goal_independent_delivery(self) -> None:
+        for description in (
+            self.manifest["description"],
+            self.manifest["interface"]["longDescription"],
+        ):
+            self.assertIn("Goal-independent execution", description)
+            self.assertNotIn("optional native Goal persistence", description)
+            self.assertNotIn("execute_record.md", description)
+            self.assertNotIn("Goal-backed full delivery", description)
 
 
 if __name__ == "__main__":

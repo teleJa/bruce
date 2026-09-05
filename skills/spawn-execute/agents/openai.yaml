@@ -1,4 +1,4 @@
 interface:
   display_name: "Spawn Execute"
-  short_description: "Execute an active Goal with auditable delegation"
-  default_prompt: "Use $spawn-execute under $goal-execution to execute this bounded Goal task and return evidence."
+  short_description: "Delegate bounded implementation without Goal"
+  default_prompt: "Use $spawn-execute to execute this authorized bounded implementation task and return evidence to Bruce."

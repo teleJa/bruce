@@ -1,6 +1,6 @@
 ---
 name: design-gate
-description: Use before implementation when persisted requirements, architecture, contracts, schema design, plans, test designs, or UI prototypes will govern downstream work. Decide artifact completeness and document readiness together, persist one design-review.md, and return one Design verdict.
+description: Use before implementation when persisted artifacts contain governing design decisions or downstream contracts, not merely an execution checklist or progress note. Decide artifact completeness and document readiness together, persist one design-review.md, and return one Design verdict.
 ---
 
 # Design Gate
@@ -43,19 +43,19 @@ For each candidate record applicability (`required|skipped`), delivery
 (`generated|missing|skipped`), the resolved path, and repository-backed evidence. `required/missing`
 is a valid blocked-state record; `required/skipped` and `skipped/generated` are invalid.
 
-When the implementation plan is generated for a multi-step, `full`, guarded, long-running, or
-handoff-worthy change, its delivery also includes one change-level `tasks/` package. The package is
-an execution-contract companion to `plan.md`, not a second design verdict or a separate repository
-plan. Inspect `tasks/index.yaml` and every referenced task file for stable ids, dependency order,
-include/exclude scope, acceptance and verification mapping, and frozen contract revisions. A missing
-or empty required task package blocks readiness; a trivial documentation-only omission must be
-recorded with a concrete reason.
+Apply [artifact-policy.md](../bruce/references/artifact-policy.md) independently to plans, test design,
+and task packages. A generated plan does not require `tasks/` or an independent `test-plan.md` merely by existing.
+Every behavior change requires an independent `test-plan.md` with minimum scenarios, commands, and
+evidence; the plan or task contract may reference it but cannot replace it. When a plan declares a package, inspect its index and frozen contracts for ids, dependencies,
+include/exclude scope, acceptance, verification, and revisions; missing declared contracts still block.
 
-Record the fixed applicability decisions `Behavior implementation: yes|no`,
-`Public/cross-component contract change: yes|no`, `Database/persistence design change: yes|no`, and
-`Governing UI prototype: yes|no`. A required persisted implementation plan always makes Test design
-required; a few verification bullets inside `plan.md` are not a substitute for `test-plan.md`. A `yes`
-contract, persistence, or governing-prototype decision makes its corresponding candidate required.
+Record `Behavior implementation: yes|no`, `Public/cross-component contract change: yes|no`,
+`Database/persistence design change: yes|no`, `Governing UI prototype: yes|no`, and the independent
+`Complex acceptance: yes|no`. Complex acceptance is determined by the `write-tests` trigger contract,
+not by plan persistence. A A behavior change always requires an independent Test design artifact (`test-plan.md`). `Complex acceptance:
+yes` requires expanded scenario matrices and evidence layers; `no` permits a minimal independent plan.
+A `yes` contract, persistence, or governing-prototype decision requires its corresponding candidate. Historical reviews without
+Complex acceptance remain readable; the validator cannot infer semantic complexity from file presence.
 
 For the UI prototype candidate, `generated` means the artifact is materialized in the current change
 directory, including an imported user-supplied prototype. An external URL alone is not delivery.

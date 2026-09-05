@@ -63,7 +63,7 @@ class DocumentReviewContractTest(unittest.TestCase):
                 if name == "write-tests":
                     self.assertIn("必须运行 `design-gate`", body)
                 else:
-                    self.assertIn("`design-gate` is required", body)
+                    self.assertIn("`design-gate` is required", " ".join(body.split()))
 
     def test_old_document_gate_is_removed(self) -> None:
         self.assertFalse((ROOT / "skills/doc-review-gate/SKILL.md").exists())

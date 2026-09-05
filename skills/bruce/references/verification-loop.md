@@ -168,10 +168,10 @@ A persisted implementation plan may define a change-level `tasks/` package. Each
 frozen contract; the current task status belongs in the requirement-level checkpoint. Tasks execute
 sequentially by default. A long-running task may span multiple checkpoints; the checkpoint does not split, restart, or shorten the task.
 
-Use a checkpoint when a task changes state, a task boundary is reached, a material finding appears,
-the environment or risk boundary changes, work resumes after a user-turn boundary, or a long-running
-interval needs a progress snapshot. A checkpoint is progress feedback only, not a third decision, a
-Goal ledger, or a second evidence store. It records evidence references rather than copying logs.
+Checkpoint and resume triggers belong only to [failure-recovery.md](failure-recovery.md). Routine
+progress updates are not structured checkpoints and need no complete schema. At a material boundary,
+a checkpoint is progress feedback only, not a third decision, Goal ledger, or a second evidence store;
+it records evidence references rather than copying logs.
 
 For a multi-batch change:
 
@@ -193,8 +193,8 @@ The locator is implementation evidence and accepts `file`, `route`, `template`, 
 incomplete, issues, or blocked under the existing rules. The requirement-level checkpoint also
 records every task's `task_id`, `status`, `contract_revision`, `evidence_refs`, and `blockers`.
 Return `Checkpoint: clear|issues|blocked` as progress feedback only; do not use it as the overall
-completion verdict. Every checkpoint uses this machine-readable summary, with `[]` when a collection
-is empty:
+completion verdict. Every structured checkpoint uses this machine-readable summary, with `[]` when a collection
+is empty; routine progress messages are exempt:
 
 ```yaml
 version: 1

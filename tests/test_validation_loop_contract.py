@@ -121,7 +121,7 @@ class ValidationLoopContractTest(unittest.TestCase):
 
     def test_checkpoint_schema_is_machine_readable_and_complete(self) -> None:
         for phrase in (
-            "Every checkpoint uses this machine-readable summary",
+            "Every structured checkpoint uses this machine-readable summary",
             "Checkpoint: clear|issues|blocked",
             "batch_id: B1-example",
             "basis_revision",

@@ -14,10 +14,11 @@ description: Use when acceptance crosses multiple component or contract boundari
 
 ## Invocation decision
 
-在行为实现前应用 frontmatter trigger contract。对任何 resolved Bruce profile 都执行判断；profile 本身既不是必要条件，也不是充分条件。只要存在持久化实现计划，就必须触发本 Skill。触发后必须持久化
-`test-plan.md`；写在 `plan.md` 里的验收条目、验证 bullet 或 Goal 审计文字都不能替代它。没有任何触发条件时
-不要调用本 Skill。如果 Design Gate 独立必需，由 Design Gate 在 candidate matrix 中记录 repository-backed 的
-测试设计 skip；否则不要创建持久化 skip 记录。
+在行为实现前应用 frontmatter trigger contract。对任何 resolved Bruce profile 都执行判断；profile 本身既不是必要条件，也不是充分条件。
+工件适用性遵循 [artifact-policy.md](../bruce/references/artifact-policy.md)：任何行为变更都必须调用本 Skill，
+并独立持久化 `test-plan.md`。简单任务使用最小场景、命令和证据；复杂验收再扩展矩阵、多层验证和回归覆盖。
+`plan.md` 或任务合同可以引用场景，但不能替代独立测试计划。仅当 Design Gate 独立必需时，在其候选矩阵中记录
+skip 证据；行为变更不得将 Test design 标记为 skipped。
 
 ## Invocation triggers
 

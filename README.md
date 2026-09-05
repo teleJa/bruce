@@ -2,8 +2,9 @@
 
 Bruce is a Codex workflow plugin for software delivery. It organizes a task around a minimal
 contract, proportional planning, scenario-based acceptance, bounded verification/repair loops, and
-evidence-backed completion. Standard/full describes evidenced delivery topology; Goal persistence,
-design readiness, and test design are selected independently. A low-noise plugin hook reminds Codex
+evidence-backed completion. Ordinary execution continues within the authorized scope through verification
+and bounded repair without requiring Goal. Standard/full describes evidenced delivery topology;
+design readiness and test design are selected independently. A low-noise plugin hook reminds Codex
 when changed planning or design documents may require Design Gate before implementation and
 deterministically validates any written `design-review.md`.
 
@@ -30,7 +31,6 @@ prior analysis or design document without an explicit user instruction.
 
 ```text
 inspect -> task contract -> design when needed -> Design Gate when needed -> implement -> Completion Gate -> summary
-                                      \-> optional Goal execution mode -/
 ```
 
 - `unresolved` is a temporary, read-only inspection state. It creates no Goal, design artifact,
@@ -41,9 +41,13 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
   duration, risk, or uncertainty alone is insufficient, and `full` does not trigger other capabilities.
 - `low`, `guarded`, and `critical` describe business/change risk only.
 - L0-L4 classify transient, repairable, replan, business-authority, and unknown/incident failures.
-- Planning, architecture, test design, review, delegation, and persistence run only from their own
-  predicates. Explicit Goal, continuous/cross-turn persistence, or audit requests enter
-  `goal-execution`; profile, complexity, duration, risk, and subagent use do not.
+- Planning, architecture, test design, review, and delegation run only from their own predicates.
+  Ordinary continuation, cross-turn recovery, and checkpoint recording do not require Goal.
+  Only an explicit request to use native Goal (`/goal` or `$goal-execution`) enters its compatibility
+  adapter; profile, duration, `continue nonstop`, `继续开发`, and audit needs do not activate it.
+- Continue authorized implementation until acceptance is met or a user pause, host limit, scope/authority
+  change, exhausted repair budget, or real blocker requires stopping. A progress checkpoint alone does
+  not end execution or require another user message. This is not a background-execution guarantee.
 - UI prototype generation is an optional `write-prototype` capability. It can drive a host-configured
   Open Design MCP run, preserve generated and user-confirmed snapshots, and feed the existing Design
   and Completion Gates without adding a third gate or copying product-delivery lanes.
@@ -80,7 +84,7 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Every task that persists downstream-governing design runs `design-gate`. It decides artifact
   completeness and document readiness together, persists one `design-review.md`, and returns only
   `Design: pass|blocked`.
-- A persisted implementation plan, handoff, or multi-step requirement derives one change-level
+- When independent per-task boundaries or handoff require it, use one change-level
   `tasks/` package: `tasks/index.yaml` plus frozen `T-<id>-<slug>.md` contracts. Task state is tracked
   in `checkpoint.yaml` or the current checkpoint message; sequential execution is the default and
   the package is not a scheduler or second evidence store.
@@ -94,12 +98,11 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - Completion review first completes one acceptance/branch/evidence matrix and batches all current
   findings. Repairs rerun only affected checks, the unchanged original failure, and related
   regressions; they do not create a per-finding review chain.
-- Multi-batch, long-running, cross-component, or pre-side-effect work uses a bounded batch checkpoint
-  with `Checkpoint: clear|issues|blocked` as progress feedback; the final `Completion Gate` remains
-  the only overall completion decision.
-- Runtime-dependent batches perform one read-only capability preflight. Long-running work records a
-  progress checkpoint after at most 40 tool calls or 45 minutes; the interval does not split or stop a
-  declared current task, and closed or invalid async handles are never polled again.
+- Structured checkpoints record material execution boundaries; routine progress and unchanged-context
+  continuation use brief updates. Trigger and recovery rules live in
+  [`failure-recovery.md`](skills/bruce/references/failure-recovery.md), not in this overview.
+- Runtime-dependent work still requires read-only capability preflight and current evidence; retry,
+  async-wait, permission, and unknown-side-effect boundaries remain mandatory.
 - Independent review is a mode inside one of those gates, not another verdict that callers combine.
 
 The canonical entry is [`skills/bruce/SKILL.md`](skills/bruce/SKILL.md). Other directories under
@@ -111,9 +114,11 @@ includes generated `agents/openai.yaml` UI metadata. Bruce has no CLI, MCP serve
 implementation, or custom scheduler.
 
 `design-gate` is the only implementation-entry decision. `completion-gate` is the only completion
-decision. `goal-execution` is an optional persistence mode: it records those results and synchronizes
-native Goal state without re-evaluating either one. `spawn-execute` is only a bounded delegation
-helper under an active Goal.
+decision. `goal-execution` is an explicit opt-in adapter for native Goal lifecycle; it consumes existing
+Gate results without re-evaluating them. It does not create `execute_record.md` by default. Durable
+audit records require an explicit user request and should reference existing progress and evidence.
+`spawn-execute` supports bounded ordinary implementation delegation without a Goal or audit-record
+prerequisite. Historical `.goal/` records are preserved but never required for ordinary recovery.
 
 ## Planning document review hook
 
@@ -124,13 +129,25 @@ Design Gate reminder. A written `design-review.md` is instead checked by the bun
 validator; an invalid review blocks normal tool-result processing until the current files are repaired.
 Code, ordinary documentation, failed tools, read-only Bash calls, and absolute paths outside the active
 task `cwd` stay quiet. The validator checks candidate completeness, required artifact delivery, real
-paths, placeholders, readiness/verdict consistency, the behavior-plan-to-test-plan invariant, and any
+paths, placeholders, readiness/verdict consistency, independently declared acceptance complexity, and any
 new plan-declared `tasks/` contract package.
 
 The hook does not itself author or approve a review: it only validates the persisted gate artifact.
 Plugin hooks run whenever the Bruce plugin is enabled,
 not only when the `$bruce` skill is selected. Codex requires hooks to be enabled and the installed
 definition to be reviewed in `/hooks`; users can decline or disable it there.
+
+## Workflow policy ownership
+
+[`artifact-policy.md`](skills/bruce/references/artifact-policy.md) owns independent artifact and Design
+Gate predicates. A plan can stand alone; it does not automatically create task files. Every behavior change must create
+an independent `test-plan.md` with scenarios, commands, and evidence; its depth is proportional to acceptance complexity.
+The recovery reference owns checkpoint triggers; the verification reference owns evidence content.
+Completion reports are concise by default and expand when coverage, revisions, repairs, or the user
+needs detail. This changes presentation, not required verification or permission boundaries.
+
+Optional isolated behavior trials live in [`tests/fixtures/workflow_behavior/README.md`](tests/fixtures/workflow_behavior/README.md).
+They supplement deterministic tests and are not a new daily Gate or Agent runtime.
 
 ## Static validation
 

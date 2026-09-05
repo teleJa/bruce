@@ -70,6 +70,8 @@ PROFILE_OPERATION_KEYS = {
     "cleanup", "required_evidence",
 }
 OPERATION_RISKS = {"read-only", "guarded", "critical"}
+PROFILE_STATES = {"draft", "needs_input", "ready_for_confirmation", "confirmed", "stale", "rejected", "superseded"}
+CONTENT_HASH_PATTERN = re.compile(r"^sha256:(?:[0-9a-f]{64}|pending|[A-Za-z0-9_-]+)$")
 OPERATION_CRITICAL_CATEGORIES = {"migrate", "seed", "reset", "drop", "destroy", "publish", "deploy-remote", "production-access", "credential-rotation"}
 SECRET_ASSIGNMENT_PATTERN = re.compile(r"(?i)^(?:[A-Z0-9_]*(?:PASSWORD|PASSWD|TOKEN|API_KEY|SECRET)[A-Z0-9_]*)=")
 DYNAMIC_ENV_KEYS = {
@@ -110,6 +112,17 @@ def validate_profile(data: Any) -> list[str]:
         errors.append("profile_kind must be environment or requirement-verification")
     if not isinstance(data.get("profile_id"), str) or not data["profile_id"].strip():
         errors.append("profile_id must be a non-empty string")
+    profile_state = data.get("profile_state")
+    if profile_state not in PROFILE_STATES:
+        errors.append("profile_state must be draft, needs_input, ready_for_confirmation, confirmed, stale, rejected, or superseded")
+    content_hash = data.get("content_hash")
+    if not isinstance(content_hash, str) or not CONTENT_HASH_PATTERN.fullmatch(content_hash):
+        errors.append("content_hash must be sha256:<64 lowercase hex characters> or sha256:pending")
+    if profile_state in {"ready_for_confirmation", "confirmed"}:
+        if content_hash == "sha256:pending":
+            errors.append("ready or confirmed Profile must have a computed content_hash")
+        elif not isinstance(content_hash, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", content_hash):
+            errors.append("ready or confirmed Profile content_hash must be sha256:<64 lowercase hex characters>")
     revision = data.get("profile_revision")
     if not isinstance(revision, int) or isinstance(revision, bool) or revision < 1:
         errors.append("profile_revision must be a positive integer")
@@ -251,8 +264,15 @@ def validate_profile(data: Any) -> list[str]:
                 if preflight is not None and not isinstance(preflight, list):
                     errors.append("test_context.preflight must be a list")
         local_env = data.get("local_env")
-        if environment_kind == "local" and not isinstance(local_env, dict):
-            errors.append("local Environment Profile requires local_env mapping")
+        configured_env_file = None
+        if isinstance(test_context, dict):
+            configured = test_context.get("configuration")
+            if isinstance(configured, dict):
+                configured_env_file = configured.get("env_file")
+        if environment_kind == "local" and not isinstance(local_env, dict) and not isinstance(configured_env_file, dict):
+            errors.append("local Environment Profile requires test_context.configuration.env_file mapping")
+        if isinstance(local_env, dict) and isinstance(configured_env_file, dict):
+            errors.append("Environment Profile must not duplicate .env metadata in local_env and test_context.configuration.env_file")
         if isinstance(local_env, dict):
             for key in set(local_env) - LOCAL_ENV_KEYS:
                 errors.append(f"local_env field is not allowed: {key}")
@@ -300,12 +320,18 @@ def validate_profile(data: Any) -> list[str]:
         if not isinstance(operations, list):
             errors.append("Environment Profile operations must be a list")
         else:
+            operation_ids: set[str] = set()
             for index, operation in enumerate(operations):
                 if not isinstance(operation, dict):
                     errors.append(f"operations[{index}] must be a mapping")
                     continue
                 for key in set(operation) - PROFILE_OPERATION_KEYS:
                     errors.append(f"operations[{index}] field is not allowed: {key}")
+                operation_id = operation.get("operation_id")
+                if isinstance(operation_id, str) and operation_id in operation_ids:
+                    errors.append(f"operations[{index}].operation_id must be unique")
+                elif isinstance(operation_id, str) and operation_id.strip():
+                    operation_ids.add(operation_id)
                 for key in ("operation_id", "category", "executor", "authorization", "risk"):
                     if not isinstance(operation.get(key), str) or not operation[key].strip():
                         errors.append(f"operations[{index}].{key} is required")
@@ -313,11 +339,10 @@ def validate_profile(data: Any) -> list[str]:
                 if risk not in OPERATION_RISKS:
                     errors.append(f"operations[{index}].risk must be read-only, guarded, or critical")
                 argv = operation.get("argv")
-                if argv is not None:
-                    if not isinstance(argv, list) or not all(isinstance(item, str) and item for item in argv):
-                        errors.append(f"operations[{index}].argv must be a non-empty string list")
-                    elif any(SECRET_ASSIGNMENT_PATTERN.search(item) for item in argv):
-                        errors.append(f"operations[{index}].argv must not contain secret assignments")
+                if not isinstance(argv, list) or not argv or not all(isinstance(item, str) and item for item in argv):
+                    errors.append(f"operations[{index}].argv must be a non-empty string list")
+                elif any(SECRET_ASSIGNMENT_PATTERN.search(item) for item in argv):
+                    errors.append(f"operations[{index}].argv must not contain secret assignments")
                 category = operation.get("category")
                 minimum_risk = "read-only" if category in {"status", "health-check", "inspect-declared-resources", "logs", "preflight"} else "guarded"
                 if risk == "read-only" and minimum_risk != "read-only":
@@ -342,6 +367,20 @@ def validate_profile(data: Any) -> list[str]:
                             errors.append(f"operations[{index}] critical operation requires {key}")
                 if category in {"stop", "down", "cleanup"} and not operation.get("ownership"):
                     errors.append(f"operations[{index}] stop-like operation requires ownership")
+        declared_operation_ids = {
+            operation.get("operation_id") for operation in operations
+            if isinstance(operation, dict) and isinstance(operation.get("operation_id"), str)
+        } if isinstance(operations, list) else set()
+        if isinstance(test_context, dict):
+            workflow = test_context.get("workflow")
+            if isinstance(workflow, dict):
+                refs = [workflow.get(key) for key in ("build_operation", "deploy_operation", "authenticate_operation", "test_operation")]
+                test_data = workflow.get("test_data")
+                if isinstance(test_data, dict):
+                    refs.extend(test_data.get(key) for key in ("prepare_operation", "cleanup_operation"))
+                for ref in refs:
+                    if ref is not None and isinstance(ref, str) and ref.strip() and ref not in declared_operation_ids:
+                        errors.append(f"workflow references undeclared operation: {ref}")
         # Backward-compatible read-only validation for profiles created before executable
         # operation Skills replaced the old manifest artifact. New profiles do not emit this field.
         operation_manifest = data.get("operation_manifest")

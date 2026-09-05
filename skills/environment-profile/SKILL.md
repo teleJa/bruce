@@ -96,6 +96,19 @@ Ask for one compact confirmation or correction covering:
 Accepted or corrected candidates become the corresponding `test_context` declarations. Do not turn
 runtime observations, account availability, build results, or deployment results into static facts.
 
+## Profile integrity and operation references
+
+The Validator is the single structural authority for generated Profiles. For `ready_for_confirmation`
+and `confirmed` Profiles, `content_hash` must be a computed `sha256:` value with 64 lowercase
+hexadecimal characters; `sha256:pending` is only valid for earlier draft states. The hash must be
+computed from a canonical serialization defined by the repository validator, not entered as an
+arbitrary label.
+
+Use only `test_context.configuration.env_file` for new Profiles. Do not also emit the legacy top-level
+`local_env`; mixed sources are invalid. Every workflow operation reference must resolve to a unique
+entry in the top-level `operations` catalog, and every executable operation must declare a non-empty
+`argv` list.
+
 ## Local `.env`
 
 For a local environment, check only the project-root `.env` using

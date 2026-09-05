@@ -192,6 +192,18 @@ evidence. It must not contain:
 
 Those belong in Verification Run/Checkpoint or the requirement-scoped Verification Profile.
 
+## Profile integrity and references
+
+New Profiles use `test_context.configuration.env_file` as the only `.env` metadata location. The
+legacy top-level `local_env` field must not be combined with it. Operation IDs are unique, workflow
+references must resolve to the top-level `operations` catalog, and every executable operation has a
+non-empty `argv` list.
+
+For `ready_for_confirmation` and `confirmed` Profiles, `content_hash` must be a computed
+`sha256:<64 lowercase hex characters>` value. Draft-like states may use `sha256:pending` while the
+Profile is incomplete. The canonical hash procedure must exclude mutable confirmation metadata and
+must be shared by Profile generation, validation, and Environment Operations binding.
+
 ## Local `.env` and security
 
 A missing local `.env` may be bootstrapped with empty values only. It must be a regular, ignored,

@@ -146,7 +146,7 @@ class EnvironmentProfileContractTest(unittest.TestCase):
             "profile_kind": "environment",
             "profile_id": "multica-test",
             "profile_revision": 1,
-            "content_hash": "sha256:abc",
+            "content_hash": "sha256:" + "a" * 64,
             "profile_state": "ready_for_confirmation",
             "confirmation": {"state": "pending"},
             "declaration": {"source": "user", "statement": "user-declared test environment"},
@@ -211,6 +211,53 @@ class EnvironmentProfileContractTest(unittest.TestCase):
             }],
         }
         self.assertEqual([], validator.validate_profile(profile))
+
+    def test_validator_accepts_new_local_env_location_without_legacy_duplicate(self) -> None:
+        validator = load_validator()
+        profile = {
+            "version": 1, "profile_kind": "environment", "profile_id": "new-local",
+            "profile_revision": 1, "content_hash": "sha256:pending", "profile_state": "draft",
+            "confirmation": {"state": "pending"},
+            "declaration": {"source": "user", "statement": "user-declared"},
+            "environment": {"kind": "local"},
+            "test_context": {"authorization": {"mode": "profile-confirmed", "approved_scopes": []}, "configuration": {"env_file": {
+                "path": ".env", "required": False, "required_variables": [],
+                "file_mode": "0600", "ignored_by_vcs": "required",
+            }}},
+            "security": {"persist_secrets": False, "expose_secrets_to_model": False, "credential_values_allowed": False, "credential_refs_only": True},
+            "operations": [],
+        }
+        self.assertEqual([], validator.validate_profile(profile))
+        profile["local_env"] = profile["test_context"]["configuration"]["env_file"]
+        self.assertTrue(any("must not duplicate .env metadata" in error for error in validator.validate_profile(profile)))
+
+    def test_validator_rejects_unresolved_or_duplicate_operations(self) -> None:
+        validator = load_validator()
+        profile = {
+            "version": 1, "profile_kind": "environment", "profile_id": "refs",
+            "profile_revision": 1, "content_hash": "sha256:pending", "profile_state": "draft",
+            "confirmation": {"state": "pending"},
+            "declaration": {"source": "user", "statement": "user-declared"},
+            "test_context": {"workflow": {"test_operation": "missing"}},
+            "operations": [
+                {"operation_id": "same", "category": "test", "executor": "local-process", "authorization": "explicit-per-invocation", "risk": "guarded", "argv": ["pytest"]},
+                {"operation_id": "same", "category": "test", "executor": "local-process", "authorization": "explicit-per-invocation", "risk": "guarded", "argv": ["pytest"]},
+            ],
+        }
+        errors = validator.validate_profile(profile)
+        self.assertTrue(any("operation_id must be unique" in error for error in errors))
+        self.assertTrue(any("undeclared operation" in error for error in errors))
+
+    def test_validator_requires_real_hash_for_ready_profile(self) -> None:
+        validator = load_validator()
+        profile = {
+            "version": 1, "profile_kind": "environment", "profile_id": "hashed",
+            "profile_revision": 1, "content_hash": "sha256:abc", "profile_state": "ready_for_confirmation",
+            "confirmation": {"state": "pending"},
+            "declaration": {"source": "user", "statement": "user-declared"},
+            "operations": [],
+        }
+        self.assertTrue(any("content_hash must be sha256:<64 lowercase hex characters>" in error for error in validator.validate_profile(profile)))
 
     def test_validator_rejects_unsafe_profile_operations(self) -> None:
         validator = load_validator()

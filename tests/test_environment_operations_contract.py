@@ -32,12 +32,12 @@ def confirmed_profile(root: Path, *, command: list[str]) -> Path:
         "profile_kind": "environment",
         "profile_id": "local-profile",
         "profile_revision": 1,
-        "content_hash": "sha256:abc",
+        "content_hash": "sha256:" + "a" * 64,
         "profile_state": "confirmed",
         "environment": {"kind": "local"},
         "declaration": {"source": "user", "statement": "user-declared"},
-        "confirmation": {"state": "confirmed", "confirmed_revision": 1, "confirmed_content_hash": "sha256:abc"},
-        "local_env": {"path": ".env", "required": False, "ignored_by_vcs": "required", "file_mode": "0600", "required_variables": []},
+        "confirmation": {"state": "confirmed", "confirmed_revision": 1, "confirmed_content_hash": "sha256:" + "a" * 64},
+        "test_context": {"authorization": {"mode": "per-invocation", "approved_scopes": []}, "configuration": {"env_file": {"path": ".env", "required": False, "ignored_by_vcs": "required", "file_mode": "0600", "required_variables": []}}},
         "security": {"persist_secrets": False, "expose_secrets_to_model": False, "credential_values_allowed": False, "credential_refs_only": True},
         "operations": [
             {"operation_id": "local-build", "category": "build", "purpose": "build", "executor": "local-operator", "working_directory_ref": "project-root", "argv": command, "authorization": "explicit-per-invocation", "risk": "guarded", "mutates": True, "required_evidence": ["command-exit-status"]},
@@ -155,6 +155,9 @@ class EnvironmentOperationsContractTest(unittest.TestCase):
                     "approved_scopes": ["build"],
                     "escalation_required_for": ["build"],
                 },
+                "configuration": {
+                    "env_file": {"path": ".env", "required": False, "required_variables": [], "file_mode": "0600", "ignored_by_vcs": "required"},
+                },
             }
             data["operations"][0]["authorization"] = "profile-confirmed"
             profile.write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
@@ -171,8 +174,8 @@ class EnvironmentOperationsContractTest(unittest.TestCase):
             root = Path(directory)
             profile = confirmed_profile(root, command=[sys.executable, "-c", "import os; print(os.environ['LOCAL_TOKEN'])"])
             data = yaml.safe_load(profile.read_text(encoding="utf-8"))
-            data["local_env"]["required"] = True
-            data["local_env"]["required_variables"] = ["LOCAL_TOKEN"]
+            data["test_context"]["configuration"]["env_file"]["required"] = True
+            data["test_context"]["configuration"]["env_file"]["required_variables"] = ["LOCAL_TOKEN"]
             profile.write_text(yaml.safe_dump(data), encoding="utf-8")
             env = root / ".env"
             env.write_text("LOCAL_TOKEN=not-for-output\n", encoding="utf-8")

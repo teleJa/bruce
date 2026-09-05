@@ -77,6 +77,11 @@ Provider 选择在批次内是确定的。非法配置、Provider unavailable/un
 
 真实动作完成后，由同一配置 Provider 观察页面实际可见状态并采集 [browser_evidence](references/browser-evidence.md)。`browser-smoke` 至少需要真实动作、可见结果和截图/等价 artifact；`browser-layout` 还必须有 viewport、相关元素 geometry、overflow 结果和交互前后状态。Evidence 的 Provider 必须与配置完全一致。
 
+按 [视觉检查清单](../write-tests/references/visual-checks.md) 实际查看当前截图/等价 artifact，逐项核对场景的
+显示完整性、溢出、遮挡和布局断言，将区域/状态、所见及结论写入 `visible_result` 或引用报告。smoke 做受影响
+区域的基础视觉判读；layout 补齐适用类别及几何证据。只保存截图而未判读保持 `incomplete`；有实际视觉缺陷记为
+`failed`，不得因 DOM/结构检查通过就声明 UI passed。
+
 ### 7. 页面动作后的 authoritative readback
 
 只有页面真实动作已经发生并采集到可见结果后，才可调用场景声明的只读 API/权威适配器核对服务端状态、持久化结果或跨用户权限。Readback 必须记录脱敏的请求/资源引用、状态摘要、actor/namespace 对应关系和 evidence ref；它不能代替页面动作或页面可见结果。

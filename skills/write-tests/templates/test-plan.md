@@ -12,12 +12,17 @@
 ## 前置条件与真实依赖
 
 - <服务、数据库、凭证、fixture、浏览器会话，或无>
+- 浏览器配置：<适用 .bruce/config.yaml 路径；verification.browser_provider 显式值或未配置；解析后的 Provider>。未配置默认 `ego-lite`，仅显式配置 `chrome` 时使用 Chrome；非 Web 验收写 not_applicable。
+- Provider 边界：<按配置执行，不继承历史 Chrome-only 前提；非法/不可读配置报告问题，不可用时 blocked/incomplete，不静默切换；执行前复核配置>。
 
 ## 按比例确定视觉验证范围
 
 - 范围：<none|browser-smoke|browser-layout>
 - 判断依据： <为什么该可见结果以及当前渲染风险需要此层级>
-- 对于 `browser-layout`： <Provider、目标 URL/tab 或 task-space、viewport、截图/hash、几何/溢出和交互检查>
+- 视觉断言：<按 [视觉检查清单](../references/visual-checks.md) 指导，生成时将适用断言展开到具体场景；不要把模板内部链接原样留在生成工件中>
+- `browser-smoke`：<受影响区域的显示完整性、明显遮挡和布局异常检查；真实交互后的截图判读，不强制完整几何扫描>
+- 对于 `browser-layout`：<目标、viewport、截图/hash、geometry、overflow、before/after；显示完整性、溢出与滚动、遮挡与层级、布局稳定性、视口与状态变化各类别的适用性/理由及 scenario id>
+- 视觉结论：<预期如何实际查看截图并记录区域/状态、所见和结论；DOM 结构/文本或“截图已保存”不等于通过；未判读为 incomplete>
 
 ## 一致性分类
 

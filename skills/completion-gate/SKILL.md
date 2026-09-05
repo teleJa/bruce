@@ -193,6 +193,14 @@ UI-file diff into a full visual run:
   geometry/overflow, and interaction checks. For layout-sensitive changes, a DOM snapshot or text
   assertion cannot substitute for these artifacts.
 
+Apply the [visual checklist](../write-tests/references/visual-checks.md) to the affected regions and
+scenario assertions. Require actual screenshot/artifact inspection with recorded region/state,
+observations, and conclusions in `visible_result` or its referenced report, not merely an artifact
+path. Smoke needs basic visible completeness/occlusion/layout inspection; layout also needs applicable
+clipping, overflow/scroll, stacking, alignment, viewport/state assertions and geometry evidence.
+An uninspected screenshot leaves the visual row incomplete; a visible defect is a finding even when
+DOM/structure checks pass. Do not require unrelated full-page or all-viewport scans.
+
 Before returning a verdict, compare `visual_scope` with the final diff. A declaration that is weaker
 than the changed visible risk is an `issues` finding, and its missing visual row is material. Evidence
 must identify the target, capture time, basis revision, and screenshot/artifact path or hash; evidence

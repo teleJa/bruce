@@ -69,10 +69,32 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 
 - Task contract 和 acceptance criteria。
 - 任务合同中的 proportional `visual_scope`（如果涉及用户可见 Web 行为）。
+- 适用 Bruce 配置路径及 `verification.browser_provider` 的解析结果；按
+  [browser-provider.md](../bruce/references/browser-provider.md) 使用共享解析器，未配置默认 `ego-lite`。
 - 已存在的 implementation plan。
 - 当前仓库的测试框架、命令、fixture、环境和真实依赖规则。
 - 风险、已知回归来源、对象关系和权限边界。
 - [document-language.md](../bruce/references/document-language.md)。
+
+## 浏览器选择与视觉检查
+
+生成和更新 Web 测试计划时，先按 [artifact-placement.md](../bruce/references/artifact-placement.md)
+定位适用的 `.bruce/config.yaml`；配置存在时通过 `scripts/browser_provider.py --config <实际配置路径> --scope <visual_scope>`
+解析 `verification.browser_provider`（脚本从实际 Bruce 插件根目录定位）。没有适用配置文件时，使用同一模块的
+`resolve_browser_provider(None)` 缺省分支，不向文件解析器传入不存在的路径，也不为取默认值创建配置文件。
+记录配置路径或无配置、配置显式值或未配置、解析后的 Provider；未配置默认 `ego-lite`，
+仅显式配置 `chrome` 时使用 Chrome。配置非法/不可读时报告问题，不当作缺省值；运行时 Provider 不可用时保持
+`blocked`/`incomplete`，不得静默切换。计划阶段的解析结果不构成浏览器能力可用证据。
+
+不得从历史计划、示例、旧的 `chrome-smoke`/`chrome-layout` scope 或当前打开的浏览器推断 Provider。
+新计划使用 `browser-smoke`/`browser-layout`；更新旧计划时将旧 scope 归一化并重新读取配置，不继承 Chrome-only
+前提。若验收确实依赖用户当前 Chrome 登录态或扩展但配置不匹配，记录冲突并请用户确认配置调整，不自行改配置。
+执行前复核配置；若与计划不同，更新受影响的前提和证据要求，旧 Provider 的证据不能沿用。
+
+所有 Web 场景均须按 [visual-checks.md](references/visual-checks.md) 写明实际视觉判读，不以 DOM 结构/文本检查
+替代视觉检查，也不以“截图已保存”作为通过结论。`browser-smoke` 做受影响区域的基础视觉检查；布局、裁切、
+溢出、遮挡或响应式风险必须选择 `browser-layout` 并补齐适用的布局断言和几何证据。两种模板都遵循此要求，
+不因最小模板而降低证据强度。`visual_scope: none` 保留无可见变化的依据，不生成空视觉清单。
 
 ## Procedure
 
@@ -105,7 +127,8 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
     和其他自然语言字段默认全部使用简体中文；保留 `Given`、`When`、`Then`、`Evidence`、scenario id、命令、路径、API
     名称和其他稳定 machine-facing tokens，不要为了中文化而翻译它们。
 11. 检查文档 diff 以及 requirement/acceptance traceability、prerequisites、Given/When/Then 可观察性、evidence layer
-    是否匹配、真实依赖语义、回归覆盖、矩阵不变量、权威状态、冲突场景、占位符和链接。修复问题后返回
+    是否匹配、真实依赖语义、回归覆盖、矩阵不变量、权威状态、冲突场景、占位符和链接；
+    同时检查 Provider 是否来自配置（未配置默认 `ego-lite`）、是否残留 Chrome-only 前提、视觉断言及截图判读是否具体。修复问题后返回
     `Document check: clear|issues`。测试设计将约束实现时，告知 Bruce 必须运行 `design-gate`；不要自动调用它。
 
 ## Output

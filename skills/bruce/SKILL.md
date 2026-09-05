@@ -32,9 +32,11 @@ Before creating any native Subagent, select exactly one Functional Agent Profile
 [functional-agent-contracts.md](references/functional-agent-contracts.md). Resolve task override >
 project override > user override > built-in Profile > current-model fallback through the shared
 resolver; do not let an individual Skill create a model selector or Runtime. Pass `model` to the
-Codex host only when the host has confirmed the configured model. Otherwise omit `model` to inherit
-the current model and record `resolution_result=fallback`, `fallback_used=true`,
-`capability_status=degraded`, and the effective model. A fallback is not model heterogeneity.
+Codex host only when the host has confirmed the configured model. A Profile with `fallback=current`
+may otherwise omit `model` to inherit the current model and record `resolution_result=fallback`,
+`fallback_used=true`, `capability_status=degraded`, and the effective model. A fallback is not model
+heterogeneity. The `prototype-generator` Profile instead has `fallback=blocked`: `write-prototype`
+must spawn only with its resolved Profile model and pass that same model to Open Design `start_run`.
 Every delegated result must include `model_resolution` and the role-specific Packet; the main Agent
 and the existing Design/Completion Gates retain all terminal authority.
 

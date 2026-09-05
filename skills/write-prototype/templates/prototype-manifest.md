@@ -1,7 +1,12 @@
 # Prototype manifest
 
 - provider: `open-design`
-- selected_agent: <explicit agent id and version>
+- prototype_generator_profile: `prototype-generator`
+- model_resolution: <complete shared resolver record; `resolved` is required>
+- requested_model: <configured model from prototype-generator Profile>
+- effective_model: <exact model passed to native spawn and `start_run`>
+- native_reasoning_effort: <exact resolver-produced effort; applies to native worker>
+- selected_agent: <explicit Open Design agent id and version>
 - selected_generation_skill: <explicit generation skill id and version>
 - generation_skill_readiness: <clear, partial, or blocked plus reusable workflow/seed evidence>
 - selected_visual_plugin: <explicit visual plugin id and version, or none>

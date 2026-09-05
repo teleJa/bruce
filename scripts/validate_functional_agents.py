@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ROUTING_FILES = {
     "inspector": ["skills/inspect-parallel/SKILL.md", "skills/solution-analysis/SKILL.md", "skills/write-architecture/SKILL.md"],
     "implementer": ["skills/spawn-execute/SKILL.md", "skills/explore-prototype/SKILL.md"],
+    "prototype-generator": ["skills/write-prototype/SKILL.md"],
     "verifier": ["skills/completion-gate/SKILL.md", "skills/design-gate/SKILL.md"],
     "reviewer": ["skills/completion-gate/SKILL.md", "skills/plan-review/SKILL.md", "skills/design-gate/SKILL.md", "skills/bruce/references/risk-policy.md", "skills/bruce/references/verification-loop.md", "skills/plan-review/references/plan-reviewer-prompt.md"],
 }
@@ -31,18 +32,21 @@ def validate_registry() -> list[str]:
     expected_outputs = {
         "inspector": "task_evidence_packet",
         "implementer": "task_evidence_packet",
+        "prototype-generator": "task_evidence_packet",
         "verifier": "verification_packet",
         "reviewer": "review_packet",
     }
     expected_context = {
         "inspector": {"inherit": "task", "clean": False},
         "implementer": {"inherit": "task", "clean": False},
+        "prototype-generator": {"inherit": "task", "clean": False},
         "verifier": {"inherit": "task", "clean": True},
         "reviewer": {"inherit": "none", "clean": True},
     }
     expected_independence = {
         "inspector": "none",
         "implementer": "none",
+        "prototype-generator": "none",
         "verifier": "preferred",
         "reviewer": "required",
     }
@@ -65,10 +69,11 @@ def validate_registry() -> list[str]:
             errors.append("inspector must be read-only")
         if profile_id == "implementer" and profile.get("write_scope") != "task_packet.allowed_paths":
             errors.append("implementer write_scope must be task_packet.allowed_paths")
-        if profile_id in {"verifier", "reviewer"} and profile.get("write_scope") != "none":
+        if profile_id in {"prototype-generator", "verifier", "reviewer"} and profile.get("write_scope") != "none":
             errors.append(f"{profile_id} must not write")
-        if profile.get("fallback") != "current":
-            errors.append(f"{profile_id} fallback must be current")
+        expected_fallback = "blocked" if profile_id == "prototype-generator" else "current"
+        if profile.get("fallback") != expected_fallback:
+            errors.append(f"{profile_id} fallback must be {expected_fallback}")
         if not isinstance(profile.get("max_calls"), int) or profile["max_calls"] < 1:
             errors.append(f"{profile_id} max_calls must be positive")
     return errors

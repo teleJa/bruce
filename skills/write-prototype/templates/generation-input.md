@@ -17,7 +17,10 @@ baseline 保留在本地 change 目录；这里只保留生成所需的稳定事
 
 - visual_authority: `<runtime, repository, confirmed-prototype, or provider-default-only>`
 - direction_selection: `<skip or provider-capability>`
-- selected_agent: `<agent/model>`
+- prototype_generator_profile: `prototype-generator`
+- effective_model: `gemini-3.8-flash` or explicitly resolved override
+- native_reasoning_effort: `high` or explicitly resolved override
+- selected_agent: `<Open Design agent id/version>`
 - selected_generation_skill: `<skill>`
 - generation_skill_readiness: `<clear, partial, or blocked>`
 - selected_visual_plugin: `<none or explicit id>`

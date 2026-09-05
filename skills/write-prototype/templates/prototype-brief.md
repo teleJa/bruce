@@ -15,6 +15,10 @@
 - Product or requirement evidence: <paths and relevant sections>
 - Repository UI contract: <path or not applicable for greenfield>
 - Design system evidence: <paths or approved greenfield constraints>
+- `prototype_generator_profile`: `prototype-generator`
+- `model_resolution`: <complete shared resolver record; must be resolved>
+- `effective_model`: <exact model passed to native spawn and `start_run`>
+- `native_reasoning_effort`: <exact resolver-produced effort; applies to native worker>
 - `selected_generation_skill`: <explicit id/version or none>
 - `generation_skill_readiness`: <clear, partial, or blocked plus reusable workflow/seed evidence>
 - `selected_visual_plugin`: <explicit id/version or none>

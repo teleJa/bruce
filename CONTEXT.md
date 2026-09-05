@@ -86,7 +86,7 @@ _Avoid_: Bruce permission layer, host adapter, workflow-owned scheduler
 
 ## Functional Agent routing
 
-Native Subagent delegation is contract-driven rather than personality-driven. Select one of the four internal Profiles, construct the v1 Task Packet, resolve model override/fallback through the shared resolver, and attach `model_resolution` to the role-specific evidence Packet. `inspector` is read-only, `implementer` is limited to Task Packet paths, `verifier` returns reproducible `verification_packet`, and `reviewer` returns clean-context `review_packet` findings only. Neither worker emits a Design or Completion verdict.
+Native Subagent delegation is contract-driven rather than personality-driven. Select one of the five internal Profiles, construct the v1 Task Packet, resolve model override/fallback through the shared resolver, and attach `model_resolution` to the role-specific evidence Packet. `inspector` is read-only, `implementer` is limited to Task Packet paths, `prototype-generator` runs formal Open Design prototype generation with its resolved `gemini-3.8-flash` + `high` configuration and no current-model fallback, `verifier` returns reproducible `verification_packet`, and `reviewer` returns clean-context `review_packet` findings only. Neither worker emits a Design or Completion verdict.
 
 ## Evidence Index
 

@@ -56,6 +56,30 @@ Create or update:
 A user-supplied prototype enters the same snapshot, hashing, checks, and manifest contract. An
 external path or URL alone cannot govern implementation.
 
+## Functional Agent routing
+
+Formal Open Design generation is performed by exactly one native `prototype-generator` worker. After
+explicit Open Design selection and grounded inputs, but before any Open Design project mutation, build
+a v1 Task Packet with `profile_id=prototype-generator`, `task_kind=prototype_generate`,
+`output=task_evidence_packet`, empty `allowed_paths`, Open Design-only allowed tools, concrete
+preflight evidence, and stop conditions covering model or provider ambiguity. The main Agent retains
+product decisions, input grounding, user confirmation, artifact import, safety/provenance checks, and
+all Gate decisions.
+
+Resolve that Packet through the shared Functional Agent resolver before `spawn_agent`. The built-in
+`prototype-generator` Profile requires `gemini-3.8-flash` at `high` reasoning effort and declares
+`fallback=blocked`. Use host-discovered Open Design model availability as the resolver's capability
+evidence. Dispatch only when `resolution_result=resolved`: pass the resolver-produced `model` and
+`reasoning_effort` verbatim to the native worker, require the worker to pass the same effective
+`model` explicitly to `start_run`, and persist the complete `model_resolution` record. Do not inherit
+the current model, silently substitute another model, or generate directly in the main Agent when this
+Profile cannot resolve; report `blocked-before-generation` instead.
+
+The current Open Design `start_run` surface accepts `model` but not a reasoning-effort argument.
+Therefore `high` governs the native `prototype-generator` worker. Do not claim that Open Design applied
+`high` unless its host response supplies independent evidence. A missing native spawn capability, a
+missing configured model, or a host-reported model mismatch is a pre-generation blocker.
+
 ## Open Design host contract
 
 Codex owns MCP, app, browser, file, hashing, and command execution. Resolve Open Design functions by
@@ -174,27 +198,32 @@ After explicit provider selection and before project mutation:
    Record the selected Provider and its required capabilities in the manifest. This Provider governs
    visible Web interaction and visual evidence; it must not be silently replaced. Resolve every other
    required logical capability.
-2. Apply a selection matrix before discovery. If the task contract or user already supplies an
-   Agent/model/skill/plugin/design-system id, verify that selection directly and do not enumerate
-   the corresponding full catalog. Run `list_agents` only when Agent/model selection is missing or
-   stale; run `list_skills` only when the generation skill is missing; run `list_plugins` only when a
-   visual plugin is requested; run design-system discovery only when a design system is requested.
+2. Apply a selection matrix before discovery. Resolve the `prototype-generator` Profile's configured
+   model through the shared resolver, and verify that exact model against the selected Open Design
+   Agent's host-reported models; do not let a user Agent/model hint bypass the Profile. Do not
+   enumerate a full catalog after the selected Agent/model availability is already confirmed. Run
+   `list_agents` when the selected Agent or its model availability is missing or stale; run
+   `list_skills` only when the generation skill is missing; run `list_plugins` only when a visual
+   plugin is requested; run design-system discovery only when a design system is requested.
    `plugin=none` and `design-system=none` skip their catalogs. Never rely on a provider default Agent
-   route.
+   route or a current-model fallback.
 3. For an existing-product extension with repository/runtime visual authority, record
    `direction_selection=skip` when plugin and design-system are both `none`; prohibit Direction
    library probing in the provider prompt. Permit a `tools directions`-style capability only when
    there is no visual authority and the host explicitly declares that capability. Never discover a
    CLI command by executing an unknown subcommand.
-4. Record `selected_agent`, host-reported `agent_readiness`, `cli_compatibility` with version and
-   required config evidence, the selected generation/visual plugin/design-system ids and
-   `compatibility_check`, `generation_skill_readiness`, local `input_readability` for every source
-   file, `visual_capability`, and aggregate `preflight_status` in the manifest. Include a
-   `run_input_summary` with the exact selections and synchronized context identities. Treat a
-   wrapper-only generation skill with no reusable seed/workflow as `partial`, and state that the
-   provider will generate from scratch; do not describe it as a ready-made prototype template.
-5. A missing Agent selection, reported authentication/readiness failure, incompatible required
-   CLI/config, or unreadable input is `blocked-before-generation`.
+4. Record `prototype_generator_profile`, the complete `model_resolution`, requested and effective
+   model, native worker `reasoning_effort`, `selected_agent`, host-reported `agent_readiness`,
+   `cli_compatibility` with version and required config evidence, the selected generation/visual
+   plugin/design-system ids and `compatibility_check`, `generation_skill_readiness`, local
+   `input_readability` for every source file, `visual_capability`, and aggregate `preflight_status`
+   in the manifest. Include a `run_input_summary` with the exact Profile/Agent/model selections and
+   synchronized context identities. Treat a wrapper-only generation skill with no reusable
+   seed/workflow as `partial`, and state that the provider will generate from scratch; do not
+   describe it as a ready-made prototype template.
+5. A non-`resolved` prototype-generator model resolution, missing Agent selection, reported
+   authentication/readiness failure, incompatible required CLI/config, or unreadable input is
+   `blocked-before-generation`.
    For existing-product work, an incompatible or unproven visual plugin/design system is also
    `blocked-before-generation`; do not treat it as a prompt-only warning.
 6. When the host cannot expose Agent or CLI readiness proof, record `partial` and the missing proof.
@@ -221,10 +250,11 @@ substitute another Provider.
    `incremental`. For a refinement, validate the complete local brief/assertion patch before
    project mutation; reuse the stable context hash and synchronize only the changed input/baseline
    diff. Any step failure stops before `start_run`.
-4. Call `start_run` once with the explicit project and Agent ids, generation skill, compatible
-   effective visual plugin/design-system selection, and grounded prompt. Persist these exact inputs
-   in `run_input_summary`. If submit
-   success is ambiguous, halt without resubmitting and resolve the original run from provider facts.
+4. The resolved `prototype-generator` worker calls `start_run` once with the explicit project and
+   Agent ids, its Profile-resolved effective `model`, generation skill, compatible effective visual
+   plugin/design-system selection, and grounded prompt. Persist these exact inputs and the worker's
+   `model_resolution` in `run_input_summary`. If submit success is ambiguous, halt without
+   resubmitting and resolve the original run from provider facts.
 5. Observe the run at a bounded 45–60 second interval. Prefer `wait_run`, `get_run_events`, or
    `get_run_summary` with a `since`/event cursor when available; otherwise use `get_run` without
    nested long sleeps and retain only changed fields. Record `last_event_id`, `last_progress_at`,
@@ -312,7 +342,8 @@ govern implementation, tell Bruce that `design-gate` is required; do not invoke 
 
 ## Output
 
-Return provider and Agent, preflight status, explicit base/current/parent project and run ids,
+Return provider, selected Agent, prototype-generator Profile, model-resolution record, requested and
+ effective model, native worker reasoning effort, preflight status, explicit base/current/parent project and run ids,
 provider status, effective-output state, artifact count, Studio/preview URLs, brief/UI-contract/
 manifest paths, generated/confirmed snapshot paths, four check results, Visual evidence strength,
 confirmation state/evidence, known gaps, cleanup history, and `Document check: clear|issues`.

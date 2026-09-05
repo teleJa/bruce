@@ -40,6 +40,26 @@ profiles:
     max_calls: 1
     output: task_evidence_packet
     authority: implementation-evidence
+  prototype-generator:
+    role: prototype-generator
+    capability: "以已冻结的原型上下文驱动 Open Design 生成，并返回实际运行证据"
+    default_model: gemini-3.8-flash
+    reasoning_effort: high
+    context:
+      inherit: task
+      clean: false
+    tools:
+      allow: [open-design]
+      deny: [write, edit, delete, deploy, push, force, credential, unrestricted-path]
+    write_scope: none
+    model_capabilities:
+      required: [prototype-generation, provider-model-selection]
+      preferred: [grounded-ui-input, bounded-provider-run]
+      independence: none
+    fallback: blocked
+    max_calls: 1
+    output: task_evidence_packet
+    authority: provider-generation-evidence
   verifier:
     role: verifier
     capability: "复现验收场景并核对测试、运行和工作区证据"

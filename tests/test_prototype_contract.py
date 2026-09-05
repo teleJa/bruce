@@ -83,6 +83,7 @@ class PrototypeContractTest(unittest.TestCase):
         self.assertIn("explicit user request", normalized)
         self.assertIn("terminal `succeeded` result has no artifact", normalized)
         self.assertIn("provider's agent message", normalized)
+        self.assertIn("model_resolution", normalized)
         self.assertIn("no generated snapshot", normalized)
 
     def test_preflight_discovery_is_selective_when_inputs_are_explicit(self) -> None:
@@ -367,6 +368,37 @@ class PrototypeContractTest(unittest.TestCase):
         self.assertIn("`blocked-before-generation`", normalized)
         self.assertIn("`partial`", normalized)
         self.assertIn("Do not claim preflight passed", self.skill)
+
+    def test_formal_generation_uses_profile_resolved_spawn_model(self) -> None:
+        normalized = " ".join(self.skill.split())
+        for marker in (
+            "`prototype-generator`",
+            "`profile_id=prototype-generator`",
+            "`task_kind=prototype_generate`",
+            "before `spawn_agent`",
+            "gemini-3.8-flash",
+            "`high` reasoning effort",
+            "`fallback=blocked`",
+            "resolution_result=resolved",
+            "same effective `model` explicitly to `start_run`",
+            "Do not inherit the current model",
+            "blocked-before-generation",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, normalized)
+        for marker in (
+            "prototype_generator_profile",
+            "model_resolution",
+            "requested_model",
+            "effective_model",
+            "native_reasoning_effort",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, self.manifest)
+        self.assertIn("prototype_generator_profile", self.brief)
+        self.assertIn("effective_model", self.generation_input)
+        self.assertIn("native_reasoning_effort", self.generation_input)
+        self.assertIn("start_run` surface accepts `model` but not a reasoning-effort", normalized)
 
     def test_effective_output_rejects_no_artifact_and_unchanged_refinement(self) -> None:
         normalized = " ".join(self.skill.split())

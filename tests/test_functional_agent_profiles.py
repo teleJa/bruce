@@ -19,12 +19,18 @@ from tests._support import ROOT, read
 class FunctionalAgentProfileContractTest(unittest.TestCase):
     def test_profile_registry_and_routing_matrix(self) -> None:
         validator = (ROOT / "scripts/validate_functional_agents.py").read_text(encoding="utf-8")
-        self.assertEqual({"inspector", "implementer", "verifier", "reviewer"}, set(PROFILE_IDS))
+        self.assertEqual(
+            {"inspector", "implementer", "prototype-generator", "verifier", "reviewer"},
+            set(PROFILE_IDS),
+        )
         profiles = load_builtin_profiles()
         self.assertEqual("gpt-5.6-luna", profiles["inspector"]["default_model"])
         self.assertEqual("max", profiles["inspector"]["reasoning_effort"])
         self.assertEqual("gpt-5.6-luna", profiles["implementer"]["default_model"])
         self.assertEqual("max", profiles["implementer"]["reasoning_effort"])
+        self.assertEqual("gemini-3.8-flash", profiles["prototype-generator"]["default_model"])
+        self.assertEqual("high", profiles["prototype-generator"]["reasoning_effort"])
+        self.assertEqual("blocked", profiles["prototype-generator"]["fallback"])
         self.assertEqual("gpt-5.6-luna", profiles["verifier"]["default_model"])
         self.assertEqual("max", profiles["verifier"]["reasoning_effort"])
         self.assertEqual("gpt-5.6-terra", profiles["reviewer"]["default_model"])
@@ -36,6 +42,7 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
             "skills/solution-analysis/SKILL.md",
             "skills/spawn-execute/SKILL.md",
             "skills/explore-prototype/SKILL.md",
+            "skills/write-prototype/SKILL.md",
             "skills/completion-gate/SKILL.md",
             "skills/plan-review/SKILL.md",
             "skills/design-gate/SKILL.md",
@@ -155,6 +162,59 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
         self.assertEqual("blocked", blocked.resolution_result)
         self.assertEqual("current_model_unavailable", blocked.fallback_reason)
         self.assertNotIn("model", blocked_args)
+
+    def test_prototype_generator_is_model_pinned(self) -> None:
+        profile, resolution, args = resolve_profile(
+            "prototype-generator",
+            current_model="current-model",
+            available_models={"gemini-3.8-flash"},
+        )
+        self.assertEqual("prototype-generator", profile["role"])
+        self.assertEqual("resolved", resolution.resolution_result)
+        self.assertEqual("gemini-3.8-flash", args["model"])
+        self.assertEqual("high", args["reasoning_effort"])
+
+        packet = {
+            "schema_version": 1,
+            "profile_id": "prototype-generator",
+            "task_packet": {
+                "task_id": "prototype-run",
+                "task_kind": "prototype_generate",
+                "objective": "在 Open Design 中生成已冻结的原型",
+                "context": {"inherit": "task", "sources": ["prototype-brief.md"]},
+                "tools": {"allow": ["open-design"], "deny": ["write"]},
+                "allowed_paths": [],
+                "model_capabilities": {
+                    "required": ["prototype-generation"],
+                    "preferred": [],
+                    "independence": "none",
+                },
+                "evidence": {
+                    "acceptance_ids": ["PG-01"],
+                    "required": ["Open Design model availability"],
+                },
+                "output": "task_evidence_packet",
+                "stop_conditions": ["配置模型不可用时停止"],
+            },
+        }
+        validate_task_packet(packet)
+
+        _, blocked, blocked_args = resolve_profile(
+            "prototype-generator",
+            current_model="current-model",
+            available_models={"current-model"},
+        )
+        self.assertEqual("blocked", blocked.resolution_result)
+        self.assertEqual("configured_model_unavailable", blocked.fallback_reason)
+        self.assertFalse(blocked.fallback_used)
+        self.assertNotIn("model", blocked_args)
+        with self.assertRaises(ContractError):
+            resolve_profile(
+                "prototype-generator",
+                current_model="current-model",
+                available_models={"gemini-3.8-flash"},
+                task_override={"model": "other-model"},
+            )
 
     def test_resolution_precedence_and_invalid_override(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

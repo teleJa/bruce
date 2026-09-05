@@ -14,7 +14,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 BUILTIN_PROFILE_PATH = ROOT / "skills/bruce/references/model-profiles.yaml"
 SCHEMA_VERSION = 1
-PROFILE_IDS = ("inspector", "implementer", "verifier", "reviewer")
+PROFILE_IDS = ("inspector", "implementer", "prototype-generator", "verifier", "reviewer")
 PACKET_OUTPUTS = {"task_evidence_packet", "verification_packet", "review_packet"}
 TERMINAL_FIELDS = {"Design", "Completion", "verdict", "approval"}
 
@@ -77,7 +77,7 @@ def load_builtin_profiles(path: Path = BUILTIN_PROFILE_PATH) -> dict[str, dict[s
     if not isinstance(profiles, dict):
         raise ContractError("profile registry must contain profiles mapping")
     if set(profiles) != set(PROFILE_IDS):
-        raise ContractError("profile registry must contain exactly the four P0 profiles")
+        raise ContractError("profile registry must contain exactly the five built-in profiles")
     return {profile_id: dict(profile) for profile_id, profile in profiles.items()}
 
 
@@ -118,8 +118,12 @@ def _load_override(path: Path | None) -> dict[str, dict[str, Any]]:
             or values["reasoning_effort"] not in reasoning_values
         ):
             raise ContractError(f"override reasoning_effort is invalid for {profile_id}")
-        if "fallback" in values and values["fallback"] != "current":
-            raise ContractError(f"override fallback must be current for {profile_id}")
+        if "fallback" in values:
+            expected_fallback = "blocked" if profile_id == "prototype-generator" else "current"
+            if values["fallback"] != expected_fallback:
+                raise ContractError(
+                    f"override fallback must be {expected_fallback} for {profile_id}"
+                )
 
     return {profile_id: dict(values) for profile_id, values in profiles.items()}
 
@@ -163,6 +167,12 @@ def resolve_profile(
     packet_model = None
     if task_packet is not None:
         packet_model = task_packet["task_packet"].get("model_override")
+    if profile_id == "prototype-generator" and (
+        packet_model is not None or "model" in task_values
+    ):
+        raise ContractError(
+            "prototype-generator model must come from its resolved Profile configuration"
+        )
     if packet_model is not None and "model" not in task_values:
         task_values["model"] = packet_model
     unknown = set(task_values) - {"model", "reasoning_effort", "fallback"}
@@ -174,8 +184,8 @@ def resolve_profile(
     for field in ("reasoning_effort", "fallback"):
         if field in task_values:
             profile[field] = task_values[field]
-    if profile.get("fallback") != "current":
-        raise ContractError("profile fallback must be current")
+    if profile.get("fallback") not in {"current", "blocked"}:
+        raise ContractError("profile fallback must be current or blocked")
     if not isinstance(profile.get("reasoning_effort"), str) or profile.get("reasoning_effort") not in {"low", "medium", "high", "max"}:
         raise ContractError("profile reasoning_effort is invalid")
 
@@ -266,6 +276,7 @@ def validate_task_packet(packet: Mapping[str, Any], profile_id: str | None = Non
     task_kinds = {
         "inspector": {"inspect"},
         "implementer": {"implement", "throwaway_prototype"},
+        "prototype-generator": {"prototype_generate"},
         "verifier": {"verify"},
         "reviewer": {"review"},
     }
@@ -301,7 +312,7 @@ def validate_task_packet(packet: Mapping[str, Any], profile_id: str | None = Non
     for path in paths:
         if Path(path).is_absolute() or ".." in Path(path).parts:
             raise ContractError(f"allowed path must be repository-relative: {path}")
-    if actual_profile in {"inspector", "verifier", "reviewer"} and paths:
+    if actual_profile in {"inspector", "prototype-generator", "verifier", "reviewer"} and paths:
         raise ContractError(f"{actual_profile} must have empty allowed_paths")
 
     capabilities = _assert_mapping(task["model_capabilities"], "model_capabilities")
@@ -404,8 +415,8 @@ def validate_output_packet(packet: Mapping[str, Any], output_type: str) -> None:
         raise ContractError("agent packet gate_verdict must be absent")
     expected_profile = {"verification_packet": "verifier", "review_packet": "reviewer"}.get(output_type)
     _validate_model_resolution(packet.get("model_resolution"), expected_profile=expected_profile)
-    if output_type == "task_evidence_packet" and packet["model_resolution"]["requested_profile"] not in {"inspector", "implementer"}:
-        raise ContractError("task_evidence_packet must come from inspector or implementer")
+    if output_type == "task_evidence_packet" and packet["model_resolution"]["requested_profile"] not in {"inspector", "implementer", "prototype-generator"}:
+        raise ContractError("task_evidence_packet must come from inspector, implementer, or prototype-generator")
 
     packet_fields = {
         "task_evidence_packet": common | {"changed_files", "commands", "evidence", "assumptions", "evidence_gaps"},

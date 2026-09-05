@@ -34,8 +34,9 @@ findings: []
 # L1 findings retain failure_id, l1_repair_rounds, original scenario and evidence refs.
 # Missing historical counts are unknown; recover before repairing, never reset on resume.
 # repair_loop is the Completion-only global budget; batch repairs use local L1 counts.
+# Compare l1_repair_rounds with configured workflow.repair_loop.max_rounds_per_failure (default 5).
 repair_loop:
-  max_rounds: 5
+  max_rounds: 10 # Copy resolved workflow.repair_loop.max_rounds; 10 is the default, not an override.
   current_round: 0
   status: not_started|scanning|repairing|verifying|exhausted|complete
 completion:

@@ -89,12 +89,14 @@ create a per-finding review chain.
 Use [failure-recovery.md](../bruce/references/failure-recovery.md) as the budget authority. Import each
 unresolved finding's stable `failure_id` and `l1_repair_rounds` from existing checkpoint/evidence; unknown
 counts require recovery, not zero initialization. A Completion repair consumes both its global round
-and each affected failure's local L1 round. Stop at whichever limit applies first; two unsuccessful
-complete repairs of the same failure become L2 even when global rounds remain. Do not reset local
-counts on batch handoff, resume, or recurrence. Batch repairs do not spend this global budget.
+and each affected failure's local L1 round. Read `workflow.repair_loop.max_rounds_per_failure`
+from the same applicable `.bruce/config.yaml` (default: 5). Stop at whichever limit applies first;
+an unresolved failure becomes L2 when its local count reaches that configured limit, even when global
+rounds remain. Do not reset local counts on batch handoff, resume, or recurrence. Batch repairs do
+not spend this global budget.
 
 The initial matrix scan is repair round 0. Read `workflow.repair_loop.max_rounds` from the resolved
-`.bruce/config.yaml` (default: 5) and allow at most that many subsequent repair rounds. Each round
+`.bruce/config.yaml` (default: 10) and allow at most that many subsequent repair rounds. Each round
 scans the current affected matrix as broadly as practical, reports all currently observable findings,
 then repairs the resulting bounded repair set one by one or in compatible groups. A repair may expose
 a new finding; carry it into the next round rather than pretending the initial scan was exhaustive.

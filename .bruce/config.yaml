@@ -9,9 +9,12 @@ verification:
   browser_provider: ego-lite
 
 workflow:
-  # Completion Gate repair loop. The initial review scan is round 0; repairs may use up to five rounds.
+  # Repair budgets read by Bruce; the initial Completion scan is round 0.
   repair_loop:
-    max_rounds: 5
+    # Overall Completion repair rounds (1-10).
+    max_rounds: 10
+    # Complete repair-and-reverify rounds for one failure, across phases (1-5).
+    max_rounds_per_failure: 5
   # Async reviewer lifecycle. Stop polling after bounded no-progress waits.
   review:
     max_wait_seconds: 60

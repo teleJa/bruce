@@ -23,7 +23,9 @@ class FailurePolicyContractTest(unittest.TestCase):
 
     def test_retry_and_repair_budgets_are_bounded(self) -> None:
         self.assertIn("`retry_count < 2`", self.policy)
-        self.assertIn("two complete repair-and-reverify rounds", self.policy)
+        self.assertIn("workflow.repair_loop.max_rounds_per_failure", self.policy)
+        self.assertIn("l1_repair_rounds >= max_rounds_per_failure", self.policy)
+        self.assertNotIn("at most two complete repair-and-reverify rounds", self.policy)
         self.assertIn("Move exhausted L0/L1 work to L2", self.policy)
 
     def test_repair_round_requires_original_scenario_and_regression(self) -> None:

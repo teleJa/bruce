@@ -67,8 +67,12 @@ an ambiguity that changes scope, acceptance, or business consequences.
 When the resolved artifact parent contains `.bruce/config.yaml`, read its `verification` and
 `workflow` settings before implementation. `verification.browser_provider` selects the browser
 provider for user-visible Web evidence and defaults to `ego-lite`; supported values are `ego-lite`
-and `chrome`. `workflow.repair_loop.max_rounds` defaults to 5 and applies only to Completion Gate
-repair rounds after the initial review scan. `workflow.review.max_wait_seconds` defaults to 60 and
+and `chrome`. `workflow.repair_loop.max_rounds` defaults to 10 and applies only to Completion Gate
+repair rounds after the initial review scan. `workflow.repair_loop.max_rounds_per_failure` defaults to
+5 and limits each failure's complete repair-and-reverify rounds across batches, Completion, and resume.
+Read both from the applicable `.bruce/config.yaml`, preserve explicit values, and use defaults only
+for missing keys. Do not use a fixed two-round L1 limit or reset consumed counts on handoff.
+`workflow.review.max_wait_seconds` defaults to 60 and
 `workflow.review.max_no_progress_polls` defaults to 2. Invalid values are configuration issues, not
 permission to silently use a different provider or larger budget. Read
 [browser-provider.md](references/browser-provider.md) for provider capabilities and evidence rules.

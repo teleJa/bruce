@@ -2,6 +2,8 @@
 from itertools import product
 import unittest
 
+import yaml
+
 from tests._support import read
 
 
@@ -58,22 +60,69 @@ class WorkflowPolicyContractTest(unittest.TestCase):
         table = rows('skills/bruce/references/failure-recovery.md', 'BUDGET')
         self.assertEqual([row[0] for row in table], [f'BUDGET-0{i}' for i in range(1, 8)])
         examples = (
-            (('unknown', '0-or-1', 'batch', 'below_limit'), 'freeze_L4'),
+            (('unknown', 'below_limit', 'batch', 'below_limit'), 'freeze_L4'),
             (('known', 'unknown', 'completion', 'below_limit'), 'recover_counts'),
-            (('known', '2+', 'batch', 'below_limit'), 'replan_L2'),
-            (('known', '2+', 'completion', 'below_limit'), 'replan_L2'),
-            (('known', '2+', 'completion', 'at_limit'), 'replan_L2'),
-            (('known', '0-or-1', 'completion', 'unknown'), 'recover_counts'),
-            (('known', '0-or-1', 'completion', 'at_limit'), 'stop_completion'),
-            (('known', '0-or-1', 'completion', 'below_limit'), 'repair_both'),
-            (('known', '0-or-1', 'batch', 'at_limit'), 'repair_local'),
-            (('known', '0-or-1', 'batch', 'unknown'), 'repair_local'),
+            (('known', 'at_limit', 'batch', 'below_limit'), 'replan_L2'),
+            (('known', 'at_limit', 'completion', 'below_limit'), 'replan_L2'),
+            (('known', 'at_limit', 'completion', 'at_limit'), 'replan_L2'),
+            (('known', 'below_limit', 'completion', 'unknown'), 'recover_counts'),
+            (('known', 'below_limit', 'completion', 'at_limit'), 'stop_completion'),
+            (('known', 'below_limit', 'completion', 'below_limit'), 'repair_both'),
+            (('known', 'below_limit', 'batch', 'at_limit'), 'repair_local'),
+            (('known', 'below_limit', 'batch', 'unknown'), 'repair_local'),
         )
         for inputs, expected in examples:
             with self.subTest(inputs=inputs):
                 self.assertEqual(select(table, inputs), (expected,))
         # Resume does not turn an exhausted failure into a new zero-count failure.
-        self.assertEqual(select(table, ('known', '2+', 'completion', 'below_limit')), ('replan_L2',))
+        self.assertEqual(select(table, ('known', 'at_limit', 'completion', 'below_limit')), ('replan_L2',))
+
+    def test_configured_numeric_boundaries_drive_budget_table(self):
+        table = rows('skills/bruce/references/failure-recovery.md', 'BUDGET')
+        configured = yaml.safe_load(read('.bruce/config.yaml'))['workflow']['repair_loop']
+        template = yaml.safe_load(read('skills/bruce/templates/config.yaml'))['workflow']['repair_loop']
+        overrides = yaml.safe_load("""
+max_rounds: 7
+max_rounds_per_failure: 3
+""")
+        # Translate numeric counts to the authoritative table's categories, not an Agent runtime.
+        for limits in (configured, template, overrides):
+            local_limit = limits['max_rounds_per_failure']
+            global_limit = limits['max_rounds']
+            for local_count, global_count, phase in product(
+                range(local_limit + 2), range(global_limit + 2), ('batch', 'completion')
+            ):
+                with self.subTest(limits=limits, local=local_count, overall=global_count, phase=phase):
+                    local_state = 'below_limit' if local_count < local_limit else 'at_limit'
+                    global_state = 'below_limit' if global_count < global_limit else 'at_limit'
+                    if local_count >= local_limit:
+                        expected = 'replan_L2'
+                    elif phase == 'batch':
+                        expected = 'repair_local'
+                    elif global_count >= global_limit:
+                        expected = 'stop_completion'
+                    else:
+                        expected = 'repair_both'
+                    self.assertEqual(select(table, ('known', local_state, phase, global_state)), (expected,))
+
+    def test_active_consumers_read_both_configured_limits(self):
+        consumers = (
+            'skills/bruce/SKILL.md',
+            'skills/bruce/references/artifact-placement.md',
+            'skills/bruce/references/failure-recovery.md',
+            'skills/bruce/references/verification-loop.md',
+            'skills/completion-gate/SKILL.md',
+            'skills/bruce/templates/checkpoint.yaml',
+        )
+        for path in consumers:
+            with self.subTest(path=path):
+                body = ' '.join(read(path).split())
+                self.assertIn('workflow.repair_loop.max_rounds_per_failure', body)
+                self.assertIn('workflow.repair_loop.max_rounds', body)
+                self.assertNotIn('at most two complete repair-and-reverify rounds', body)
+                self.assertNotIn('two unsuccessful complete repairs', body)
+                self.assertNotIn('max_rounds` (integer 1 through 5', body)
+                self.assertNotIn('max_rounds` defaults to 5', body)
 
     def test_counter_consumers_do_not_widen_local_budget(self):
         policy = read('skills/bruce/references/failure-recovery.md')

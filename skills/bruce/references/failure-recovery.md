@@ -6,7 +6,7 @@ dependency or incident boundary supported by current facts.
 | Level | Class | Default response | Propagation |
 |---|---|---|---|
 | L0 | Transient: rate limit, connection reset, temporary lock, occasional tool timeout | Retry only when idempotent; after the first failure allow at most two retries with backoff | Failed task and its dependents wait |
-| L1 | Repairable: compile, test, lint, type, assertion, scenario, or local implementation error | Make an actual correction, inspect the changed code, then rerun the original failed scenario and related regressions; allow at most two complete repair-and-reverify rounds | Failed task and its dependents wait |
+| L1 | Repairable: compile, test, lint, type, assertion, scenario, or local implementation error | Make an actual correction, inspect the changed code, then rerun the original failed scenario and related regressions; read `workflow.repair_loop.max_rounds_per_failure` from the applicable `.bruce/config.yaml` (default 5) for the complete repair-and-reverify limit | Failed task and its dependents wait |
 | L2 | Replan: missing dependency, incompatible interface, invalid approach, or denied host action with an authorized alternative | Replan the affected task, descendants, and unsafe shared-file/contract peers | Proven dependency-independent work continues |
 | L3 | Business authority: unresolved scope, acceptance change, or unauthorized guarded/critical action | Ask one precise question and pause only work that needs the answer | Independent work continues |
 | L4 | Unknown or incident: non-idempotent external action may be half-complete, data/security state is unknown, or integrity risk is reported | Freeze writes, retries, and work depending on the unknown result inside the incident boundary; report known and unknown facts | Only read-only diagnosis and proven-isolated work may continue |
@@ -15,7 +15,8 @@ dependency or incident boundary supported by current facts.
 
 - `retry_count` counts attempts after the first L0 failure. Retry only while `retry_count < 2`.
 - `repair_round` counts only after an actual L1 correction, author inspection, the unchanged original
-  failed scenario, and related regressions were run. Move to L2 when two complete rounds still fail.
+  failed scenario, and related regressions were run. Move to L2 when `l1_repair_rounds >= max_rounds_per_failure`
+  and the original failure is still unresolved; compare against the resolved configuration, not a fixed two.
 - Do not call an unchanged compile, type, assertion, or lint error transient.
 - Move exhausted L0/L1 work to L2; do not extend the budget informally.
 - Treat unknown external side-effect state, data integrity risk, and security incidents as L4.
@@ -30,13 +31,22 @@ This reference owns both budget scopes and their precedence. A failed original s
 `failure_id` across batches, Completion, and resume. A genuinely different failure gets a new id with its
 own evidence; renaming a repeated failure never grants more attempts. Record `failure_id` and
 `l1_repair_rounds` on the existing checkpoint `findings` row, with the original scenario and evidence refs.
+Resolve both settings through the applicable `.bruce/config.yaml` identified by
+[artifact-placement.md](artifact-placement.md), using per-field defaults only for absent keys.
+An explicit smaller value remains authoritative; invalid/unreadable configuration is an issue, not
+permission to substitute defaults. Record the config path (or absence) and effective limits in current
+evidence. Existing checkpoint limits are snapshots, not configuration overrides; preserve consumed
+counts across an explicitly confirmed configuration change and compare them with the effective limits.
 No new ledger is required. A successful repair can resolve that finding; the table below applies only
 while a failure remains unresolved. If an old checkpoint has no reliable count, recover it from existing
 evidence before repair; missing history is unknown, not zero. Do not reset a count on recurrence.
 
-- Local L1 budget: at most two complete repair-and-reverify rounds per failure, in any phase. A declared
-  smaller task/batch budget also applies. Exhaustion moves that affected failure to L2.
-- Completion budget: `workflow.repair_loop.max_rounds` (integer 1 through 5, default 5) limits overall
+- Local L1 budget: `workflow.repair_loop.max_rounds_per_failure` (integer 1 through 5, default 5)
+  limits complete repair-and-reverify rounds per failure, in any phase. Read it from the applicable
+  `.bruce/config.yaml`; do not inherit a hardcoded two-round limit from an old task/batch plan.
+  At the default, completed counts 0 through 4 allow another repair; five unsuccessful complete rounds
+  exhaust this failure's budget and move it to L2 before a sixth repair.
+- Completion budget: `workflow.repair_loop.max_rounds` (integer 1 through 10, default 10) limits overall
   repair rounds after the initial Completion scan (round 0), across all findings in that Completion.
   Store this counter in existing `repair_loop.current_round`; do not reuse it as a per-failure count.
 - Batch verification never reads or spends the Completion budget. During Completion, each actual
@@ -48,7 +58,9 @@ evidence before repair; missing history is unknown, not zero. Do not reset a cou
 
 ### Unresolved-failure decision table
 
-Evaluate in order; `below_limit`/`at_limit` refer to the configured Completion maximum, not a hardcoded five.
+Evaluate in order. L1 rounds are compared with `max_rounds_per_failure`; Completion rounds are
+compared with `max_rounds`. For each column, `below_limit` means its consumed count is less than its
+own configured maximum; `at_limit` means greater than or equal to that maximum, not a fixed number.
 Unknown external state is L4 before either budget is considered. Partial/incomplete attempts do not
 justify unbounded reruns; inspect actual state under L0-L4 first.
 
@@ -56,11 +68,11 @@ justify unbounded reruns; inspect actual state under L0-L4 first.
 |---|---|---|---|---|---|
 | BUDGET-01 | unknown | any | any | any | freeze_L4 |
 | BUDGET-02 | known | unknown | any | any | recover_counts |
-| BUDGET-03 | known | 2+ | any | any | replan_L2 |
-| BUDGET-04 | known | 0-or-1 | completion | unknown | recover_counts |
-| BUDGET-05 | known | 0-or-1 | completion | at_limit | stop_completion |
-| BUDGET-06 | known | 0-or-1 | completion | below_limit | repair_both |
-| BUDGET-07 | known | 0-or-1 | batch | any | repair_local |
+| BUDGET-03 | known | at_limit | any | any | replan_L2 |
+| BUDGET-04 | known | below_limit | completion | unknown | recover_counts |
+| BUDGET-05 | known | below_limit | completion | at_limit | stop_completion |
+| BUDGET-06 | known | below_limit | completion | below_limit | repair_both |
+| BUDGET-07 | known | below_limit | batch | any | repair_local |
 
 ## Event-driven checkpoints
 

@@ -39,7 +39,8 @@ verification:
   browser_provider: ego-lite
 workflow:
   repair_loop:
-    max_rounds: 5
+    max_rounds: 10
+    max_rounds_per_failure: 5
   review:
     max_wait_seconds: 60
     max_no_progress_polls: 2
@@ -73,11 +74,25 @@ checkpoint state holds current progress and references evidence without copying 
 
 ### Workflow limits
 
-`workflow.repair_loop.max_rounds` controls the Completion Gate repair loop only. The initial review
-scan is round 0; a repair loop may run at most this many subsequent repair rounds. It must be an integer from 1 through 5. Generic L0/L1 failure-recovery retry budgets remain governed by
-`references/failure-recovery.md` and are not silently widened by this setting. That reference owns
-counter identity and precedence: batch repairs use only local budgets; Completion repairs spend both
-local and global budgets, and the first exhausted limit stops affected work.
+Read both repair limits from the applicable `.bruce/config.yaml`:
+
+- `workflow.repair_loop.max_rounds` controls the Completion Gate repair loop only (default `10`,
+  integer from 1 through 10). The initial review scan is round 0; it permits at most that many
+  subsequent repair rounds across all findings in that Completion.
+- `workflow.repair_loop.max_rounds_per_failure` controls complete L1 repair-and-reverify rounds for
+  the same failure across phases (default `5`, integer from 1 through 5). At the default, allow five
+  complete repairs, then move an unresolved failure to L2 before attempting a sixth.
+
+[Failure recovery](failure-recovery.md) owns counter identity and precedence: batch repairs use only
+local budgets; Completion repairs spend both local and global budgets, and the first exhausted limit
+stops affected work. L0 transient retries and reviewer waiting budgets are not repair rounds and are
+not widened by either repair setting.
+
+Both repair keys are independently optional: absent keys use their own defaults (`max_rounds=10`,
+`max_rounds_per_failure=5`); explicit smaller values are preserved, including an existing `max_rounds: 5`.
+Missing configuration uses these defaults without creating a file. Present invalid/unreadable
+configuration must be reported; null, booleans, strings, fractions, zero, negative and out-of-range
+values are not valid integers for these limits. Never clamp, silently default, or widen an invalid value.
 
 `workflow.review.max_wait_seconds` and `workflow.review.max_no_progress_polls` bound asynchronous
 reviewer polling. They must be bounded integers: `max_wait_seconds` is 1 through 60 and `max_no_progress_polls` is 1 through 2. After the configured number of no-progress polls,
@@ -85,5 +100,6 @@ stop polling the handle; if independent review is required and unavailable, the 
 `Completion: blocked`.
 
 If `verification` is absent, use `browser_provider=ego-lite`. If `workflow` is absent, use the documented
-defaults (`5`, `60`, and `2`). Invalid Provider or workflow values must be reported rather than silently
+defaults (`10`, `5`, `60`, and `2` for Completion repairs, per-failure repairs, review seconds, and
+no-progress polls respectively). Invalid Provider or workflow values must be reported rather than silently
 changed, widened, or ignored.

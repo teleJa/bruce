@@ -21,7 +21,7 @@ class ContextContractTest(unittest.TestCase):
             "**Business Risk**",
             "**Prototype Design Capability**",
             "**Design Gate**",
-            "**Native Goal Adapter**",
+            "**Native Goal Boundary**",
             "**Completion Gate**",
             "**Failure Level**",
             "**Codex Host Authority**",
@@ -50,8 +50,8 @@ class ContextContractTest(unittest.TestCase):
         normalized = " ".join(self.context.split())
         self.assertIn("skills/completion-gate/SKILL.md", self.context)
         self.assertNotIn("skills/verify-completion/SKILL.md", self.context)
-        self.assertIn("independent of execution profile", normalized)
-        self.assertIn("does not decide design readiness or completion", normalized)
+        self.assertIn("independently classified consequence", normalized)
+        self.assertIn("Native Goal is outside the Bruce user-facing workflow", normalized)
         self.assertIn("Independence is risk- or user-triggered", normalized)
         self.assertIn("never adds another externally combined verdict", normalized)
 

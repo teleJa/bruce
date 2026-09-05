@@ -1,6 +1,6 @@
 {
   "name": "bruce",
-  "version": "0.1.0+codex.20260905061247",
+  "version": "0.1.0+codex.20260905072613",
   "description": "A proportional software delivery workflow with evidence-backed decisions, functional Agent contracts, Model Profile routing, and Goal-independent execution.",
   "author": {
     "name": "teleJa"
@@ -18,7 +18,7 @@
   "interface": {
     "displayName": "Bruce",
     "shortDescription": "Run a risk-driven software delivery workflow",
-    "longDescription": "Bruce keeps software delivery proportional in the current Codex task, with evidence-driven standard/full profiles, four internal Functional Agent contracts, explicit Model Profile override/fallback resolution, one conditional Design Gate, one Completion Gate, verifiable Given/When/Then scenarios, layered real-use validation, bounded repair loops, and Goal-independent execution, recovery, and delegation. Native Goal is available only through an explicitly requested adapter; durable audit records are opt-in.",
+    "longDescription": "Bruce keeps software delivery proportional in the current Codex task, with evidence-driven standard/full profiles, four internal Functional Agent contracts, explicit Model Profile override/fallback resolution, one conditional Design Gate, one Completion Gate, verifiable Given/When/Then scenarios, layered real-use validation, bounded repair loops, and Goal-independent execution, recovery, and delegation. Native Goal is outside the Bruce workflow.",
     "developerName": "teleJa",
     "category": "Developer Tools",
     "brandColor": "#4F46E5",

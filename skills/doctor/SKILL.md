@@ -43,9 +43,9 @@ Return:
 - the smallest next diagnostic action.
 
 Doctor findings are diagnostic inputs only. Do not emit or change `Design: pass`,
-`Completion: pass|issues|blocked`, or native Goal status on Doctor's authority. If a completion
-decision is needed, hand the current evidence to `completion-gate`. Only an explicit user request to
-use native Goal may route to `goal-execution`; diagnostic findings or audit needs do not activate it.
+`Completion: pass|issues|blocked` on Doctor's authority. If a completion
+decision is needed, hand the current evidence to `completion-gate`. Native Goal state does not change
+ the diagnostic workflow.
 
 ## Does not own
 

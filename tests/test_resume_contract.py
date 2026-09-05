@@ -28,9 +28,8 @@ class ResumeContractTest(unittest.TestCase):
         for trigger in ("context is missing", "materially changed", "evidence became stale", "unknown result"):
             with self.subTest(trigger=trigger):
                 self.assertIn(trigger, policy)
-        self.assertIn("Ordinary recovery does not require Goal", policy)
+        self.assertIn("Ordinary recovery does not require native Goal state", policy)
         self.assertIn("retry or repair counts or authorizes unmapped inspection", policy)
-        self.assertNotIn("first enter or resume `goal-execution`", workflow)
 
     def test_legacy_artifacts_are_not_resume_truth(self) -> None:
         policy = read("skills/bruce/references/failure-recovery.md")

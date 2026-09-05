@@ -10,7 +10,7 @@ from tests._support import ROOT
 class SkillAgentsMetadataTest(unittest.TestCase):
     def test_every_skill_has_valid_ui_metadata(self) -> None:
         skill_dirs = sorted(path.parent for path in (ROOT / "skills").glob("*/SKILL.md"))
-        self.assertEqual(21, len(skill_dirs))
+        self.assertEqual(20, len(skill_dirs))
         for skill_dir in skill_dirs:
             path = skill_dir / "agents/openai.yaml"
             with self.subTest(skill=skill_dir.name):

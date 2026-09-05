@@ -29,7 +29,6 @@ class PluginManifestTest(unittest.TestCase):
         self.assertTrue((ROOT / manifest["skills"]).is_dir())
         self.assertTrue((ROOT / "skills/bruce/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/design-gate/SKILL.md").is_file())
-        self.assertTrue((ROOT / "skills/goal-execution/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/completion-gate/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/doctor/SKILL.md").is_file())
         self.assertTrue((ROOT / "skills/explore-prototype/SKILL.md").is_file())

@@ -88,7 +88,7 @@ inspect current implementation and existing solutions
 禁止自动执行：
 
 - `write-architecture`、`write-db-design`、`write-plan`、`write-tests`；
-- `design-gate`、`completion-gate` 或 `goal-execution`；
+- `design-gate` 或 `completion-gate`；
 - 源代码、测试、配置或项目文档修改；
 - 创建或更新 `docs/change`、Goal、checkpoint 或 review 状态；
 - commit、push、部署或其他外部副作用。

@@ -43,8 +43,8 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - L0-L4 classify transient, repairable, replan, business-authority, and unknown/incident failures.
 - Planning, architecture, test design, review, and delegation run only from their own predicates.
   Ordinary continuation, cross-turn recovery, and checkpoint recording do not require Goal.
-  Only an explicit request to use native Goal (`/goal` or `$goal-execution`) enters its compatibility
-  adapter; profile, duration, `continue nonstop`, `继续开发`, and audit needs do not activate it.
+  Native Goal is outside the Bruce workflow; profile, duration, `continue nonstop`, `继续开发`, and
+  host Goal state do not change Bruce's ordinary execution path.
 - Continue authorized implementation until acceptance is met or a user pause, host limit, scope/authority
   change, exhausted repair budget, or real blocker requires stopping. A progress checkpoint alone does
   not end execution or require another user message. This is not a background-execution guarantee.
@@ -114,9 +114,8 @@ includes generated `agents/openai.yaml` UI metadata. Bruce has no CLI, MCP serve
 implementation, or custom scheduler.
 
 `design-gate` is the only implementation-entry decision. `completion-gate` is the only completion
-decision. `goal-execution` is an explicit opt-in adapter for native Goal lifecycle; it consumes existing
-Gate results without re-evaluating them. It does not create `execute_record.md` by default. Durable
-audit records require an explicit user request and should reference existing progress and evidence.
+decision. Native Goal is outside Bruce's workflow; it does not participate in Gate results, task progress, or
+completion decisions. Bruce does not create or maintain Goal audit records.
 `spawn-execute` supports bounded ordinary implementation delegation without a Goal or audit-record
 prerequisite. Historical `.goal/` records are preserved but never required for ordinary recovery.
 

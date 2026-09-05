@@ -19,11 +19,11 @@ Bruce has two decisions; ordinary execution does not require Goal:
 - `design-gate` is the only implementation-entry decision for persisted downstream design.
 - `completion-gate` is the only completion decision for an implementation task.
 - A batch checkpoint is progress feedback, not a third decision or an overall completion result.
-- Native Goal is an explicit user-selected host capability, not the engine for ordinary execution,
-  recovery, delegation, or evidence recording. `goal-execution` is only its compatibility adapter.
+- Native Goal is not part of Bruce's user-facing workflow or ordinary execution, recovery,
+  delegation, or evidence recording. Codex may manage native Goals independently of Bruce.
 
 Keep Bruce as workflow guidance. Let Codex own commands, files, tools, permissions, task context,
-native Goal state, and subagent lifecycle. Read
+native host state, and subagent lifecycle. Read
 [plugin-boundary.md](references/plugin-boundary.md) before handling a permission denial, external
 side effect, or request to add execution infrastructure.
 
@@ -175,9 +175,8 @@ task-local verification is incomplete; `verified` means task-local acceptance pa
 `completion.result` remains empty until the single Completion Gate returns `pass`, `issues`, or
 `blocked`. It is progress feedback only: it is not a third decision, a Goal ledger, or a second
 evidence store. The checkpoint is authoritative only for change/task progress and never overrides
-either Gate. Recovery uses current workspace and evidence, not an audit ledger. Native Goal, when
-explicitly requested, remains authoritative only for its own lifecycle. No Goal-specific audit record
-is required; existing records are optional references. Tasks execute sequentially by default;
+either Gate. Recovery uses current workspace and evidence, not an audit ledger. Native Goal state is outside
+Bruce's workflow and never determines task progress or completion. Tasks execute sequentially by default;
 `depends_on` prepares future scheduling but does not activate parallel execution.
 
 A long-running task may span multiple checkpoints without being split or restarted. Use
@@ -206,7 +205,6 @@ supporting skill only for a present need:
   content from the decision table in `artifact-policy.md`, not from the execution profile;
 - an explicitly requested standalone plan review: `plan-review`;
 - readiness of persisted downstream design: `design-gate`;
-- only when the user explicitly requests native Goal creation or continuation: `goal-execution`;
 - boundary-clear implementation delegation, with sequential fallback and no Goal prerequisite:
   `spawn-execute`;
 - final completion decision for every implementation task: `completion-gate`.
@@ -271,7 +269,6 @@ in-scope action after recording required progress; do not require Goal or a sepa
 phrase. This is an execution discipline and does not promise background or automatic cross-turn execution.
 Honor design-only stops, explicit user handoffs, permissions, and the existing L0-L4 boundaries.
 
-Enter `goal-execution` only when the user explicitly requests native Goal creation or continuation.
 Profile, duration, cross-turn recovery, audit needs, and phrases such as `continue nonstop`, `继续开发`,
 or `持续推进直到完成` do not imply that request. Without it, do not call Goal tools or create a
 Goal-specific audit record. `spawn-execute` is an optional helper for ordinary bounded delegation,
@@ -342,8 +339,7 @@ missing authority, unsafe external state, or unresolved L2-L4 conditions return 
 Do not use `implemented`, `verified`, `reviewing`, or `repairing` as completion verdicts: those are
 progress states recorded in the checkpoint and never replace the single terminal Completion field.
 
-Only for an explicitly requested native Goal, pass the single completion result and existing evidence
-references to `goal-execution` for host-state synchronization. Ordinary completion never requires Goal
+Bruce does not synchronize completion with native Goal state. Ordinary completion never requires Goal
 tools, a Goal status transition, or an extra audit log.
 
 Report changed files, acceptance evidence, the Design Gate result when applicable, the Completion

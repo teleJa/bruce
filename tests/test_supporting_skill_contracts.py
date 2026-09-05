@@ -9,7 +9,6 @@ SUPPORTING_SKILLS = (
     "inspect-parallel",
     "solution-analysis",
     "design-gate",
-    "goal-execution",
     "write-architecture",
     "write-db-design",
     "write-plan",
@@ -230,7 +229,6 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("Completion: pass|issues|blocked", body)
 
     def test_profile_does_not_trigger_supporting_modes(self) -> None:
-        self.assertNotIn("Bruce routes a `full` task", read("skills/goal-execution/SKILL.md"))
         self.assertNotIn("When a `full` task", read("skills/design-gate/SKILL.md"))
         tests = read("skills/write-tests/SKILL.md")
         self.assertIn("profile 本身既不是必要条件，也不是充分条件", tests)

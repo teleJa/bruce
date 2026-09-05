@@ -1,4 +1,0 @@
-interface:
-  display_name: "Native Goal Adapter"
-  short_description: "Connect explicitly requested native Goal to Bruce"
-  default_prompt: "Use $goal-execution for my explicitly requested native Goal, reusing existing task progress and evidence without an extra audit log."

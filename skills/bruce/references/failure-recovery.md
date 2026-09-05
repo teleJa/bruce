@@ -110,8 +110,8 @@ remain L4; do not replay them. Rerun checks whose preconditions changed, the unc
 scenario, and required related regressions. Neither continuation nor checkpoint recording resets
 retry or repair counts or authorizes unmapped inspection.
 
-Ordinary recovery does not require Goal or `execute_record.md`. Consult native Goal only for an
-explicitly requested Goal lifecycle; unavailable Goal tools do not block ordinary recovery.
+Ordinary recovery does not require native Goal state or `execute_record.md`. Native Goal state is
+outside Bruce's workflow and unavailable Goal tools do not block ordinary recovery.
 When prior context is unavailable, use the user objective or explicit handoff and current repository
 evidence. Do not infer completion from old workflow artifacts. Missing evidence means unknown, not
 verified. Preserve unrelated working-tree changes and do not reopen unrelated investigation.

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from tests._support import ROOT, read
+from tests._support import read
 
 
 class WorkflowRoutingContractTest(unittest.TestCase):
@@ -12,7 +12,7 @@ class WorkflowRoutingContractTest(unittest.TestCase):
         self.assertIn("implementation:", skill)
         self.assertIn("Bruce has two decisions; ordinary execution does not require Goal", skill)
         self.assertNotIn("two decisions and one optional execution mode", skill)
-        for name in ("`design-gate`", "`completion-gate`", "`goal-execution`"):
+        for name in ("`design-gate`", "`completion-gate`"):
             self.assertIn(name, skill)
 
     def test_bruce_is_user_directed_and_consumes_confirmed_handoffs(self) -> None:
@@ -55,12 +55,10 @@ class WorkflowRoutingContractTest(unittest.TestCase):
             "skills/bruce/references/verification-loop.md",
             "skills/design-gate/SKILL.md",
             "skills/completion-gate/SKILL.md",
-            "skills/goal-execution/SKILL.md",
             "skills/spawn-execute/SKILL.md",
         )
         forbidden = (
             "artifact-review-gate",
-            "goal-execution-gate",
             "doc-review-gate",
             "Author check: C0",
             "Document author check: D0",
@@ -74,22 +72,6 @@ class WorkflowRoutingContractTest(unittest.TestCase):
                 for marker in forbidden:
                     self.assertNotIn(marker, body)
 
-    def test_goal_route_is_explicit_and_profile_independent(self) -> None:
-        workflow = read("skills/bruce/SKILL.md")
-        goal = read("skills/goal-execution/SKILL.md")
-        for path in (
-            "skills/bruce/SKILL.md",
-            "skills/goal-execution/SKILL.md",
-            "skills/bruce/references/plugin-boundary.md",
-        ):
-            with self.subTest(path=path):
-                normalized = " ".join(read(path).split())
-                self.assertIn("user explicitly requests native Goal", normalized)
-                self.assertNotIn("task-contract need for continuous", normalized)
-                self.assertNotIn("task contract requires continuous/cross-turn", normalized)
-        self.assertIn(".goal/<goal-id>/execute_record.md", goal)
-        self.assertTrue((ROOT / "skills/goal-execution/SKILL.md").is_file())
-        self.assertNotIn("a `full` profile by default", workflow)
 
     def test_host_authority_remains_owned_by_codex(self) -> None:
         boundary = read("skills/bruce/references/plugin-boundary.md")

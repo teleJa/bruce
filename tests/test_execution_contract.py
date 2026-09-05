@@ -8,53 +8,12 @@ from tests._support import read
 class ExecutionContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.goal = read("skills/goal-execution/SKILL.md")
         cls.spawn = read("skills/spawn-execute/SKILL.md")
 
-    def test_goal_execution_is_a_mode_not_a_gate(self) -> None:
-        self.assertIn("Goal execution is a mode, not a gate", self.goal)
-        self.assertIn("does not re-check", self.goal)
-        self.assertIn("Do not independently inspect artifacts", self.goal)
-        self.assertIn(".goal/<goal-id>/execute_record.md", self.goal)
 
-    def test_goal_consumes_owned_results_without_mandatory_audit(self) -> None:
-        normalized = " ".join(self.goal.split())
-        for result in ("`Completion: pass`", "`Completion: issues`", "`Completion: blocked`"):
-            self.assertIn(result, normalized)
-        self.assertIn("Design result when applicable", normalized)
-        self.assertIn("Completion result and evidence summary", normalized)
-        self.assertIn("Do not create or maintain `execute_record.md` by default", normalized)
-        self.assertIn("Only when the user explicitly requests a durable audit record", normalized)
-        self.assertIn("never overrides native Goal state or either Gate result", normalized)
-        self.assertIn("Do not independently inspect artifacts", normalized)
 
-    def test_goal_resume_reuses_ordinary_recovery_and_honors_host_state(self) -> None:
-        normalized = " ".join(self.goal.split())
-        self.assertIn("Use the ordinary Bruce resume procedure", normalized)
-        self.assertIn("failure-recovery.md", normalized)
-        self.assertIn("Do not silently replace a conflicting unfinished Goal", normalized)
-        self.assertIn("Honor host pause, cancellation, permissions, and budget limits", normalized)
-        self.assertIn("Pass a token budget only when the user explicitly specified one", normalized)
 
-    def test_goal_reuses_existing_progress_and_evidence(self) -> None:
-        normalized = " ".join(self.goal.split())
-        for phrase in (
-            "existing task contract, checkpoint, and verification evidence",
-            "capability preflight",
-            "event-driven checkpoints",
-            "does not reset L0/L1 retry or repair counts",
-            "Do not mirror",
-        ):
-            self.assertIn(phrase, normalized)
 
-    def test_goal_entry_requires_explicit_native_goal_request(self) -> None:
-        normalized = " ".join(self.goal.split())
-        self.assertIn("Enter only when the user explicitly requests native Goal", normalized)
-        self.assertIn("Profile, complexity, duration, risk, subagent use, cross-turn recovery, and audit needs", normalized)
-        self.assertIn("do not enable this adapter", normalized)
-        for phrase in ("continue nonstop", "继续开发", "持续推进直到完成"):
-            self.assertIn(phrase, normalized)
-        self.assertNotIn("resolved task contract requires continuous/cross-turn", normalized)
 
     def test_ordinary_execution_continues_with_bounded_stops(self) -> None:
         workflow = " ".join(read("skills/bruce/SKILL.md").split())
@@ -84,16 +43,8 @@ class ExecutionContractTest(unittest.TestCase):
         self.assertIn("Neither a native Goal nor `execute_record.md` is a prerequisite", spawn)
         self.assertIn("Return task evidence to Bruce for integration", spawn)
         self.assertIn("Do not create or close native Goals", spawn)
-        self.assertNotIn("under an active goal-execution mode", spawn)
+        self.assertNotIn("under a special execution mode", spawn)
         self.assertNotIn("Confirm matching native Goal state and audit record exist", spawn)
-
-    def test_discovery_metadata_does_not_reintroduce_goal_or_audit_requirements(self) -> None:
-        goal_ui = read("skills/goal-execution/agents/openai.yaml")
-        spawn_ui = read("skills/spawn-execute/agents/openai.yaml")
-        self.assertIn("explicitly requested native Goal", goal_ui)
-        self.assertNotIn("one audit record", goal_ui)
-        self.assertNotIn("under $goal-execution", spawn_ui)
-        self.assertNotIn("active Goal", spawn_ui)
 
     def test_spawn_execute_returns_task_evidence_not_gate_verdicts(self) -> None:
         self.assertIn("Neither a native Goal nor `execute_record.md` is a prerequisite", self.spawn)

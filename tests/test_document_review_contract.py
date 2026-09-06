@@ -50,20 +50,23 @@ class DocumentReviewContractTest(unittest.TestCase):
         self.assertIn("never a third verdict", policy)
         self.assertIn("without the author's rationale or proposed verdict", gate)
 
-    def test_document_writers_return_local_checks_and_defer_readiness(self) -> None:
+    def test_document_writers_return_local_checks_and_mandatory_gate_handoff(self) -> None:
         for name in DOCUMENT_WRITERS:
             body = read(f"skills/{name}/SKILL.md")
+            normalized = " ".join(body.split())
             with self.subTest(skill=name):
                 self.assertIn("Document check: clear|issues", body)
                 self.assertNotIn("D0", body)
                 self.assertNotIn("D1", body)
-        for name in DOCUMENT_WRITERS[1:]:
-            body = read(f"skills/{name}/SKILL.md")
-            with self.subTest(skill=name):
+                self.assertIn("`design-gate` handoff", normalized)
                 if name == "write-tests":
-                    self.assertIn("必须运行 `design-gate`", body)
+                    self.assertIn("同一轮", normalized)
+                    self.assertIn("无需用户追加指令", normalized)
+                    self.assertIn("不拥有 Design verdict", normalized)
                 else:
-                    self.assertIn("`design-gate` is required", " ".join(body.split()))
+                    self.assertIn("same turn", normalized)
+                    self.assertIn("without another user instruction", normalized)
+                    self.assertIn("does not own the Design verdict", normalized)
 
     def test_old_document_gate_is_removed(self) -> None:
         self.assertFalse((ROOT / "skills/doc-review-gate/SKILL.md").exists())

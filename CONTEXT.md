@@ -37,7 +37,7 @@ The optional `explore-prototype` skill answers one logic or UI-structure questio
 _Avoid_: Formal prototype evidence, production code, delegated product authority, mandatory subagent
 
 **Design Gate**:
-The `design-gate` skill makes the only implementation-entry decision for persisted requirements, architecture, contracts, schema design, plans, test designs, or UI prototypes that will govern downstream implementation. It returns `Design: pass|blocked` and persists one `design-review.md`.
+The `design-gate` skill makes the only implementation-entry decision for persisted requirements, architecture, contracts, schema design, plans, test designs, or UI prototypes that will govern downstream implementation. Successful persistence and local checks create a mandatory handoff that Bruce consumes in the same turn without another user instruction. The writer does not own the verdict; `design-gate` returns `Design: pass|blocked` and persists one `design-review.md`.
 _Avoid_: Plan approval, separate artifact gate, independent-agent verdict
 
 **Native Goal Boundary**:
@@ -96,7 +96,7 @@ Native Subagent delegation is contract-driven rather than personality-driven. Se
 - **Verified**: capabilities are predicate-driven and do not cascade from profile selection (`skills/bruce/SKILL.md:69-93`).
 - **Verified**: `write-prototype` keeps provider execution host-owned and returns change-scoped brief, manifest, and snapshot evidence (`skills/write-prototype/SKILL.md`).
 - **Verified**: `explore-prototype` separates logic/UI exploration from formal prototype readiness and bounds optional generation delegation (`skills/explore-prototype/SKILL.md`).
-- **Verified**: Design Gate owns persisted-design readiness, including governing UI prototypes, and its single verdict (`skills/design-gate/SKILL.md`).
+- **Verified**: governing design persistence creates a same-turn mandatory Design Gate handoff without another user instruction, while Design Gate retains its single verdict (`skills/bruce/SKILL.md`, `skills/design-gate/SKILL.md`).
 - **Verified**: native Goal is outside Bruce workflow and does not determine ordinary execution, recovery, or completion (`skills/bruce/SKILL.md`).
 - **Verified**: Completion Gate owns the single completion verdict and treats independence as an internal mode (`skills/completion-gate/SKILL.md:6-9`, `skills/completion-gate/SKILL.md:57-89`).
 - **Verified**: shared Scenario/Track Result contracts lock exact versions, isolate API/UI namespaces and write paths, and aggregate track state without emitting Completion (`skills/test-dispatch/references/scenario-schema.md`, `skills/test-dispatch/references/track-result-schema.md`).

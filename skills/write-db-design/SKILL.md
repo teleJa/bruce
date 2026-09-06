@@ -47,7 +47,9 @@ deriving schema facts separately from each owning repository.
 8. When a design file was persisted, inspect its diff against actual schema/repository rules and
    check scenario coverage, lifecycle/migration consistency, omissions, placeholders, and links.
    Repair issues and return `Document check: clear|issues`. When the design will govern
-   implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.
+   implementation, return a mandatory `design-gate` handoff. Bruce/the caller must invoke
+   `design-gate` in the same turn without another user instruction; do not stop after merely reporting
+   that the gate is required. This writer does not own the Design verdict.
 
 ## Output
 
@@ -57,4 +59,5 @@ verification requirements. List the generated file and document-check result whe
 ## Does not own
 
 Do not choose Bruce execution profile/risk, create workflow state, force plan or test updates, approve schema
-changes, execute migrations, or invoke another supporting skill automatically.
+changes, or execute migrations. The mandatory Design Gate handoff is the only automatic continuation;
+other supporting skills remain predicate-driven.

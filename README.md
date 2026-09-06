@@ -23,9 +23,11 @@ Validate the contract with `python3 scripts/validate_functional_agents.py`.
 `$bruce` is the user-directed design and implementation capability. Analysis-only work starts with
 `$solution-analysis`, not with a hidden pre-step inside `$bruce`. After the user discusses and confirms
 the analysis, `$bruce` can be entered with an explicit `design-only` scope to persist the necessary design
-artifacts and run Design Gate without implementing behavior or invoking Completion Gate. A separate user
-instruction is required before implementation begins. Bruce does not infer implementation from a
-prior analysis or design document without an explicit user instruction.
+artifacts and run Design Gate without implementing behavior or invoking Completion Gate. Once governing
+design artifacts are persisted and locally checked, Bruce runs Design Gate in the same turn without
+asking for another user instruction. A separate user instruction is still required before implementation
+begins; the automatic Gate handoff does not infer implementation authorization from a prior analysis or
+design document.
 
 ## Workflow
 
@@ -81,9 +83,10 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
 - An L1 failed scenario enters a bounded repair loop: fix, inspect the change, rerun the unchanged scenario,
   then run related regressions. Two unsuccessful complete rounds escalate to L2 replanning; L0,
   L2, L3, and L4 retain their retry, replan, decision, and incident-freeze semantics.
-- Every task that persists downstream-governing design runs `design-gate`. It decides artifact
-  completeness and document readiness together, persists one `design-review.md`, and returns only
-  `Design: pass|blocked`.
+- Every task that persists downstream-governing design creates a mandatory `design-gate` handoff.
+  Bruce consumes it in the same turn without another user instruction; the document writer does not
+  stop after merely recommending the Gate. `design-gate` decides artifact completeness and document
+  readiness together, persists one `design-review.md`, and returns only `Design: pass|blocked`.
 - When independent per-task boundaries or handoff require it, use one change-level
   `tasks/` package: `tasks/index.yaml` plus frozen `T-<id>-<slug>.md` contracts. Task state is tracked
   in `checkpoint.yaml` or the current checkpoint message; sequential execution is the default and

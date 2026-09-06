@@ -48,7 +48,9 @@ class PrototypeContractTest(unittest.TestCase):
         self.assertIn("explicitly requests a prototype", normalized)
         self.assertIn("confirmed prototype must govern", normalized)
         self.assertIn("does not trigger this skill", normalized)
-        self.assertIn("Do not invoke another supporting skill automatically", self.skill)
+        self.assertIn("mandatory `design-gate` handoff", normalized)
+        self.assertIn("same turn without another user instruction", normalized)
+        self.assertIn("other supporting skills remain predicate-driven", normalized)
 
     def test_open_design_requires_the_complete_host_capability_set(self) -> None:
         for capability in CORE_OPEN_DESIGN_CAPABILITIES:

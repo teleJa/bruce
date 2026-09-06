@@ -337,8 +337,11 @@ delete its project/run identity, lineage, output state, artifact count, hash sum
 or snapshot-retention record.
 
 Inspect final brief, UI contract when applicable, manifest, files, hashes, links, four checks,
-confirmation, and evidence gaps. Return `Document check: clear|issues`. When the prototype will
-govern implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.
+confirmation, and evidence gaps. Return `Document check: clear|issues`. When the confirmed prototype
+will govern implementation, return a mandatory `design-gate` handoff. Bruce/the caller must invoke
+`design-gate` in the same turn without another user instruction; do not stop after merely reporting
+that the gate is required. This writer does not own the Design verdict. Pending, unconfirmed, or
+otherwise non-governing prototype state does not create this handoff.
 
 ## Output
 
@@ -352,4 +355,5 @@ confirmation state/evidence, known gaps, cleanup history, and `Document check: c
 
 Do not make product decisions, install or configure host tools, create a Bruce MCP/CLI/app, publish
 artifacts, implement production frontend code, approve the prototype, decide design readiness, or
-declare delivery complete. Do not invoke another supporting skill automatically.
+declare delivery complete. The mandatory Design Gate handoff is the only automatic continuation;
+other supporting skills remain predicate-driven.

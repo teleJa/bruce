@@ -62,8 +62,10 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
 9. Inspect the plan and task-package diff and check requirement/acceptance coverage, task boundaries,
    dependencies, file/interface joins, Given/When/Then evidence anchors, omissions, placeholders,
    links, and path ownership. Repair issues and return `Document check: clear|issues`. When the plan
-   contains a governing design decision or downstream contract, tell Bruce that `design-gate` is
-   required under the shared artifact policy; an execution checklist alone does not require it.
+   contains a governing design decision or downstream contract, return a mandatory `design-gate`
+   handoff under the shared artifact policy. Bruce/the caller must invoke `design-gate` in the same turn
+   without another user instruction; do not stop after merely reporting that the gate is required. This
+   writer does not own the Design verdict. An execution checklist alone does not require the handoff.
 
 ## Output
 
@@ -78,5 +80,6 @@ Return exactly one outcome:
 ## Does not own
 
 Do not generate a test plan, database design, architecture, review, approval, progress ledger, or
-execution automatically. Do not choose Bruce risk/profile, launch subagents, own repository
-exploration, invoke another supporting skill automatically, or declare completion.
+execution automatically. Do not choose Bruce risk/profile, launch subagents, or own repository
+exploration. The mandatory Design Gate handoff is the only automatic continuation; other supporting
+skills remain predicate-driven. Do not declare completion.

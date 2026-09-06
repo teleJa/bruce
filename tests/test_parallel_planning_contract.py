@@ -24,8 +24,8 @@ class ParallelPlanningContractTest(unittest.TestCase):
         normalized = " ".join(self.plan.split())
         for phrase in (
             "Do not launch subagents, invoke `inspect-parallel`, or own parallel repository inspection",
-            "Do not choose Bruce risk/profile, launch subagents, own repository exploration",
-            "invoke another supporting skill automatically",
+            "Do not choose Bruce risk/profile, launch subagents, or own repository exploration",
+            "other supporting skills remain predicate-driven",
         ):
             self.assertIn(phrase, normalized)
         for forbidden in (

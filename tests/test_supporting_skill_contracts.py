@@ -296,25 +296,31 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("Do not launch subagents, invoke `inspect-parallel`", normalized)
         self.assertIn("Return `Missing planning evidence`", normalized)
         self.assertIn("smallest bounded scopes Bruce must inspect", normalized)
-        self.assertIn("invoke another supporting skill automatically", normalized)
+        self.assertIn("other supporting skills remain predicate-driven", normalized)
         for forbidden in (
             "use bounded native read-only subagents directly",
             "inspect the affected scopes directly",
         ):
             self.assertNotIn(forbidden, normalized)
 
-    def test_capabilities_do_not_cascade(self) -> None:
+    def test_capabilities_only_auto_chain_the_mandatory_design_gate_handoff(self) -> None:
         for name in (
             "write-architecture",
             "write-db-design",
             "write-plan",
             "write-prototype",
             "write-tests",
-            "doctor",
         ):
             body = read(f"skills/{name}/SKILL.md")
+            normalized = " ".join(body.split())
             with self.subTest(skill=name):
-                self.assertRegex(body, r"(?i)do not invoke it automatically|does not own")
+                self.assertIn("`design-gate` handoff", normalized)
+                self.assertRegex(
+                    normalized,
+                    r"(?i)other supporting skills remain predicate-driven|除强制 Design Gate handoff 外，不要自动调用其他 supporting skill",
+                )
+        doctor = read("skills/doctor/SKILL.md")
+        self.assertIn("does not own the main Bruce workflow", doctor)
 
     def test_doctor_is_explicit_and_not_a_completion_authority(self) -> None:
         body = read("skills/doctor/SKILL.md")

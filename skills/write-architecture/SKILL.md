@@ -59,7 +59,9 @@ trigger this requirement.
 8. When an artifact was persisted, inspect its diff, verify claims against repository evidence,
    check contracts and cross-document references, and remove material omissions, placeholders, and
    broken links. Repair issues and return `Document check: clear|issues`. When the artifact will
-   govern implementation, tell Bruce that `design-gate` is required; do not invoke it automatically.
+   govern implementation, return a mandatory `design-gate` handoff. Bruce/the caller must invoke
+   `design-gate` in the same turn without another user instruction; do not stop after merely reporting
+   that the gate is required. This writer does not own the Design verdict.
 
 ## Output
 
@@ -73,3 +75,5 @@ implementation.
 
 Do not select the execution profile or business risk, request host approval, generate database design or plans
 automatically, freeze a user approval state, schedule execution, or declare implementation complete.
+The mandatory Design Gate handoff is the only automatic continuation; other supporting skills remain
+predicate-driven.

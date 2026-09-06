@@ -24,6 +24,18 @@ class WorkflowRoutingContractTest(unittest.TestCase):
         self.assertIn("does not invoke it automatically", normalized)
         self.assertIn("user-confirmed analysis", normalized)
 
+    def test_governing_design_handoff_runs_gate_without_new_user_command(self) -> None:
+        skill = read("skills/bruce/SKILL.md")
+        normalized = " ".join(skill.split())
+        self.assertIn("mandatory `design-gate` handoff", normalized)
+        self.assertIn("in the same turn", normalized)
+        self.assertIn("without another user instruction", normalized)
+        self.assertIn("must not stop after the document writer returns", normalized)
+        self.assertIn("does not authorize behavior implementation", normalized)
+        self.assertIn("`design-only` scope still stops after the Gate result", normalized)
+        self.assertIn("may continue only after the current Gate passes", normalized)
+        self.assertIn("A `Design: blocked` result stops affected implementation", normalized)
+
     def test_design_only_handoff_stops_before_completion(self) -> None:
         skill = read("skills/bruce/SKILL.md")
         normalized = " ".join(skill.split())

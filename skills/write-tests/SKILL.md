@@ -129,7 +129,8 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 11. 检查文档 diff 以及 requirement/acceptance traceability、prerequisites、Given/When/Then 可观察性、evidence layer
     是否匹配、真实依赖语义、回归覆盖、矩阵不变量、权威状态、冲突场景、占位符和链接；
     同时检查 Provider 是否来自配置（未配置默认 `ego-lite`）、是否残留 Chrome-only 前提、视觉断言及截图判读是否具体。修复问题后返回
-    `Document check: clear|issues`。测试设计将约束实现时，告知 Bruce 必须运行 `design-gate`；不要自动调用它。
+    `Document check: clear|issues`。测试设计将约束实现时，返回强制 `design-gate` handoff；Bruce/调用方
+    必须在同一轮内立即运行 `design-gate`，无需用户追加指令，不得停在“需要门禁”的提示上。本 Skill 不拥有 Design verdict。
 
 ## Output
 
@@ -140,4 +141,4 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 ## Does not own
 
 不要创建 execution state，不负责开发顺序，不批准计划，不调用 plan review，不运行完整 workflow，不委托或声明
-completion。不要自动调用其他 supporting skill。
+completion。除强制 Design Gate handoff 外，不要自动调用其他 supporting skill。

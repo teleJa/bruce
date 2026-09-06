@@ -21,6 +21,26 @@ def select(table, inputs):
 
 
 class WorkflowPolicyContractTest(unittest.TestCase):
+    def test_design_gate_handoff_preserves_negative_applicability_boundaries(self):
+        policy = ' '.join(read('skills/bruce/references/artifact-policy.md').split())
+        for phrase in (
+            '持久化工件包含待确认的设计决策或下游合同',
+            '只是执行清单、现有命令列表、进度说明或普通文档编辑',
+            '治理型工件已成功落盘并完成本地文档检查',
+            '必须在同一轮内立即执行 Gate，无需用户追加指令',
+        ):
+            self.assertIn(phrase, policy)
+
+        plan = ' '.join(read('skills/write-plan/SKILL.md').split())
+        self.assertIn('An execution checklist alone does not require the handoff', plan)
+
+        prototype = ' '.join(read('skills/write-prototype/SKILL.md').split())
+        self.assertIn('When the confirmed prototype will govern implementation', prototype)
+        self.assertIn(
+            'Pending, unconfirmed, or otherwise non-governing prototype state does not create this handoff',
+            prototype,
+        )
+
     def test_test_design_truth_table_covers_all_inputs(self):
         table = rows('skills/bruce/references/artifact-policy.md', 'TEST')
         self.assertEqual([row[0] for row in table], [f'TEST-0{i}' for i in range(1, 6)])

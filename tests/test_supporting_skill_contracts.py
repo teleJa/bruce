@@ -290,6 +290,37 @@ class SupportingSkillContractTest(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, normalized)
 
+    def test_execution_handoff_freezes_cross_model_boundaries_and_budget(self) -> None:
+        plan = " ".join(read("skills/write-plan/SKILL.md").split())
+        handoff = read("skills/write-plan/templates/execution-handoff.md")
+        gate = " ".join(read("skills/design-gate/SKILL.md").split())
+        spawn = " ".join(read("skills/spawn-execute/SKILL.md").split())
+        for phrase in (
+            "different execution model/profile",
+            "execution-handoff.md",
+            "implementation-map joins",
+            "executor_must_verify",
+            "investigation budget",
+            "stop conditions",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, plan)
+                self.assertIn(phrase, gate)
+        for phrase in (
+            "Frozen scope",
+            "Allowed paths",
+            "Excluded paths",
+            "Confirmed decisions",
+            "Implementation map",
+            "Maximum discovery calls before the first edit",
+            "Maximum full-file or multi-range reads before the first edit",
+            "Begin implementation once",
+        ):
+            self.assertIn(phrase, handoff)
+        self.assertIn("accept frozen decisions", spawn)
+        self.assertIn("Do not ask the executor to reread the full design", spawn)
+        self.assertIn("bounded conflict report", spawn)
+
     def test_write_plan_does_not_cascade_to_parallel_inspection(self) -> None:
         normalized = " ".join(read("skills/write-plan/SKILL.md").split())
         self.assertIn("when Bruce already produced them", normalized)

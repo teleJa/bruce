@@ -24,6 +24,9 @@ user for the document path.
 - The implementation boundary that the design will govern.
 - The document language rule in [../bruce/references/document-language.md](../bruce/references/document-language.md).
 - The deterministic [Design Review validator](scripts/validate_design_review.py).
+- When implementation will be consumed by a different execution model/profile or a durable task handoff
+  is part of the confirmed scope, the execution handoff at
+  [write-plan/templates/execution-handoff.md](../write-plan/templates/execution-handoff.md).
 - The task-contract package rule in [../bruce/references/task-contract.md](../bruce/references/task-contract.md).
 
 ## Candidate set
@@ -114,7 +117,13 @@ An independent design review uses the `reviewer` Profile with a clean-context Ta
    it cannot be marked skipped.
 3. Verify every generated path exists and every skip cites concrete repository and scope evidence.
 4. Perform the readiness checks against the actual files and current repository facts.
-5. Return `blocked` when a candidate is omitted, a required artifact is missing or stale, a skip is
+5. When a different execution model/profile will consume the design, or the confirmed implementation
+   scope requires durable task handoff, verify that `execution-handoff.md` exists beside `plan.md` and
+   contains frozen allowed/excluded paths, implementation-map joins, confirmed decisions, bounded
+   `executor_must_verify` facts, required verification, investigation budget, and stop conditions.
+   A missing or incomplete handoff is a readiness blocker; do not make the executor reconstruct it by
+   rereading the entire design package.
+6. Return `blocked` when a candidate is omitted, a required artifact is missing or stale, a skip is
    unsupported, documents materially conflict, a blocking readiness issue remains, or required
    independent review cannot run. A governing prototype is also blocked when
    `prototype-manifest.md` is absent, confirmation is pending, material product facts remain
@@ -126,18 +135,18 @@ An independent design review uses the `reviewer` Profile with a clean-context Ta
    names the inspected exact snapshot. Pending or blocked Visual checks, unavailable Visual evidence,
    and every mismatched pair cannot govern implementation. `manual-confirmed + manual-only` cannot
    override `exact_token_assertions = blocked`; deterministic assertions must be `clear` first.
-6. Write the review's natural-language fields and Markdown section titles in the user's language
+7. Write the review's natural-language fields and Markdown section titles in the user's language
    following [document-language.md](../bruce/references/document-language.md), using Simplified Chinese
    by default for Chinese requests (e.g. `# 设计评审`, `## 候选工件矩阵`, `## 就绪检查`, `## 验证`, `## 结论`);
    preserve machine tokens including candidate names, paths, statuses, and verdict tokens.
-7. Persist or update exactly one same-directory `design-review.md` using
+8. Persist or update exactly one same-directory `design-review.md` using
    [design-review.md](templates/design-review.md). Reuse it on re-review.
-8. Run `python3 <plugin-root>/skills/design-gate/scripts/validate_design_review.py --change-dir
+9. Run `python3 <plugin-root>/skills/design-gate/scripts/validate_design_review.py --change-dir
    <change-directory>` against the current files. A non-zero result or an unexecuted validator forces
    `Design: blocked`; never write or report `Design: pass` from prose inspection alone.
-9. Inspect the review file itself and the validator output for matrix completeness, accurate evidence,
+10. Inspect the review file itself and the validator output for matrix completeness, accurate evidence,
    placeholders, links, current paths, and verdict consistency.
-10. Record validator `Result: pass` only from the current zero exit; the persisted result line is a
+11. Record validator `Result: pass` only from the current zero exit; the persisted result line is a
     trace field, not authority. The hook or direct validator subprocess exit code is authoritative;
     this validator result confirms document integrity and is independent of whether the Design verdict
     is `pass` or `blocked`. Return `Design: pass|blocked` with blocking findings, validator evidence,

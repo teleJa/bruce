@@ -13,18 +13,23 @@ verdict protocol. Neither a native Goal nor `execute_record.md` is a prerequisit
 - The current authorized task contract and existing checkpoint when applicable.
 - Objective, scope, acceptance, constraints, profile, and risk.
 - The task slice, dependencies, file ownership, interfaces, and required verification.
+- The execution handoff when a design model/profile differs from the executor or durable handoff is required.
 - Current workspace facts and unrelated changes that must be preserved.
 
 ## Procedure
 
 1. Confirm the parent authorized implementation and froze the task slice, acceptance, allowed paths,
-   dependencies, and stop condition. If those inputs are incomplete, return control to Bruce without
+   dependencies, and stop condition. If an execution handoff exists, consume it as the bounded
+   implementation contract: accept frozen decisions, verify only `executor_must_verify` items, and
+   honor its investigation budget and stop conditions. Do not ask the executor to reread the full design
+   package to rediscover scope. If those inputs are incomplete, return control to Bruce without
    creating a Goal or audit record. If delegation is unavailable or unsafe, use sequential execution
    within the same scope.
 2. Delegate only boundary-clear, low-coupling work without hidden context. Keep shared-file and
    unresolved-contract work sequential.
 3. Give the executor objective, allowed/excluded files, dependencies, exact interfaces, acceptance,
-   verification, and prohibited side effects.
+   verification, investigation budget, stop conditions, and prohibited side effects. If a frozen decision
+   conflicts with current evidence, require a bounded conflict report instead of silent redesign.
 4. Keep the main agent responsible for dependency order, conflicts, scope, integration, and final
    verification.
 5. Inspect actual changes and tool evidence. Classify failures with

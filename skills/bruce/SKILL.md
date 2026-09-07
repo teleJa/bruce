@@ -56,7 +56,11 @@ After the user discusses and confirms the direction, invoke Bruce explicitly wit
 
 A new conversation may start an `implementation` scope from the confirmed design artifacts. Bruce must
 not silently turn a design-only request into implementation, or an implementation request into a new
-broad analysis phase.
+broad analysis phase. When the design author and executor use different model/profile assignments,
+Bruce must require an execution-level handoff before implementation: the handoff freezes scope, maps
+files/symbols to acceptance and verification, labels what is already design-verified versus
+executor-only verification, and sets an investigation budget and stop conditions. Model differences do
+not authorize the executor to reopen the full design package.
 
 Once the selected scope successfully persists artifacts that will govern downstream implementation, their
 return creates a mandatory `design-gate` handoff. Bruce must invoke `design-gate` in the same turn,

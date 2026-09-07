@@ -46,11 +46,19 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
    change-level `tasks/` package with `tasks/index.yaml` using
    [tasks-index.yaml](templates/tasks-index.yaml) and [task.md](templates/task.md). Preserve stable order, ownership, acceptance ids, and revisions.
 4. Keep one `plan.md`. Without a package it holds the executable steps and verification directly;
-   with a package it summarizes and references frozen contracts instead of copying them.
+   with a package it summarizes and references frozen contracts instead of copying them. When a
+   persisted design will be consumed by a different execution model/profile, or when implementation
+   needs a durable handoff, also persist one `execution-handoff.md` beside the plan using
+   [execution-handoff.md](templates/execution-handoff.md). The handoff is an execution contract, not
+   a second design source of truth: it must freeze allowed/excluded paths, implementation-map joins,
+   confirmed decisions, executor-only verification facts, required checks, investigation budget, and
+   stop conditions. Do not leave the executor to rediscover these boundaries from the full design set.
 5. Mark `parallel_safe` only when dependencies and file ownership prove it. Bruce executes tasks
    sequentially by default; do not select a model, process, isolation mechanism, or scheduler.
 6. Ensure every acceptance item maps to a task and verification, dependencies exist and are acyclic,
-   every task has explicit included and excluded scope, and no task depends on unstated context. For
+   every task has explicit included and excluded scope, and no task depends on unstated context. When
+   an execution handoff is required, every `executor_must_verify` item must have a bounded source and
+   every implementation step must join to an allowed path, acceptance item, and verification command. For
    relationship or permission-projected state, also ensure the plan identifies the invariant and
    authority that govern the state; otherwise return a planning gap instead of allowing the UI to
    define the business rule implicitly.
@@ -74,7 +82,7 @@ Return exactly one outcome:
 - `Plan: ready`: persist one minimal executable plan, plus a task package only when independently
   required; summarize dependency order, risks, verification anchors, any task-package path, and
   `Document check: clear|issues` result.
-- `Missing planning evidence`: do not create or update `plan.md`; return the unresolved questions
+- `Missing planning evidence`: do not create or update `plan.md` or `execution-handoff.md`; return the unresolved questions
   and smallest bounded inspection scopes to Bruce for evidence collection before retrying this skill.
 
 ## Does not own

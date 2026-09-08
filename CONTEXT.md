@@ -40,6 +40,10 @@ _Avoid_: Formal prototype evidence, production code, delegated product authority
 The `design-gate` skill makes the only implementation-entry decision for persisted requirements, architecture, contracts, schema design, plans, test designs, or UI prototypes that will govern downstream implementation. Successful persistence and local checks create a mandatory handoff that Bruce consumes in the same turn without another user instruction. The writer does not own the verdict; `design-gate` returns `Design: pass|blocked` and persists one `design-review.md`.
 _Avoid_: Plan approval, separate artifact gate, independent-agent verdict
 
+**Unified Workflow State**:
+The versioned task-level lifecycle snapshot persisted under `checkpoint.workflow_state`. Checkpoint, Verification Run, repair, Design Gate, and Completion Gate map into it while retaining their local evidence and verdict ownership. Only a Gate-emitted `completion_passed` event can enter `completed`.
+_Avoid_: Scheduler, Goal ledger, second evidence store, state-produced Gate verdict
+
 **Native Goal Boundary**:
 Native Goal is outside the Bruce user-facing workflow and is not required for ordinary execution, recovery, checkpoint recording, delegation, or completion. Codex may manage native Goals independently.
 _Avoid_: Goal gate, scheduler, completion authority
@@ -90,6 +94,7 @@ Native Subagent delegation is contract-driven rather than personality-driven. Se
 
 ## Evidence Index
 
+- **Verified**: the workflow has one versioned task-level lifecycle state persisted under `checkpoint.workflow_state`; Checkpoint, Verification Run, repair and both Gates map into it without changing verdict ownership (`skills/bruce/references/workflow-state.md`, `scripts/workflow_state.py`).
 - **Verified**: the workflow has two decisions; ordinary execution, recovery, and delegation do not require Goal (`skills/bruce/SKILL.md`).
 - **Verified**: task contract, profile resolution, and profile/risk independence are defined in `skills/bruce/SKILL.md:38-63`.
 - **Verified**: artifact selection uses independent predicates; plans can stand alone and task packages remain sequential when needed (`skills/bruce/references/artifact-policy.md`, `skills/bruce/references/task-contract.md`).

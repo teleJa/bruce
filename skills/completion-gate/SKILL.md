@@ -105,7 +105,7 @@ After the configured limit, stop and return `Completion: issues` for repairable 
 
 The progress state is separate from the terminal verdict: task states are `implemented`, `verifying`,
 and `verified`; completion progress is `not_started`, `reviewing`, `repairing`, `ready`, or `decided`.
-Only `Completion: pass|issues|blocked` is terminal.
+Only `Completion: pass|issues|blocked` is terminal. After this Gate returns, Bruce records the corresponding normalized event in `checkpoint.workflow_state`: `completion_passed(actor=completion-gate) -> completed`, `completion_issues(actor=completion-gate) -> completion_issues`, or `completion_blocked(actor=completion-gate) -> blocked`. The shared state machine validates lifecycle consistency but cannot generate or override this Gate verdict.
 
 Reviewer waits are bounded by `workflow.review.max_wait_seconds` (default: 60) and
 `workflow.review.max_no_progress_polls` (default: 2). After that limit, stop polling the handle. If

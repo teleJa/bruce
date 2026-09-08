@@ -1,6 +1,12 @@
 # Dynamic execution record; do not write these values into a static Profile.
 version: 1
+# Task lifecycle is authoritative in checkpoint.workflow_state.
+workflow_state_ref: checkpoint.workflow_state
 run_id: VR-0001
+task_id: <task-id>
+checkpoint_id: <checkpoint-id>
+workflow_state_revision: <state-revision>
+basis_revision: <basis-revision>
 requirements_path: null
 requirements_content_hash: null
 profile_id: null

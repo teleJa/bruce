@@ -1,0 +1,15 @@
+# Task-level lifecycle snapshot. Dynamic execution details remain in checkpoint/run evidence.
+version: 1
+task_id: T-001
+state: unresolved
+state_revision: 0
+mode: implementation # allowed: design_only, implementation
+contract_revision: 1
+contract_frozen_revision: null
+basis_revision: template
+design_gate: not_required # allowed: not_required, pending, pass, blocked
+completion_result: null # allowed: null, pass, issues, blocked
+last_event: null
+stop_reason: null
+resume_state: null
+resume_conditions: []

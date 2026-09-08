@@ -14,7 +14,7 @@ design-only: confirmed analysis -> task contract -> necessary design artifacts -
 implementation: confirmed design -> scoped inspect -> implement -> targeted verification -> Completion Gate
 ```
 
-Bruce has two decisions; ordinary execution does not require Goal:
+Bruce has two decisions; ordinary execution does not require Goal. It also has one authoritative task-level lifecycle state machine. Read [workflow-state.md](references/workflow-state.md) before recording a structured checkpoint, entering verification, repairing, resuming, or deciding completion. Persist the current task snapshot under `checkpoint.workflow_state`; local Checkpoint, Verification Run, repair, Design Gate, and Completion Gate states map into it and do not create parallel task lifecycles.
 
 - `design-gate` is the only implementation-entry decision for persisted downstream design.
 - `completion-gate` is the only completion decision for an implementation task.
@@ -277,7 +277,7 @@ delegation alone does not block exploration.
 
 When Design Gate is required, do not implement affected behavior until the current same-directory
 `design-review.md` reports `Design: pass` and the Design Gate validator passes against that current
-change directory. A prose verdict, plan status, or file presence without validator evidence is not
+change directory. Record the normalized `design_passed` event with `actor=design-gate` and enter `workflow_state.state=design_ready` before implementation authorization; `Design: blocked` records `design_blocked` with `actor=design-gate` and prevents the implementation transition. A prose verdict, plan status, or file presence without validator evidence is not
 implementation entry. If scope changes a design decision, rerun Design Gate before continuing
 affected implementation.
 
@@ -353,8 +353,7 @@ scope is unchanged.
 Do not start a fresh review for each finding or repeat unaffected checks unless the review basis or
 risk trigger materially changes.
 
-Completion is allowed only when it returns `Completion: pass`. Repairable findings return `issues`;
-missing authority, unsafe external state, or unresolved L2-L4 conditions return `blocked`.
+Completion is allowed only when it returns `Completion: pass`. Record `completion_passed` with `actor=completion-gate` and enter `workflow_state.state=completed` only from that Gate result. Repairable findings return `issues` and enter `completion_issues`; missing authority, unsafe external state, or unresolved L2-L4 conditions return `blocked` via `completion_blocked` with `actor=completion-gate`. The state machine records these normalized results but never manufactures a Gate verdict.
 Do not use `implemented`, `verified`, `reviewing`, or `repairing` as completion verdicts: those are
 progress states recorded in the checkpoint and never replace the single terminal Completion field.
 

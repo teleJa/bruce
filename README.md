@@ -35,6 +35,10 @@ design document.
 inspect -> task contract -> design when needed -> Design Gate when needed -> implement -> Completion Gate -> summary
 ```
 
+- Bruce uses one versioned task-level lifecycle state machine persisted as `checkpoint.workflow_state`.
+  Checkpoint, Verification Run, repair, Design Gate, and Completion Gate keep their local details but
+  map into this shared lifecycle; see `skills/bruce/references/workflow-state.md`. Gate verdict ownership
+  remains unchanged, and only `Completion: pass` can enter `completed`.
 - `unresolved` is a temporary, read-only inspection state. It creates no Goal, design artifact,
   change directory, or behavior implementation solely because boundary evidence is incomplete.
 - `standard` is resolved after inspection proves one delivery component with no cross-component

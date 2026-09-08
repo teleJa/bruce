@@ -163,6 +163,10 @@ final field:
 
 `Design: pass|blocked`
 
+After returning the verdict, Bruce records the normalized event in `checkpoint.workflow_state`:
+`design_passed(actor=design-gate) -> design_ready` or `design_blocked(actor=design-gate) -> design_blocked`. The shared state machine validates
+the lifecycle transition but cannot generate, change, or combine this Gate verdict.
+
 ## Does not own
 
 Do not implement behavior, create Goal state, decide delivery completion, perform delivery actions,

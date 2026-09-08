@@ -1,0 +1,128 @@
+version: 1
+workflow_state:
+  version: 1
+  task_id: T-001
+  state: completed
+  state_revision: 8
+  mode: implementation
+  contract_revision: 1
+  contract_frozen_revision: 1
+  basis_revision: working-tree-20260908-unified-workflow-state-machine
+  design_gate: pass
+  completion_result: pass
+  last_event:
+    event_id: EV-0008
+    type: completion_passed
+    actor: completion-gate
+    from_state: completion_review
+    to_state: completed
+    resume_state: null
+    basis_revision: working-tree-20260908-unified-workflow-state-machine
+    observed_at: '2026-09-08T11:41:16.238478+00:00'
+    evidence_refs:
+    - 'python3 -m pytest -q: 412 passed, 2035 subtests passed'
+    - 'python3 scripts/validate_plugin.py .: pass'
+    - 'python3 scripts/validate_functional_agents.py: pass'
+    - 'python3 scripts/validate_workflow_state.py: pass'
+    - 'python3 skills/design-gate/scripts/validate_design_review.py --change-dir docs/change/20260908-120000-unified-workflow-state-machine:
+      pass'
+    - 'git diff --check: pass'
+  stop_reason: null
+  resume_state: null
+  resume_conditions: []
+Checkpoint: clear
+checkpoint_id: CP-0001
+checkpoint_kind: batch
+requirement_id: 20260908-120000-unified-workflow-state-machine
+basis_revision: working-tree-20260908-unified-workflow-state-machine
+environment: {}
+profiles:
+  environment_refs: []
+  verification_profile: null
+blockers: []
+resume_event: null
+active_task: T-001
+execution_mode: sequential
+batch_id: B-001-unified-state-machine
+matrix:
+- batch_id: B-001-unified-state-machine
+  acceptance_id: AC-001
+  path: skills/bruce/references/workflow-state.md
+  required_layer: contract
+  basis_revision: working-tree-20260908-unified-workflow-state-machine
+  evidence_revision: working-tree-20260908-unified-workflow-state-machine
+  evidence: state schema and mapping contract tests
+  result: pass
+  affected_scope:
+  - skills/bruce/references/workflow-state.md
+  - skills/bruce/templates/workflow-state.yaml
+- batch_id: B-001-unified-state-machine
+  acceptance_id: AC-002
+  path: scripts/workflow_state.py
+  required_layer: unit
+  basis_revision: working-tree-20260908-unified-workflow-state-machine
+  evidence_revision: working-tree-20260908-unified-workflow-state-machine
+  evidence: 20 state-machine tests plus full pytest
+  result: pass
+  affected_scope:
+  - scripts/workflow_state.py
+  - scripts/validate_workflow_state.py
+- batch_id: B-001-unified-state-machine
+  acceptance_id: AC-003
+  path: skills/bruce/templates/checkpoint.yaml
+  required_layer: contract
+  basis_revision: working-tree-20260908-unified-workflow-state-machine
+  evidence_revision: working-tree-20260908-unified-workflow-state-machine
+  evidence: checkpoint/run consistency tests
+  result: pass
+  affected_scope:
+  - skills/bruce/templates/checkpoint.yaml
+  - skills/bruce/templates/verification-run.yaml
+- batch_id: B-001-unified-state-machine
+  acceptance_id: AC-004
+  path: skills/design-gate/SKILL.md
+  required_layer: contract
+  basis_revision: working-tree-20260908-unified-workflow-state-machine
+  evidence_revision: working-tree-20260908-unified-workflow-state-machine
+  evidence: Gate ownership tests and Design Review validator
+  result: pass
+  affected_scope:
+  - skills/design-gate/SKILL.md
+  - skills/completion-gate/SKILL.md
+- batch_id: B-001-unified-state-machine
+  acceptance_id: AC-005
+  path: tests/test_workflow_state_machine.py
+  required_layer: regression
+  basis_revision: working-tree-20260908-unified-workflow-state-machine
+  evidence_revision: working-tree-20260908-unified-workflow-state-machine
+  evidence: 'python3 -m pytest -q: 411 passed, 2035 subtests passed'
+  result: pass
+  affected_scope:
+  - tests/test_workflow_state_machine.py
+tasks:
+- task_id: T-001
+  status: verified
+  contract_revision: 1
+  evidence_refs:
+  - test-plan.md
+  - design-review.md
+  blockers: []
+acceptance:
+  passed:
+  - AC-001
+  - AC-002
+  - AC-003
+  - AC-004
+  - AC-005
+  failed: []
+  unexecuted: []
+findings: []
+repair_loop:
+  max_rounds: 10
+  current_round: 0
+  status: complete
+completion:
+  state: decided
+  result: pass
+repair_sets: []
+next_action: none

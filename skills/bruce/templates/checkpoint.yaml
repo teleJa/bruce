@@ -1,4 +1,20 @@
 version: 1
+# Authoritative task lifecycle snapshot; see references/workflow-state.md.
+workflow_state:
+  version: 1
+  task_id: T-001
+  state: unresolved
+  state_revision: 0
+  mode: implementation
+  contract_revision: 1
+  contract_frozen_revision: null
+  basis_revision: <working-tree-or-commit>
+  design_gate: not_required
+  completion_result: null
+  last_event: null
+  stop_reason: null
+  resume_state: null
+  resume_conditions: []
 Checkpoint: clear|issues|blocked
 checkpoint_id: CP-0001
 checkpoint_kind: progress|batch|resume

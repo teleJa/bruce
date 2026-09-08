@@ -162,6 +162,19 @@ repair reruns only affected matrix rows plus the unchanged original failure and 
 it does not create a per-finding review chain or a fresh independent reviewer unless the repair changes
 an independence-triggering concern or risk trigger.
 
+## Unified task lifecycle
+
+The authoritative task-level lifecycle is defined in [workflow-state.md](workflow-state.md) and persisted
+under `checkpoint.yaml` as `workflow_state`. Checkpoint, Verification Run, repair, Design Gate and
+Completion Gate keep their local details, but they must map through this state machine rather than
+creating an independent task lifecycle. `verification-run.yaml` is a sub-run state machine and
+cannot produce `completed` or either Gate verdict on its own.
+
+A state transition increments `workflow_state.state_revision` and records its event. It must not reset
+repair rounds, failure history, evidence revision, Profile revision, or contract revision. Use
+`scripts/workflow_state.py` for normalized transitions and `scripts/validate_workflow_state.py` for
+snapshot validation.
+
 ## Task package and checkpoint
 
 A persisted implementation plan may define a change-level `tasks/` package. Each task file is a
@@ -198,6 +211,20 @@ is empty; routine progress messages are exempt:
 
 ```yaml
 version: 1
+workflow_state:
+  version: 1
+  task_id: T-001
+  state: unresolved
+  state_revision: 0
+  mode: implementation
+  contract_revision: 1
+  basis_revision: <working-tree-or-commit>
+  design_gate: not_required
+  completion_result: null
+  last_event: null
+  stop_reason: null
+  resume_state: null
+  resume_conditions: []
 Checkpoint: clear|issues|blocked
 checkpoint_id: CP-0001
 checkpoint_kind: progress|batch|resume

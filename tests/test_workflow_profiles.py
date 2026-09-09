@@ -157,10 +157,11 @@ class WorkflowProfileContractTest(unittest.TestCase):
         self.assertIn("before continuing affected behavior implementation", normalized)
         self.assertIn("Do not ask for approval unless", normalized)
 
-    def test_risk_changes_review_mode_not_verdict_count(self) -> None:
-        self.assertIn("Risk changes its review mode, not the number of", self.risk)
-        self.assertIn("main-agent review mode", self.risk)
-        self.assertIn("independent mode", self.risk)
+    def test_risk_changes_depth_not_mandatory_independence(self) -> None:
+        self.assertIn("Risk changes review depth and focus", self.risk)
+        self.assertIn("including low-risk", self.risk)
+        self.assertIn("no inherited author conversation", self.risk)
+        self.assertIn("No automatic", self.risk)
         self.assertIn("Completion: blocked", self.risk)
 
     def test_critical_requires_impact_recovery_confirmation(self) -> None:

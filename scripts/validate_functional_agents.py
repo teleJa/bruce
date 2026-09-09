@@ -71,7 +71,7 @@ def validate_registry() -> list[str]:
             errors.append("implementer write_scope must be task_packet.allowed_paths")
         if profile_id in {"prototype-generator", "verifier", "reviewer"} and profile.get("write_scope") != "none":
             errors.append(f"{profile_id} must not write")
-        expected_fallback = "blocked" if profile_id == "prototype-generator" else "current"
+        expected_fallback = "blocked" if profile_id in {"prototype-generator", "reviewer"} else "current"
         if profile.get("fallback") != expected_fallback:
             errors.append(f"{profile_id} fallback must be {expected_fallback}")
         if not isinstance(profile.get("max_calls"), int) or profile["max_calls"] < 1:

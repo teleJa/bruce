@@ -159,8 +159,8 @@ Before completion, the owning gate builds one matrix across acceptance ids, chan
 material error/empty/null/partial/duplicate/state paths, verification layers, and current evidence.
 It completes that matrix before reporting findings and returns all current findings together. A
 repair reruns only affected matrix rows plus the unchanged original failure and related regressions;
-it does not create a per-finding review chain or a fresh independent reviewer unless the repair changes
-an independence-triggering concern or risk trigger.
+it does not create a per-finding review chain. A changed review basis requires independent recheck of
+its affected rows; the same clean-context reviewer may continue without spawning one per finding.
 
 ## Unified task lifecycle
 
@@ -287,12 +287,17 @@ A new finding gets its own evidence and local count, not a reset of an existing 
 ## Independent review
 
 Independence is a review mode inside `design-gate` or `completion-gate`, never a third verdict.
-When required, use a fresh native subagent with no inherited author conversation. Use the shared `reviewer` Functional Agent Profile and a clean-context v1 Task Packet; supply objective,
+Completion review and any invoked plan review always require a fresh native subagent with no inherited
+author conversation; design quality review follows Design Gate's predicate. Use the shared `reviewer` Functional Agent Profile and a clean-context v1 Task Packet; supply objective,
 acceptance, the final review target diff or immutable snapshot, raw evidence, and only necessary
 constraints. Exclude author rationale, confidence, and proposed conclusion.
 
 The reviewer may inspect repository facts and rerun safe checks but must not edit the reviewed work.
-If required independence is unavailable, the owning gate returns `blocked`.
+If required independence is unavailable, the owning gate returns `blocked`. Reviewer model fallback is
+prohibited: stop the affected review and ask the user to name an available replacement, then re-resolve
+with actual host capability evidence. Do not let the author or verifier replace the reviewer. After
+repairs, send changed/stale rows and updated evidence back to the independent reviewer before pass;
+unchanged current-basis rows may be reused and the same clean-context reviewer may continue.
 
 ## Repair and regression loop
 

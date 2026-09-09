@@ -52,8 +52,8 @@ class ContextContractTest(unittest.TestCase):
         self.assertNotIn("skills/verify-completion/SKILL.md", self.context)
         self.assertIn("independently classified consequence", normalized)
         self.assertIn("Native Goal is outside the Bruce user-facing workflow", normalized)
-        self.assertIn("Independence is risk- or user-triggered", normalized)
-        self.assertIn("never adds another externally combined verdict", normalized)
+        self.assertIn("Implementation completion and every invoked plan review require an independent reviewer", normalized)
+        self.assertIn("Risk controls review depth", normalized)
 
     def test_manifest_describes_goal_independent_delivery(self) -> None:
         for description in (

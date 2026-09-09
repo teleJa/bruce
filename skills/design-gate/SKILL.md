@@ -113,15 +113,38 @@ For every generated document:
 6. Record only evidence-backed blockers that can cause wrong implementation, unsafe execution, or
    unverifiable acceptance. Wording preferences and optional polish do not block.
 
-Use a clean-context native reviewer only when the user explicitly requests independent design
-review or the design carries critical security, data, migration, or irreversible-operation risk.
-The reviewer receives objective, acceptance, the final document snapshot/diff, raw evidence, and
-necessary constraints without the author's rationale or proposed verdict. Independence changes how
-the check runs, not the output schema.
+The Gate may perform purely deterministic completeness checks itself; these are not independent
+design-quality review. Any design-quality or critical-semantic assessment requires an independent
+clean-context native reviewer, especially public/cross-component contracts, persistence or migration,
+permissions or security, asynchronous/concurrent/idempotent behavior, cross-repository design,
+governing prototypes, irreversible operations, or semantic disputes. An explicit user request for
+independent review also makes it mandatory. Scale review depth to risk, not reviewer independence.
+Author self-checks and deterministic validator success cannot replace this review.
+
+Start the initial review with a fresh native reviewer using `fork_turns="none"` or equivalent clean
+context, without author conversation inheritance. The reviewer receives objective, acceptance, the
+final document snapshot/diff, raw evidence, and necessary constraints without the author's rationale or proposed verdict.
+It returns only a packet to the Gate; independence does not create another verdict or schema.
 
 ## Functional Agent routing
 
-An independent design review uses the `reviewer` Profile with a clean-context Task Packet and returns a `review_packet`; any evidence reproduction used by the gate uses the `verifier` Profile and returns a `verification_packet`. Neither Packet may contain a terminal verdict. Design Gate remains the only owner of `Design: pass|blocked`.
+Required independent design review uses the shared `reviewer` Profile with a v1 clean-context Task
+Packet (`task_kind=review`, `output=review_packet`) and the shared
+[delegation contract](../bruce/references/delegation-contract.md) before spawning. Resolve the model and
+reasoning effort from the shared Profile. The existing
+`fallback: blocked` policy applies to every selected reviewer model: if unavailable or unconfirmed,
+pause the affected review and ask the user to explicitly name an available replacement, then
+re-resolve and confirm host capability. Do not automatically switch models, inherit the current
+model, or substitute main-agent self-review or a verifier. Missing native subagent, clean context,
+or confirmed model capability blocks the required review; configuration unavailability is never
+business approval. Do not introduce a private router or runtime.
+
+The returned shared `review_packet` carries `review_subject=design`, `review_mode=independent`, and
+`review_mode_reason=mandatory-independent-review` by default; retain applicable shared explicit-request
+and risk reasons, never `none`. A completed packet requires resolved model evidence and a non-empty
+review matrix tied to the current snapshot. Evidence reproduction uses the `verifier` Profile and a
+`verification_packet`, but cannot replace required independent quality review. Neither Packet may
+contain a terminal verdict. Design Gate remains the only owner of `Design: pass|blocked`.
 
 ## Procedure
 
@@ -133,7 +156,12 @@ An independent design review uses the `reviewer` Profile with a clean-context Ta
 3. Verify every generated path exists and every skip cites concrete repository and scope evidence.
 4. Perform the readiness checks against the actual files and current repository facts. Reuse the
    evidence gathered by the writers; perform additional bounded checks only for unresolved or
-   cross-document joins. Do not rerun each writer's full local review.
+   cross-document joins. Do not rerun each writer's full local review. Separate deterministic
+   completeness from design-quality/critical-semantic review using the rules above. Before judging
+   required quality review, obtain and validate its independent packet against the current snapshot.
+   If unavailable, failed, incomplete, or invalid, record the review as not executed / blocked as
+   applicable and return `Design: blocked`; never use `main-agent` mode as a substitute or invent a
+   reviewer packet. Preserve blocking findings; they cannot be dismissed to reach pass.
 5. When a different execution model/profile will consume the design, or the confirmed implementation
    scope requires durable task handoff, verify that `execution-handoff.md` exists beside `plan.md` and
    contains frozen allowed/excluded paths, implementation-map joins, confirmed decisions, bounded
@@ -170,13 +198,30 @@ An independent design review uses the `reviewer` Profile with a clean-context Ta
     and the smallest next action.
 
 Any later scope or design change invalidates the affected verdict. Rerun this gate before continuing
-affected implementation.
+affected implementation. If repairs affect reviewed evidence, the original independent reviewer must
+re-review the new snapshot before the Gate can pass; it need not be a fresh reviewer on every repair.
+Main-agent confirmation cannot replace that re-review. If the reviewer cannot continue, require a
+fresh clean-context reviewer under the same routing rules.
+
+## Review evidence binding
+
+Before consuming a completed reviewer result, use `validate_review_for_basis` from
+`scripts/functional_agent_profiles.py` with the current task id, actual native reviewer dispatch id,
+current artifact/acceptance/evidence snapshot hash, retained pre-dispatch `model_resolution`, and this
+review's subject. The result must carry the matching `review_basis`; do not copy returned values into
+the expected context. Shape validation alone is insufficient. A repair or material evidence change
+requires a new snapshot and independent re-review; do not accept an old packet or a different dispatch's
+model record. Record these references in existing review/task evidence, not a new ledger.
 
 ## Output
 
 Return the `design-review.md` path, candidate matrix, evidence boundary, review mode
 (`main-agent|independent`), validator command/result, blocking findings, smallest next action, and one
-final field:
+final field. For compatibility with the existing validator, `main-agent` in this document denotes
+purely deterministic completeness checks only, never a quality-review packet. Record that boundary
+and why quality review is not applicable. When independent review is required but unavailable, record
+`independent` with execution not executed / blocked and the concrete next action; do not claim it ran.
+A completed independent packet never uses `main-agent` mode.
 
 `Design: pass|blocked`
 

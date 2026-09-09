@@ -96,7 +96,7 @@ profiles:
       required: [clean-context-review]
       preferred: [model-diversity]
       independence: required
-    fallback: current
+    fallback: blocked
     max_calls: 1
     output: review_packet
     authority: findings-only

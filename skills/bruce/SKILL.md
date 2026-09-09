@@ -323,7 +323,7 @@ risks, and the explicit implementation boundary, then stop. Do not invoke `compl
 no behavior implementation or completion evidence is being claimed.
 
 After implementation and targeted verification, invoke `completion-gate`. It performs all required
-author checks, evidence checks, scope checks, design-to-diff checks, and any risk-triggered independent
+author checks, evidence checks, scope checks, design-to-diff checks, and mandatory independent
 review internally. No caller repeats those checks or combines their internal labels.
 
 When the contract declares multiple delivery batches, when execution spans a long-running or

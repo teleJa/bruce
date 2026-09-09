@@ -77,8 +77,8 @@ The `completion-gate` skill makes the only completion decision for an implementa
 _Avoid_: Self-report, separate review verdict, completion-review artifact
 
 **Review Mode**:
-The `main-agent` or `independent` way a Design Gate or Completion Gate performs its internal review. Independence is risk- or user-triggered and never adds another externally combined verdict.
-_Avoid_: Mandatory independent reviewer, third gate, reviewer approval
+Implementation completion and every invoked plan review require an independent reviewer subagent with no inherited author conversation. Design-quality or critical-semantic assessment also requires independent review; only deterministic Design Gate completeness checks may use the main Agent. Risk controls review depth, not whether mandatory review occurs. Reviewer model unavailability pauses the affected review until the user selects an available replacement; no automatic model or author fallback.
+_Avoid_: Author self-check as independent review, third gate, reviewer approval
 
 **Failure Level**:
 An L0-L4 classification applied to the smallest affected boundary: transient retry, repair, replan, business authority, or unknown/incident handling.

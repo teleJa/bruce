@@ -1,6 +1,6 @@
 ---
 name: completion-gate
-description: Use after implementation as Bruce's only completion decision. Check final scope, author quality, acceptance evidence, design alignment, failures, and delivery boundaries, adding an independent reviewer only when risk or the user requires it, then return one Completion verdict.
+description: Use after implementation as Bruce's only completion decision. Check final scope, author quality, acceptance evidence, design alignment, failures, and delivery boundaries, requiring an independent reviewer for every implementation task, then return one Completion verdict.
 ---
 
 # Completion Gate
@@ -22,9 +22,11 @@ callers do not rerun its checks or combine separate author, verification, and re
 
 ## Mandatory review-mode selection
 
-Before author-quality checks or review-matrix construction, evaluate the final task contract, diff,
-evidence, and repair history and record exactly one `review_mode` plus one stable
-`review_mode_reason`. Select the first matching reason in this precedence order:
+Every implementation task requires a fresh independent reviewer subagent with clean context and no
+inherited author conversation, including low-risk and single-file changes. Author self-checks and
+verifier evidence cannot substitute for review. Before author-quality checks or review-matrix
+construction, record `review_mode: independent` and one stable `review_mode_reason`. Risk controls
+review depth, not whether review occurs. Select the first matching reason in this precedence order:
 
 1. `explicit-independent-request`: the user explicitly requested independent review;
 2. `critical-risk`: risk is `critical`;
@@ -38,15 +40,19 @@ evidence, and repair history and record exactly one `review_mode` plus one stabl
    rounds;
 8. `guarded-broad-security-data-impact`: risk is `guarded` and the final state has broad security or
    data impact;
-9. `none`: no independent trigger remains.
+9. `mandatory-independent-review`: the baseline requirement when no more specific reason matches.
 
-Reasons 1-8 require `review_mode: independent`; reason 9 requires `review_mode: main-agent`.
+All reasons require `review_mode: independent`; `main-agent` is not an allowed completion review mode.
+Use a compact scope for small changes rather than skipping the reviewer. Repeat reason/depth selection
+when a repair changes the final scope, risk trigger, or review basis. Do not silently downgrade:
+if a clean-context native reviewer is unavailable, return `Completion: blocked`.
 
-A `full` profile, multiple files, task duration, or subagent availability alone does not select
-`independent`. Perform this check before any other internal review work, and repeat it when a repair
-changes the final scope, risk trigger, review basis, or independence-triggering concern. Do not
-silently downgrade a required independent review; if a clean-context native reviewer is unavailable,
-return `Completion: blocked`.
+Resolve the shared `reviewer` Profile through the [delegation contract](../bruce/references/delegation-contract.md)
+before dispatch. Reviewer model fallback is prohibited. If the configured model is unavailable or
+unconfirmed, stop the affected review, ask the user to specify an available replacement, and resume only
+after that explicit choice resolves with host capability evidence. Do not substitute the main Agent,
+current model, another model chosen by the Agent, or the verifier. Missing context/tool capability also
+blocks the affected review; changing model does not waive those requirements.
 
 ## Functional Agent routing
 
@@ -56,6 +62,8 @@ Completion Gate consumes two role-specific packets without creating parallel aut
 
 ### Author quality
 
+The author may perform preparation and self-checks; the independent reviewer must assess the final
+snapshot itself. Do not present author inspection as the required independent review.
 Inspect the final diff and affected call sites for unintended scope, omissions, error paths, edge
 inputs, state transitions, resource cleanup, compatibility, security, permissions, concurrency,
 idempotency, data integrity, and missing regression coverage as relevant. For changed documents,
@@ -81,10 +89,12 @@ or manufacture empty matrices. Coverage and required verification are unchanged 
 Repairable findings make the result `issues`. Any later change invalidates a row when its evidence
 revision differs from the current review basis, a changed path intersects its affected scope, or
 impact cannot be determined. Rerun stale rows, the unchanged original failed scenario, and related
-regressions; this does not invalidate unaffected matrix rows, which may be reused. Batch compatible repairs and do not force a fresh
-independent reviewer. Start one only when the repair changes an independence-triggering concern or
-risk trigger, or when critical risk or the user explicitly requires it. This repair path does not
-create a per-finding review chain.
+regressions; this does not invalidate unaffected matrix rows, which may be reused. Batch compatible
+repairs and return changed rows plus current raw evidence to the independent reviewer. The same reviewer
+may continue from its clean review context; a new subagent is not required per finding. Changed or stale
+review rows must be independently rechecked before pass; the author's claim of repair never closes a
+reviewer finding. If the reviewer is no longer available, resolve and dispatch an independent replacement
+under the same Profile/no-fallback rule. This does not create a per-finding review chain.
 
 Use [failure-recovery.md](../bruce/references/failure-recovery.md) as the budget authority. Import each
 unresolved finding's stable `failure_id` and `l1_repair_rounds` from existing checkpoint/evidence; unknown
@@ -267,12 +277,14 @@ them outside the completed boundary.
 
 ## Review mode
 
-Apply the mandatory selection recorded above. In `main-agent` mode, perform the matrix and all
-internal checks directly. In `independent` mode, give the clean-context native reviewer only the
+Apply the mandatory independent mode recorded above. Give the clean-context native reviewer only the
 objective, acceptance, final diff, raw evidence, necessary repository constraints, and review-matrix
 schema. Exclude author rationale, confidence, and proposed verdict. The reviewer must return the
 completed matrix and one consolidated findings packet. Independence is a mode of this gate, not a
-second externally combined verdict.
+second externally combined verdict. The main Agent may aggregate the findings and make the owning
+Gate's single decision, but cannot overrule or silently drop a blocking finding. Disputes require a
+bounded return to the reviewer with new raw evidence. Confirm the review matches the current diff,
+acceptance, and evidence basis; never fabricate a reviewer packet or reuse a stale approval.
 
 ## Decision
 
@@ -281,11 +293,22 @@ Return exactly one terminal field:
 - `Completion: pass` when scope matches, every required task is `verified` or `superseded`, every
   acceptance item has sufficient current evidence, task contract and evidence revisions match the
   current basis, author-quality checks are clear, required design remains aligned, required
-  independent review found no blocking issue, and no required work remains.
+  independent review of the current basis found no blocking issue, all affected repairs were independently
+  rechecked, and no required work remains.
 - `Completion: issues` when in-scope implementation, documentation, design alignment, or evidence
   gaps are repairable.
 - `Completion: blocked` when authority, unavailable required independent review, external state, or
   unresolved L2-L4 prevents completion.
+
+## Review evidence binding
+
+Before consuming a completed reviewer result, use `validate_review_for_basis` from
+`scripts/functional_agent_profiles.py` with the current task id, actual native reviewer dispatch id,
+current artifact/acceptance/evidence snapshot hash, retained pre-dispatch `model_resolution`, and this
+review's subject. The result must carry the matching `review_basis`; do not copy returned values into
+the expected context. Shape validation alone is insufficient. A repair or material evidence change
+requires a new snapshot and independent re-review; do not accept an old packet or a different dispatch's
+model record. Record these references in existing review/task evidence, not a new ledger.
 
 ## Output
 
@@ -319,9 +342,9 @@ next_action: none
 For expanded reports, use the stable top-level fields below. `Completion` is the only terminal verdict;
 all remaining fields are supporting evidence, context, or follow-up action rather than additional
 verdicts. Do not use aliases such as `completion_verdict`. Use `[]` for an empty collection rather
-than omitting the field or returning `null`. `review_mode: main-agent` requires
-`review_mode_reason: none`; `review_mode: independent` requires one of reasons 1-8 from the mandatory
-review-mode selection.
+than omitting the field or returning `null`. `review_mode: independent` is required with one of reasons
+1-9 from the mandatory review-mode selection. Historical main-agent reports are not valid evidence for
+a new completion decision under this policy.
 
 ```yaml
 Completion: pass

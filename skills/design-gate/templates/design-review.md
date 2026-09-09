@@ -4,6 +4,14 @@
 - Scope: <allowed and excluded scope>
 - Implementation boundary: <what this design governs>
 - Review mode: <main-agent|independent>
+- Review boundary: <main-agent is deterministic completeness only, not independent design-quality review>
+- Independent quality review: <required with semantic/risk/explicit-request evidence, or not applicable with deterministic-only evidence>
+- Review execution: <completed|not executed|blocked|failed; mode alone does not prove execution>
+- Review basis: <task_id, actual native dispatch_id, sha256 snapshot of reviewed artifacts/acceptance/evidence>
+- Review consumption: <validate_review_for_basis against caller-held current basis and pre-dispatch resolution; not shape-only validation>
+- Review packet evidence: <current snapshot and valid independent packet/model_resolution, or unavailable reason; never fabricate a packet>
+- Review mode reason: <mandatory-independent-review or applicable shared explicit-request/risk reason when required; never none in review_packet>
+- Reviewer recovery: <fallback: blocked; if any selected model is unavailable/unconfirmed, ask user to explicitly name an available replacement and confirm capability; no automatic fallback or main-agent substitute>
 - Behavior implementation: <yes|no>
 - Public/cross-component contract change: <yes|no>
 - Database/persistence design change: <yes|no>
@@ -52,7 +60,8 @@
   run input summary>
 - Deterministic artifact visual assertions: <clear or findings for exact colors/dimensions/brand/
   forbidden tokens and whether manual-only evidence is correctly fail-closed>
-- Blocking findings: <none or findings>
+- Blocking findings: <none or findings; preserve unresolved blockers from the independent packet>
+- Repair re-review: <original independent reviewer checked the new snapshot when reviewed evidence changed, or not applicable; author confirmation is insufficient>
 - Evidence boundary: <checked and unchecked facts>
 - Cross-document consistency: <clear or findings with JOIN IDs>
 - Upstream decision authority: <all material decisions have sources, or findings>

@@ -1,4 +1,4 @@
 interface:
   display_name: "Plan Review"
-  short_description: "Review implementation plans for execution readiness"
-  default_prompt: "Use $plan-review to check this implementation plan for blocking execution risks."
+  short_description: "Review plans independently for execution readiness"
+  default_prompt: "Use $plan-review with a fresh clean-context native reviewer through the shared reviewer Profile to check this implementation plan for blocking execution risks. Block unavailable or unconfirmed models and ask me to explicitly select an available replacement; do not automatically fall back or substitute main-agent self-review. Only the caller forms Clean or Issues Found from a valid independent review_packet."

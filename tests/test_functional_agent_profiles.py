@@ -11,6 +11,7 @@ from scripts.functional_agent_profiles import (
     resolve_profile,
     validate_changed_paths,
     validate_output_packet,
+    validate_review_for_basis,
     validate_task_packet,
 )
 from tests._support import ROOT, read
@@ -139,29 +140,129 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
         with self.assertRaises(ContractError):
             validate_changed_paths("inspector", [], ["src/example.py"])
 
-    def test_reviewer_resolution_and_fallback(self) -> None:
+    def test_reviewer_resolution_never_falls_back(self) -> None:
         profile, resolution, args = resolve_profile(
             "reviewer", current_model="current-model", available_models={"gpt-5.6-terra"}
         )
         self.assertTrue(profile["context"]["clean"])
+        self.assertEqual("none", profile["context"]["inherit"])
+        self.assertEqual("blocked", profile["fallback"])
         self.assertEqual("resolved", resolution.resolution_result)
         self.assertEqual("gpt-5.6-terra", args["model"])
+        for available in (None, set(), {"current-model"}, {"other-model"}):
+            with self.subTest(available=available):
+                _, blocked, blocked_args = resolve_profile(
+                    "reviewer", current_model="current-model", available_models=available
+                )
+                self.assertEqual("blocked", blocked.resolution_result)
+                self.assertFalse(blocked.fallback_used)
+                self.assertIsNone(blocked.effective_model)
+                self.assertNotIn("model", blocked_args)
+                reason = "host_model_unconfirmed" if available is None else "configured_model_unavailable"
+                self.assertEqual(reason, blocked.fallback_reason)
 
-        _, fallback, fallback_args = resolve_profile(
-            "reviewer", current_model="current-model", available_models=None
-        )
-        self.assertEqual("fallback", fallback.resolution_result)
-        self.assertEqual("degraded", fallback.capability_status)
-        self.assertTrue(fallback.fallback_used)
-        self.assertEqual("current-model", fallback.effective_model)
-        self.assertNotIn("model", fallback_args)
-
-        _, blocked, blocked_args = resolve_profile(
-            "reviewer", current_model="current-model", available_models={"other-model"}
+    def test_reviewer_requires_explicit_available_replacement(self) -> None:
+        _, blocked, _ = resolve_profile(
+            "reviewer", current_model="replacement", available_models={"replacement"}
         )
         self.assertEqual("blocked", blocked.resolution_result)
-        self.assertEqual("current_model_unavailable", blocked.fallback_reason)
-        self.assertNotIn("model", blocked_args)
+        for level in ("task", "project", "user"):
+            with self.subTest(level=level), tempfile.TemporaryDirectory() as directory:
+                kwargs = {}
+                if level == "task":
+                    kwargs["task_override"] = {"model": "replacement"}
+                else:
+                    path = Path(directory) / "override.yaml"
+                    path.write_text("version: 1\nprofiles:\n  reviewer:\n    default_model: replacement\n")
+                    kwargs[f"{level}_path"] = path
+                _, resolved, args = resolve_profile(
+                    "reviewer", current_model="current-model", available_models={"replacement"}, **kwargs
+                )
+                self.assertEqual("resolved", resolved.resolution_result)
+                self.assertEqual(level, resolved.source)
+                self.assertEqual("replacement", args["model"])
+                for capability in ({"clean_context_available": False}, {"required_tools": {"deploy"}}):
+                    _, blocked, blocked_args = resolve_profile(
+                        "reviewer", current_model="current-model", available_models={"replacement"},
+                        **kwargs, **capability
+                    )
+                    self.assertEqual("blocked", blocked.resolution_result)
+                    self.assertNotIn("model", blocked_args)
+
+    def test_reviewer_override_cannot_enable_current_fallback(self) -> None:
+        with self.assertRaisesRegex(ContractError, "fallback"):
+            resolve_profile("reviewer", current_model="current", task_override={"fallback": "current"})
+        for level in ("project", "user"):
+            with self.subTest(level=level), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "override.yaml"
+                path.write_text("version: 1\nprofiles:\n  reviewer:\n    fallback: current\n")
+                with self.assertRaisesRegex(ContractError, "fallback"):
+                    resolve_profile("reviewer", current_model="current", **{f"{level}_path": path})
+
+    def test_non_reviewer_fallback_policy_is_unchanged(self) -> None:
+        for role in ("inspector", "implementer", "verifier"):
+            with self.subTest(role=role):
+                _, resolution, args = resolve_profile(role, current_model="current", available_models={"current"})
+                self.assertEqual("fallback", resolution.resolution_result)
+                self.assertTrue(resolution.fallback_used)
+                self.assertNotIn("model", args)
+
+    def test_review_packet_rejects_self_review_and_unexecuted_claims(self) -> None:
+        _, resolution, _ = resolve_profile("reviewer", current_model="current", available_models={"gpt-5.6-terra"})
+        packet = {
+            "schema_version": 1, "status": "completed", "output_type": "review_packet",
+            "review_basis": {"task_id": "T-1", "dispatch_id": "reviewer-run-1", "basis_revision": "sha256:" + "a" * 64},
+                "review_subject": "implementation", "review_mode": "independent",
+            "review_mode_reason": "mandatory-independent-review", "findings": [],
+            "review_matrix": [{"acceptance_id": "AC-1", "path": "src/example.py",
+                               "required_layer": "unit", "evidence": "current-evidence", "result": "pass"}],
+            "model_resolution": resolution.as_dict(), "gate_verdict": "absent",
+        }
+        for subject in ("plan", "implementation", "design"):
+            validate_output_packet({**packet, "review_subject": subject}, "review_packet")
+        _, blocked, _ = resolve_profile("reviewer", current_model="current", available_models={"current"})
+        _, fallback, _ = resolve_profile("inspector", current_model="current", available_models={"current"})
+        invalid_variants = (
+            {"review_mode": "main-agent"}, {"review_mode_reason": "none"},
+            {"review_matrix": []}, {"model_resolution": blocked.as_dict()},
+            {"model_resolution": {**fallback.as_dict(), "requested_profile": "reviewer"}},
+            {"model_resolution": {**resolution.as_dict(), "source": "current"}},
+        )
+        for variant in invalid_variants:
+            with self.subTest(variant=variant), self.assertRaises(ContractError):
+                validate_output_packet({**packet, **variant}, "review_packet")
+        validate_output_packet({**packet, "status": "blocked", "review_matrix": [],
+                                "model_resolution": blocked.as_dict()}, "review_packet")
+
+    def test_review_consumption_binds_current_basis_and_native_dispatch(self) -> None:
+        _, resolution, _ = resolve_profile("reviewer", current_model=None, available_models={"gpt-5.6-terra"})
+        context = {"task_id": "T-1", "dispatch_id": "reviewer-run-1", "basis_revision": "sha256:" + "a" * 64,
+                   "model_resolution": resolution.as_dict(), "review_subject": "implementation"}
+        packet = {"schema_version": 1, "status": "completed", "output_type": "review_packet",
+                  "review_subject": "implementation", "review_mode": "independent",
+                  "review_mode_reason": "mandatory-independent-review",
+                  "review_basis": {key: context[key] for key in ("task_id", "dispatch_id", "basis_revision")},
+                  "findings": [], "review_matrix": [{"acceptance_id": "AC-1", "path": "src/example.py",
+                  "required_layer": "unit", "evidence": "current-evidence", "result": "pass"}],
+                  "model_resolution": resolution.as_dict(), "gate_verdict": "absent"}
+        validate_review_for_basis(packet, **context)
+        _, replacement, _ = resolve_profile("reviewer", current_model=None, available_models={"user-model"},
+                                            task_override={"model": "user-model"})
+        for update in ({"task_id": "T-2"}, {"dispatch_id": "another-native-run"},
+                       {"basis_revision": "sha256:" + "b" * 64}, {"review_subject": "plan"},
+                       {"model_resolution": replacement.as_dict()}):
+            with self.subTest(update=update), self.assertRaises(ContractError):
+                validate_review_for_basis(packet, **{**context, **update})
+        with self.assertRaises(ContractError):
+            validate_review_for_basis({**packet, "status": "blocked"}, **context)
+        for invalid_basis in ({}, {"task_id": "", "dispatch_id": "run", "basis_revision": "sha256:" + "a" * 64},
+                              {**packet["review_basis"], "basis_revision": "HEAD"}):
+            with self.subTest(basis=invalid_basis), self.assertRaises(ContractError):
+                validate_output_packet({**packet, "review_basis": invalid_basis}, "review_packet")
+        # After a repair, the old packet stays invalid; the same independent reviewer can recheck.
+        repaired_context = {**context, "basis_revision": "sha256:" + "b" * 64}
+        repaired_packet = {**packet, "review_basis": {**packet["review_basis"], "basis_revision": repaired_context["basis_revision"]}}
+        validate_review_for_basis(repaired_packet, **repaired_context)
 
     def test_prototype_generator_is_model_pinned(self) -> None:
         profile, resolution, args = resolve_profile(
@@ -288,6 +389,7 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
                 "schema_version": 1,
                 "status": "completed",
                 "output_type": "review_packet",
+                "review_basis": {"task_id": "T-1", "dispatch_id": "reviewer-run-1", "basis_revision": "sha256:" + "a" * 64},
                 "review_subject": "implementation",
                 "review_mode": "independent",
                 "review_mode_reason": "guarded-multi-component-contract",
@@ -304,7 +406,8 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
                     "schema_version": 1,
                     "status": "completed",
                     "output_type": "review_packet",
-                    "review_subject": "implementation",
+                    "review_basis": {"task_id": "T-1", "dispatch_id": "reviewer-run-1", "basis_revision": "sha256:" + "a" * 64},
+                "review_subject": "implementation",
                     "review_mode": "independent",
                     "review_mode_reason": "guarded-multi-component-contract",
                     "findings": [],
@@ -332,7 +435,8 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
             "schema_version": 1,
             "status": "completed",
             "output_type": "review_packet",
-            "review_subject": "implementation",
+            "review_basis": {"task_id": "T-1", "dispatch_id": "reviewer-run-1", "basis_revision": "sha256:" + "a" * 64},
+                "review_subject": "implementation",
             "review_mode": "independent",
             "review_mode_reason": "guarded-multi-component-contract",
             "findings": [{}],
@@ -460,7 +564,8 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
                     "schema_version": 1,
                     "status": "completed",
                     "output_type": "review_packet",
-                    "review_subject": "implementation",
+                    "review_basis": {"task_id": "T-1", "dispatch_id": "reviewer-run-1", "basis_revision": "sha256:" + "a" * 64},
+                "review_subject": "implementation",
                     "review_mode": "independent",
                     "review_mode_reason": "guarded-multi-component-contract",
                     "findings": [],

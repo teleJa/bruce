@@ -119,7 +119,7 @@ def _load_override(path: Path | None) -> dict[str, dict[str, Any]]:
         ):
             raise ContractError(f"override reasoning_effort is invalid for {profile_id}")
         if "fallback" in values:
-            expected_fallback = "blocked" if profile_id == "prototype-generator" else "current"
+            expected_fallback = "blocked" if profile_id in {"prototype-generator", "reviewer"} else "current"
             if values["fallback"] != expected_fallback:
                 raise ContractError(
                     f"override fallback must be {expected_fallback} for {profile_id}"
@@ -186,6 +186,8 @@ def resolve_profile(
             profile[field] = task_values[field]
     if profile.get("fallback") not in {"current", "blocked"}:
         raise ContractError("profile fallback must be current or blocked")
+    if profile_id == "reviewer" and profile.get("fallback") != "blocked":
+        raise ContractError("reviewer fallback must be blocked; ask the user to select an available model")
     if not isinstance(profile.get("reasoning_effort"), str) or profile.get("reasoning_effort") not in {"low", "medium", "high", "max"}:
         raise ContractError("profile reasoning_effort is invalid")
 
@@ -221,7 +223,10 @@ def resolve_profile(
                 "blocked", "blocked", source,
             )
     else:
-        reason = "current_model_unavailable" if current_model is None else "configured_model_unavailable"
+        if profile_id == "reviewer":
+            reason = "host_model_unconfirmed" if available_models is None else "configured_model_unavailable"
+        else:
+            reason = "current_model_unavailable" if current_model is None else "configured_model_unavailable"
         resolution = ModelResolution(
             profile_id, configured, None, False, reason,
             "blocked", "blocked", source,
@@ -374,6 +379,10 @@ def _validate_model_resolution(
         raise ContractError("model_resolution source is invalid")
 
     result = resolution["resolution_result"]
+    if resolution["requested_profile"] == "reviewer" and (
+        result == "fallback" or resolution["fallback_used"] or resolution["source"] == "current"
+    ):
+        raise ContractError("reviewer cannot use automatic model fallback")
     if result == "resolved":
         if (
             resolution["capability_status"] != "resolved"
@@ -421,7 +430,7 @@ def validate_output_packet(packet: Mapping[str, Any], output_type: str) -> None:
     packet_fields = {
         "task_evidence_packet": common | {"changed_files", "commands", "evidence", "assumptions", "evidence_gaps"},
         "verification_packet": common | {"acceptance_ids", "scenario_results", "repro_commands", "evidence_revision"},
-        "review_packet": common | {"review_subject", "review_mode", "review_mode_reason", "findings", "review_matrix"},
+        "review_packet": common | {"review_subject", "review_mode", "review_mode_reason", "review_basis", "findings", "review_matrix"},
     }
     if not isinstance(output_type, str) or output_type not in packet_fields:
         raise ContractError("unknown output packet type")
@@ -462,18 +471,30 @@ def validate_output_packet(packet: Mapping[str, Any], output_type: str) -> None:
         review_mode = packet["review_mode"]
         review_reason = packet["review_mode_reason"]
         reasons = {
-            "none", "explicit-independent-request", "critical-risk",
+            "mandatory-independent-review", "explicit-independent-request", "critical-risk",
             "guarded-multi-component-contract", "guarded-migration-rollout",
             "guarded-semantic-ambiguity", "guarded-weak-evidence",
             "guarded-repeated-repair", "guarded-broad-security-data-impact",
         }
-        if not isinstance(review_mode, str) or review_mode not in {"main-agent", "independent"}:
+        if not isinstance(review_mode, str) or review_mode != "independent":
             raise ContractError("review_packet review_mode is invalid")
         if not isinstance(review_reason, str) or review_reason not in reasons:
             raise ContractError("review_packet review_mode_reason is invalid")
+        basis = _assert_mapping(packet["review_basis"], "review_basis")
+        if set(basis) != {"task_id", "dispatch_id", "basis_revision"}:
+            raise ContractError("review_basis fields are incomplete or unknown")
+        for field in ("task_id", "dispatch_id"):
+            if not isinstance(basis[field], str) or not basis[field].strip():
+                raise ContractError(f"review_basis {field} must be non-empty")
+        if not isinstance(basis["basis_revision"], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", basis["basis_revision"]):
+            raise ContractError("review_basis basis_revision must be an immutable sha256 snapshot")
         review_subject = packet["review_subject"]
         if not isinstance(review_subject, str) or review_subject not in {"implementation", "plan", "design"}:
             raise ContractError("review_packet review_subject is invalid")
+        if packet["model_resolution"]["resolution_result"] == "blocked" and status != "blocked":
+            raise ContractError("blocked reviewer resolution cannot claim an executed review")
+        if status == "completed" and not packet["review_matrix"]:
+            raise ContractError("completed independent review requires review matrix evidence")
         if not isinstance(packet["findings"], list) or not all(isinstance(item, Mapping) for item in packet["findings"]):
             raise ContractError("findings must be a list of mappings")
         for finding in packet["findings"]:
@@ -493,6 +514,34 @@ def validate_output_packet(packet: Mapping[str, Any], output_type: str) -> None:
                 raise ContractError("review matrix identity/evidence fields must be non-empty")
             if not isinstance(row["result"], str) or row["result"] not in {"pass", "finding", "incomplete"}:
                 raise ContractError("review matrix result is invalid")
+
+
+def validate_review_for_basis(
+    packet: Mapping[str, Any],
+    *,
+    task_id: str,
+    dispatch_id: str,
+    basis_revision: str,
+    model_resolution: Mapping[str, Any],
+    review_subject: str,
+) -> None:
+    """Validate a completed review against caller-held dispatch and current snapshot evidence.
+
+    Expected values must come from the task, native spawn receipt, retained pre-dispatch resolution,
+    and current artifact/evidence snapshot, never from the returned packet itself. This is a pure
+    consistency check, not authentication of a host receipt or a new review runtime.
+    """
+    validate_output_packet(packet, "review_packet")
+    if packet["status"] != "completed":
+        raise ContractError("review is not completed")
+    expected_basis = {"task_id": task_id, "dispatch_id": dispatch_id, "basis_revision": basis_revision}
+    if packet["review_basis"] != expected_basis:
+        raise ContractError("review does not match the current task, dispatch, or basis")
+    _validate_model_resolution(model_resolution, expected_profile="reviewer")
+    if model_resolution["resolution_result"] != "resolved" or packet["model_resolution"] != model_resolution:
+        raise ContractError("review model resolution does not match the retained dispatch record")
+    if packet["review_subject"] != review_subject:
+        raise ContractError("review subject does not match the owning gate")
 
 
 def validate_changed_paths(profile_id: str, allowed_paths: list[str], changed_paths: list[str]) -> None:

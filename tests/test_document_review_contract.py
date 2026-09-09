@@ -50,6 +50,59 @@ class DocumentReviewContractTest(unittest.TestCase):
         self.assertIn("never a third verdict", policy)
         self.assertIn("without the author's rationale or proposed verdict", gate)
 
+    def test_plan_review_requires_independent_packet_without_automatic_invocation(self) -> None:
+        plan = read("skills/plan-review/SKILL.md")
+        prompt = read("skills/plan-review/references/plan-reviewer-prompt.md")
+        interface = read("skills/plan-review/agents/openai.yaml")
+        self.assertIn("optional standalone entry", plan)
+        self.assertIn("Once invoked, independent review is mandatory", plan)
+        self.assertNotIn("Use `main-agent` review mode by default", plan)
+        for body in (plan, prompt):
+            with self.subTest(document=body.splitlines()[0]):
+                for token in (
+                    'fork_turns="none"',
+                    "review_packet",
+                    "mandatory-independent-review",
+                    "fallback: blocked",
+                    "original",
+                    "new snapshot",
+                ):
+                    self.assertIn(token, body)
+        self.assertIn("Only the caller interprets a valid independent packet", plan)
+        self.assertIn("not executed / blocked", plan)
+        self.assertIn("never invent a `pass` result", plan)
+        self.assertIn("Do not ignore blocking findings", plan)
+        self.assertNotIn("Status: Clean | Issues Found", prompt)
+        self.assertIn("Do not return Clean, Issues Found, Design, Completion, verdict, or approval", prompt)
+        self.assertIn("valid independent review_packet", interface)
+
+    def test_design_quality_review_is_mandatory_but_completeness_can_be_deterministic(self) -> None:
+        gate = read("skills/design-gate/SKILL.md")
+        normalized = " ".join(gate.split())
+        template = read("skills/design-gate/templates/design-review.md")
+        self.assertIn("purely deterministic completeness checks", gate)
+        self.assertIn("Any design-quality or critical-semantic assessment requires an independent", gate)
+        for trigger in (
+            "public/cross-component contracts",
+            "persistence or migration",
+            "permissions or security",
+            "asynchronous/concurrent/idempotent behavior",
+            "cross-repository design",
+            "governing prototypes",
+            "semantic disputes",
+            "explicit user request",
+        ):
+            self.assertIn(trigger, normalized)
+        self.assertIn("mandatory-independent-review", gate)
+        self.assertIn("fallback: blocked", gate)
+        self.assertIn("ask the user to explicitly name an available replacement", normalized)
+        self.assertIn("never use `main-agent` mode as a substitute", normalized)
+        self.assertIn("original independent reviewer must re-review the new snapshot", normalized)
+        self.assertIn("Design Gate remains the only owner of `Design: pass|blocked`", gate)
+        self.assertIn("main-agent is deterministic completeness only", template)
+        self.assertIn("mode alone does not prove execution", template)
+        self.assertIn("author confirmation is insufficient", template)
+
     def test_document_writers_return_local_checks_and_mandatory_gate_handoff(self) -> None:
         for name in DOCUMENT_WRITERS:
             body = read(f"skills/{name}/SKILL.md")

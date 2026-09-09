@@ -14,6 +14,8 @@ Bruce routes native Subagents through five internal Profiles: `inspector`, `impl
 
 Profile resolution is `task override > project override > user override > built-in Profile > current model fallback`. The resolver passes `model` to the Codex host only when the target model is confirmed available; Profiles with `fallback=current` may otherwise inherit the current model and record `fallback_used`, `effective_model`, `capability_status=degraded`, and `resolution_result=fallback`. `prototype-generator` instead defaults to `gemini-3.8-flash` + `high` with `fallback=blocked`: formal `write-prototype` work must spawn with its resolved Profile model and pass the same model to Open Design, never inherit a default/current model. Inspector remains read-only (the built-in inspection route is `gpt-5.6-luna` + `max`), Implementer is path-bounded, Verifier emits only `verification_packet`, and Reviewer emits only `review_packet`; Design/Completion remain the only terminal decisions.
 
+The `reviewer` Profile also uses `fallback=blocked`. When its model is unavailable or unconfirmed, pause the affected review and ask the user to explicitly select an available replacement; never substitute the current model, main-Agent self-review, or a verifier. Completion review and any invoked plan review require an independent reviewer; Design Gate owns the independent design-quality review predicate. See `skills/bruce/references/risk-policy.md` and the owning Gate for review depth and evidence requirements.
+
 Validate the contract with `python3 scripts/validate_functional_agents.py`.
 
 ## Pre-design solution analysis

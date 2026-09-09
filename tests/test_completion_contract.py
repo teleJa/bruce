@@ -144,7 +144,7 @@ class CompletionContractTest(unittest.TestCase):
         normalized = " ".join(self.skill.split())
         self.assertIn("Mandatory review-mode selection", self.skill)
         self.assertIn("Before author-quality checks or review-matrix construction", normalized)
-        self.assertIn("record exactly one `review_mode` plus one stable `review_mode_reason`", normalized)
+        self.assertIn("record `review_mode: independent` and one stable `review_mode_reason`", normalized)
         reasons = (
             "`explicit-independent-request`: the user explicitly requested independent review",
             "`critical-risk`: risk is `critical`",
@@ -154,7 +154,7 @@ class CompletionContractTest(unittest.TestCase):
             "`guarded-weak-evidence`: risk is `guarded` and the result relies mainly on weak executable evidence",
             "`guarded-repeated-repair`: risk is `guarded` and the current task completed two or more L1 repair rounds",
             "`guarded-broad-security-data-impact`: risk is `guarded` and the final state has broad security or data impact",
-            "`none`: no independent trigger remains",
+            "`mandatory-independent-review`: the baseline requirement when no more specific reason matches",
         )
         self.assertIn("Select the first matching reason in this precedence order", normalized)
         section = self.skill.split("## Mandatory review-mode selection", 1)[1].split(
@@ -167,7 +167,7 @@ class CompletionContractTest(unittest.TestCase):
         expected_reasons = [reason.split(":", 1)[0] for reason in reasons]
         self.assertEqual(expected_reasons, actual_reasons)
         self.assertIn(
-            "Reasons 1-8 require `review_mode: independent`; reason 9 requires `review_mode: main-agent`",
+            "All reasons require `review_mode: independent`",
             normalized,
         )
         self.assertIn("Do not silently downgrade", normalized)
@@ -241,11 +241,11 @@ class CompletionContractTest(unittest.TestCase):
     def test_output_mode_and_reason_pairing_is_explicit(self) -> None:
         normalized = " ".join(self.skill.split())
         self.assertIn(
-            "`review_mode: main-agent` requires `review_mode_reason: none`",
+            "`main-agent` is not an allowed completion review mode",
             normalized,
         )
         self.assertIn(
-            "`review_mode: independent` requires one of reasons 1-8",
+            "`review_mode: independent` is required with one of reasons 1-9",
             normalized,
         )
 

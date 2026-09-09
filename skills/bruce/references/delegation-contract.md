@@ -4,6 +4,9 @@ This reference defines the shared mechanics for Codex-native subagent delegation
 remain responsible for their role-specific authority, write scope, task kind, evidence semantics, and
 failure recovery; they must not create a private router or runtime.
 
+The [Functional Agent contract](functional-agent-contracts.md) owns the exact packet schema and model
+resolution rules; this reference defines dispatch sequencing, not a second packet schema.
+
 ## Common Task Packet requirements
 
 Every delegated task must declare:
@@ -23,9 +26,20 @@ host arguments unchanged. A worker's later record does not prove that pre-dispat
 - `resolution_result=blocked`: do not dispatch. Report the missing capability or use the role's explicitly permitted
   direct fallback without pretending that the blocked capability was supplied.
 
+For `reviewer`, model fallback and main-agent/direct review fallback are prohibited. Resolve the shared
+reviewer Profile before dispatch; if its model is unavailable or unconfirmed, pause the affected review
+and ask the user to name an available replacement. Resume only after that explicit choice resolves with
+confirmed host capability. Missing clean context or reviewer tools also blocks review; a model change
+does not waive those requirements. Never automatically substitute another model or a verifier.
+
 Do not select provider-specific models, create a Runtime, scheduler, worker registry, permission wrapper,
 second ledger, or persistent execution mode inside a capability Skill. Do not dispatch until the packet,
 model resolution, host arguments, and write scope agree.
+
+Reviewer results additionally carry the `review_basis` binding defined in the Functional Agent contract.
+Retain the actual native dispatch receipt and the immutable reviewed snapshot alongside pre-dispatch
+resolution. At consumption, use `validate_review_for_basis` with caller-held current values; do not
+accept a packet solely because its fields look valid. Repairs invalidate affected snapshot evidence.
 
 ## Common evidence and recovery
 

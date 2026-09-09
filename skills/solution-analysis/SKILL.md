@@ -63,7 +63,7 @@ inspect current implementation and existing solutions
 - 一般代码、调用链和项目文档调研：使用 `inspector` Profile 的 `gpt-5.6-luna` + `reasoning_effort=max`（即 `5.6-luna-max`）；
 - 需要独立推理、挑战候选方案并返回只读 findings 的委托任务：使用 `reviewer` Profile 的 `gpt-5.6-terra` + `reasoning_effort=high`（即 `5.6-terra-high`）；它只能审查主 Agent 提供的分析快照或设计假设并返回 findings，最终可行性结论仍由主 Agent 负责；
 - 模型只有在宿主确认可用时才作为 `model` 传入；否则按共享 resolver 的 current-model fallback 记录 `resolution_result=fallback`、`capability_status=degraded`。不得静默切换模型，也不得把配置文件本身当成模型已生效的证据；
-- 若目标模型、clean context 或必要工具不可用，记录 `resolution_result=blocked` 并由主 Agent决定是直接完成缺失分析还是停止报告阻塞。
+- 仅当共享 resolver 返回 `resolution_result=blocked` 时，由主 Agent决定是直接完成缺失分析还是停止报告阻塞。目标模型不可用但允许 current-model fallback 时，保留 resolver 的 fallback 结果；当前模型或必需工具不可用、必需 clean context 缺失、任务禁止 fallback 等阻塞条件以共享 resolver 为准，不在本 Skill 重复定义。主 Agent 直接补做仅限其自身具备能力且无需独立上下文的分析；不得替代必需 clean-context 审查、绕过缺失的必需能力，或把该必需部分报告为已完成。
 
 主 Agent 不得把 Subagent 的 `task_evidence_packet` 或 `review_packet` 当作最终方案结论；必须核对路径、符号、接口、命令、测试和当前工作区。
 

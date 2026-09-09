@@ -59,9 +59,9 @@ trigger this requirement.
 8. When an artifact was persisted, inspect its diff, verify claims against repository evidence,
    check contracts and cross-document references, and remove material omissions, placeholders, and
    broken links. Repair issues and return `Document check: clear|issues`. When the artifact will
-   govern implementation, return a mandatory `design-gate` handoff. Bruce/the caller must invoke
-   `design-gate` in the same turn without another user instruction; do not stop after merely reporting
-   that the gate is required. This writer does not own the Design verdict.
+   govern implementation, return a mandatory `design-gate` handoff. Bruce/the caller must coalesce pending handoffs under
+   [artifact-policy.md](../bruce/references/artifact-policy.md): finish the already authorized design
+   batch's required artifacts and local checks; once ready, run one Gate in the same turn without another user instruction. A single-artifact batch runs the Gate immediately after its check. This writer does not own the Design verdict.
 
 ## Output
 

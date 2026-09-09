@@ -338,9 +338,9 @@ or snapshot-retention record.
 
 Inspect final brief, UI contract when applicable, manifest, files, hashes, links, four checks,
 confirmation, and evidence gaps. Return `Document check: clear|issues`. When the confirmed prototype
-will govern implementation, return a mandatory `design-gate` handoff. Bruce/the caller must invoke
-`design-gate` in the same turn without another user instruction; do not stop after merely reporting
-that the gate is required. This writer does not own the Design verdict. Pending, unconfirmed, or
+will govern implementation, return a mandatory `design-gate` handoff. Bruce/the caller must coalesce pending handoffs under
+[artifact-policy.md](../bruce/references/artifact-policy.md): finish the already authorized design
+batch's required artifacts and local checks; once ready, run one Gate in the same turn without another user instruction. A single-artifact batch runs the Gate immediately after its check. This writer does not own the Design verdict. Pending, unconfirmed, or
 otherwise non-governing prototype state does not create this handoff.
 
 ## Output

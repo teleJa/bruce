@@ -130,7 +130,8 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
     是否匹配、真实依赖语义、回归覆盖、矩阵不变量、权威状态、冲突场景、占位符和链接；
     同时检查 Provider 是否来自配置（未配置默认 `ego-lite`）、是否残留 Chrome-only 前提、视觉断言及截图判读是否具体。修复问题后返回
     `Document check: clear|issues`。测试设计将约束实现时，返回强制 `design-gate` handoff；Bruce/调用方
-    必须在同一轮内立即运行 `design-gate`，无需用户追加指令，不得停在“需要门禁”的提示上。本 Skill 不拥有 Design verdict。
+    按共享 artifact-policy 的设计批次规则合并待执行 handoff：完成当前已授权批次的必需工件和本地检查后，
+    在就绪的同一轮执行一次 Gate，无需用户追加指令；单工件批次在检查完成后立即执行，不逐个 writer 重复门禁。本 Skill 不拥有 Design verdict。
 
 ## Output
 

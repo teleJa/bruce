@@ -71,8 +71,10 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
    dependencies, file/interface joins, Given/When/Then evidence anchors, omissions, placeholders,
    links, and path ownership. Repair issues and return `Document check: clear|issues`. When the plan
    contains a governing design decision or downstream contract, return a mandatory `design-gate`
-   handoff under the shared artifact policy. Bruce/the caller must invoke `design-gate` in the same turn
-   without another user instruction; do not stop after merely reporting that the gate is required. This
+   handoff under the shared artifact policy. Bruce/the caller coalesces pending handoffs, finishes the
+   already authorized design batch's required artifacts and local checks, then runs one Gate in the
+   same turn the batch becomes ready, without another user instruction. A single-artifact batch runs
+   the Gate immediately after its check. This
    writer does not own the Design verdict. An execution checklist alone does not require the handoff.
 
 ## Output

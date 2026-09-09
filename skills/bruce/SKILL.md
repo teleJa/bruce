@@ -63,9 +63,11 @@ executor-only verification, and sets an investigation budget and stop conditions
 not authorize the executor to reopen the full design package.
 
 Once the selected scope successfully persists artifacts that will govern downstream implementation, their
-return creates a mandatory `design-gate` handoff. Bruce must invoke `design-gate` in the same turn,
-without another user instruction, and must not stop after the document writer returns merely to ask the
-user to trigger the gate. This automatic handoff does not authorize behavior implementation: a
+return creates a pending mandatory `design-gate` handoff. Apply the design-batch rule in
+[artifact-policy.md](references/artifact-policy.md): finish the already authorized batch's required
+artifacts and local checks, then invoke one Gate in the same turn the batch becomes ready, without
+another user instruction. Do not run a whole-batch Gate after each writer. Bruce must not stop after the document writer returns
+merely to ask the user to trigger the Gate. This automatic handoff does not authorize behavior implementation: a
 `design-only` scope still stops after the Gate result, while an already authorized `implementation`
 scope may continue only after the current Gate passes. A `Design: blocked` result stops affected
 implementation and does not create a new authorization prompt.
@@ -236,8 +238,9 @@ must generate or update `api-contracts.md` before behavior implementation.
 
 Do not chain supporting skills merely because one was selected. The only mandatory continuation is
 the `design-gate` handoff created after downstream-governing design artifacts are successfully
-persisted and locally checked; Bruce consumes that handoff in the same turn without another user
-instruction. In particular, Bruce does not automatically invoke `solution-analysis`; it consumes a
+persisted and locally checked; Bruce coalesces pending handoffs under the shared design-batch rule
+and runs one Gate when that batch is ready, in the same turn without another user instruction.
+In particular, Bruce does not automatically invoke `solution-analysis`; it consumes a
 user-confirmed analysis only when the user explicitly selects a design or implementation scope.
 
 ## 4. Implement with Codex
@@ -246,8 +249,9 @@ A `design-only` scope is the normal Bruce handoff after the user has confirmed t
 but has not authorized behavior implementation. In this mode, Bruce may form the task contract and
 invoke only the necessary `write-architecture`, `write-db-design`, `write-plan`, and `write-tests`
 skills. When the resulting artifacts govern downstream implementation, their successful persistence
-and local document check create a mandatory `design-gate` handoff; Bruce must run `design-gate`
-immediately in the same turn instead of waiting for another user instruction. It must stop after the
+and local document check create pending mandatory `design-gate` handoffs; Bruce must finish the
+already authorized design batch and run one `design-gate` immediately when it is ready, in the same
+turn instead of waiting for another user instruction. It must stop after the
 design artifacts and Design Gate result; it must not implement behavior, invoke `completion-gate`, or
 perform delivery actions. `Design: pass` in this mode means the artifacts are ready to govern a later
 implementation; it is not permission to implement without a separate user instruction.

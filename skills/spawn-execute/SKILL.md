@@ -48,7 +48,14 @@ state.
 
 ## Functional Agent routing
 
-This Skill is the `implementer` Profile consumer. Each bounded task must carry a v1 Task Packet with `task_kind=implement`, `output=task_evidence_packet`, exact `allowed_paths`, excluded paths, verification commands, and a stop condition. The implementer may write only within `allowed_paths`; it returns changed files, commands, evidence gaps, and `model_resolution`, never a Gate verdict. `explore-prototype` generation workers reuse this Profile with `task_kind=throwaway_prototype`.
+This Skill consumes the `implementer` Profile and the shared [delegation contract](../bruce/references/delegation-contract.md).
+Each bounded task must carry a v1 Task Packet with `task_kind=implement`, `output=task_evidence_packet`,
+exact `allowed_paths`, excluded paths, verification commands, and a stop condition. Resolve the
+`implementer` Profile and complete the shared pre-dispatch routing gate before calling `spawn_agent`;
+do not dispatch when resolution, host arguments, packet, or write scope disagree. The implementer may
+write only within `allowed_paths`; it returns changed files, commands, evidence gaps, and
+`model_resolution`, never a Gate verdict. `explore-prototype` generation workers reuse this Profile
+with `task_kind=throwaway_prototype` and must use their declared role-specific scope.
 
 ## Does not own
 

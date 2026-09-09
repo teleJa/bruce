@@ -256,6 +256,15 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("Do not modify files", body)
         self.assertIn("Do not treat `Analysis: complete` as `Design: pass`", body)
 
+    def test_delegation_contract_is_shared_by_inspection_and_execution(self) -> None:
+        contract = read("skills/bruce/references/delegation-contract.md")
+        for phrase in ("Common Task Packet requirements", "model_resolution", "resolved", "fallback", "blocked", "Do not dispatch"):
+            self.assertIn(phrase, contract)
+        for name in ("inspect-parallel", "spawn-execute"):
+            body = read(f"skills/{name}/SKILL.md")
+            self.assertIn("delegation-contract.md", body)
+            self.assertIn("shared pre-dispatch routing gate", " ".join(body.split()))
+
     def test_parallel_inspection_is_read_only_and_advisory(self) -> None:
         body = read("skills/inspect-parallel/SKILL.md")
         normalized = " ".join(body.split())
@@ -281,17 +290,17 @@ class SupportingSkillContractTest(unittest.TestCase):
         body = read("skills/inspect-parallel/SKILL.md")
         normalized = " ".join(body.split())
         for phrase in (
-            "Mandatory pre-dispatch routing gate",
-            "before calling the native `spawn_agent` tool",
-            "Do not call `spawn_agent` until a `model_resolution` record",
-            "Pass `model` only when `resolution_result=resolved`",
-            "when `resolution_result=fallback`, intentionally omit `model`",
-            "If resolution is `blocked`, the resolver fails",
-            "A worker's later `model_resolution` output does not prove",
+            "shared pre-dispatch routing gate",
+            "`task_kind=inspect`",
+            "`output=task_evidence_packet`",
+            "`allowed_paths=[]`",
             "In `Inspection mode: direct`, do not create a native subagent",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, normalized)
+        shared = read("skills/bruce/references/delegation-contract.md")
+        for phrase in ("Do not dispatch until", "resolution_result=resolved", "resolution_result=fallback", "resolution_result=blocked", "worker's later record does not prove"):
+            self.assertIn(phrase, " ".join(shared.split()))
 
     def test_execution_handoff_freezes_cross_model_boundaries_and_budget(self) -> None:
         plan = " ".join(read("skills/write-plan/SKILL.md").split())

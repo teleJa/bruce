@@ -28,6 +28,10 @@ user for the document path.
   is part of the confirmed scope, the execution handoff at
   [write-plan/templates/execution-handoff.md](../write-plan/templates/execution-handoff.md).
 - The task-contract package rule in [../bruce/references/task-contract.md](../bruce/references/task-contract.md).
+- The upstream/downstream artifact responsibilities: architecture owns structure and domain semantics;
+  API/file contracts own observable contract details; database design owns persistence and migration;
+  test design owns verification scenarios and evidence; the plan owns implementation sequencing and
+  task boundaries. Downstream artifacts may refine these decisions but may not silently change them.
 
 ## Candidate set
 
@@ -95,7 +99,18 @@ For every generated document:
      placeholder, or incomplete surface/region/field is a Design blocker with the concrete ID/path in
      the finding. Do not require React/Vue, a DOM tree, or framework AST; do not treat visual-token
      clearance or prototype existence as Surface Contract completeness.
-5. Record only evidence-backed blockers that can cause wrong implementation, unsafe execution, or
+5. Check cross-document authority and flow, not just each document in isolation:
+   - architecture decisions, domain objects, state authority, invariants, and preserved behavior agree
+     with API/file contracts and database design;
+   - database design implements the persistence responsibilities without inventing or contradicting
+     architecture semantics (including the repository's confirmed database constraints);
+   - test-plan scenarios validate confirmed acceptance, contracts, authority, and invariants without
+     defining missing business rules; write-plan steps point to the same contract and evidence;
+   - plan and handoff preserve allowed/excluded scope and do not reopen or silently alter upstream decisions.
+   Record each material join and its source paths in `design-review.md`. A missing join, contradictory
+   decision, or downstream document that silently changes an upstream decision is a blocker. Do not
+   duplicate the full source documents in the review.
+6. Record only evidence-backed blockers that can cause wrong implementation, unsafe execution, or
    unverifiable acceptance. Wording preferences and optional polish do not block.
 
 Use a clean-context native reviewer only when the user explicitly requests independent design
@@ -116,7 +131,9 @@ An independent design review uses the `reviewer` Profile with a clean-context Ta
 2. Populate the complete candidate matrix. Record a required absent artifact as `required/missing`;
    it cannot be marked skipped.
 3. Verify every generated path exists and every skip cites concrete repository and scope evidence.
-4. Perform the readiness checks against the actual files and current repository facts.
+4. Perform the readiness checks against the actual files and current repository facts. Reuse the
+   evidence gathered by the writers; perform additional bounded checks only for unresolved or
+   cross-document joins. Do not rerun each writer's full local review.
 5. When a different execution model/profile will consume the design, or the confirmed implementation
    scope requires durable task handoff, verify that `execution-handoff.md` exists beside `plan.md` and
    contains frozen allowed/excluded paths, implementation-map joins, confirmed decisions, bounded

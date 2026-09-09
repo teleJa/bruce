@@ -234,21 +234,24 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("profile 本身既不是必要条件，也不是充分条件", tests)
 
 
-    def test_solution_analysis_is_read_only_and_stops_before_design(self) -> None:
+    def test_solution_analysis_is_read_only_and_uses_shared_investigation(self) -> None:
         body = read("skills/solution-analysis/SKILL.md")
-        normalized = " ".join(body.split())
-        for phrase in (
-            "由主 Agent 决定是否委托 Subagent",
-            "`inspector` Profile",
-            "`task_kind=inspect`",
-            "`output=task_evidence_packet`",
-            "`allowed_paths=[]`",
-            "gpt-5.6-luna",
-            "gpt-5.6-terra",
-            "Analysis: complete",
-            "Awaiting user direction: yes",
+        skill_dir = ROOT / "skills/solution-analysis"
+        # Delegation remains available, with its protocol and model routing owned
+        # by shared sources rather than copied into the analysis skill.
+        for reference in (
+            "../inspect-parallel/SKILL.md",
+            "../bruce/references/functional-agent-contracts.md",
         ):
-            self.assertIn(phrase, normalized)
+            self.assertIn(f"]({reference})", body)
+            self.assertTrue((skill_dir / reference).is_file())
+        self.assertIn("`inspector` Profile", body)
+        self.assertIn("`reviewer` Profile", body)
+        self.assertNotIn("gpt-5.6-luna", body)
+        self.assertNotIn("gpt-5.6-terra", body)
+        self.assertNotIn("`task_kind=inspect`", body)
+        self.assertNotIn("`output=task_evidence_packet`", body)
+        self.assertNotIn("`allowed_paths=[]`", body)
         self.assertIn("不得自动调用后续 Skill", body)
         self.assertIn("Do not modify files", body)
         self.assertIn("Do not treat `Analysis: complete` as `Design: pass`", body)

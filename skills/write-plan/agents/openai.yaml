@@ -1,4 +1,4 @@
 interface:
   display_name: "Write Plan"
-  short_description: "Create minimal executable implementation plans"
-  default_prompt: "Use $write-plan 为本次变更创建最小可执行计划；中文请求用简体中文撰写自然语言内容。"
+  short_description: "Turn confirmed design into development-ready plans"
+  default_prompt: "Use $write-plan 将已确认架构或任务决策补全为可指导开发的执行计划，明确接入位置、实施顺序、任务产出和验证，区分固定约束与开发者可自行决定的细节；中文请求用简体中文。"

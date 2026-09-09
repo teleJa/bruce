@@ -20,6 +20,8 @@ design across repositories.
 - Objective, scope, acceptance, constraints, execution profile, and known risk.
 - Current repository components, toolchains, deployables, interfaces, and architecture conventions.
 - Existing decisions or domain clarification when available.
+- Prior `solution-analysis` findings and bounded `inspect-parallel` evidence; reuse valid evidence and
+  investigate only architecture-specific gaps.
 - The repository's documented convention and any existing change directory for the current task.
 - The document language rule in [document-language.md](../bruce/references/document-language.md).
 
@@ -40,23 +42,31 @@ trigger this requirement.
 
 ## Procedure
 
-1. Inspect the current repository with available Codex tools. If a bounded read-only shard is delegated, use the shared `inspector` Functional Agent Profile and its v1 Task Packet; never select a provider-specific model or Runtime here. Use a native subagent only when the
-   exploration boundary is clear; otherwise inspect sequentially.
-2. Identify architecture decisions and every public or cross-component API, event, or file-contract
+1. Consume existing analysis findings and identify only the facts needed to make the structural or
+   contract decision. If new evidence is needed, use the shared `inspect-parallel` boundary and routing
+   rules with the `inspector` Profile; do not repeat a completed repository survey or select a model/Runtime here. If a material
+   fact remains unresolved, return the bounded evidence gap rather than inventing a boundary.
+2. Separate the current implementation from the target design: record reusable existing capabilities,
+   changed behavior, preserved behavior, new responsibilities, and unverified assumptions.
+3. Identify architecture decisions and every public or cross-component API, event, or file-contract
    change. A single-component task may still require a contract artifact.
-3. Define components from real ownership, build, deployment, or delivery boundaries. Do not turn
+4. Define components from real ownership, build, deployment, or delivery boundaries. Do not turn
    internal layers into artificial components.
-4. Define each changed public or cross-component contract with provider, consumers, request or
+5. For applicable stateful, asynchronous, permissioned, or relationship-based behavior, define domain
+   objects, state ownership/transitions, authoritative state, invariants, concurrency/retry/idempotency,
+   and conflict/error semantics. Mark the dimension not_applicable with a reason when it does not apply.
+6. Define each changed public or cross-component contract with provider, consumers, request or
    event shape, success/error behavior, authentication, compatibility, versioning, and verification.
-5. Cover data flow, failure handling, rollout/rollback, observability, security, and verification in
-   proportion to the decision.
-6. Generate `architecture.md` from [architecture.md](templates/architecture.md) only when a durable
+7. Cover data flow, failure handling, rollout/rollback, observability, security, and verification in
+   proportion to the decision. Do not use tests or the implementation plan to silently decide missing
+   business rules, authority, or conflict semantics; return those as open decisions.
+8. Generate `architecture.md` from [architecture.md](templates/architecture.md) only when a durable
    structural decision must be persisted or handed off. For every contract change described above,
    generate or update `api-contracts.md` from [api-contracts.md](templates/api-contracts.md) in the
    resolved artifact directory before behavior implementation begins.
-7. Write natural-language content in the user's language, using Simplified Chinese for a Chinese
+9. Write natural-language content in the user's language, using Simplified Chinese for a Chinese
    request; preserve stable contract tokens, identifiers, paths, and protocol names.
-8. When an artifact was persisted, inspect its diff, verify claims against repository evidence,
+10. When an artifact was persisted, inspect its diff, verify claims against repository evidence,
    check contracts and cross-document references, and remove material omissions, placeholders, and
    broken links. Repair issues and return `Document check: clear|issues`. When the artifact will
    govern implementation, return a mandatory `design-gate` handoff. Bruce/the caller must coalesce pending handoffs under

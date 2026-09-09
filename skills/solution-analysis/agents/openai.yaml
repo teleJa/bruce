@@ -1,4 +1,4 @@
 interface:
   display_name: "Solution Analysis"
-  short_description: "Inspect existing solutions and analyze feasibility before design"
-  default_prompt: "Use $solution-analysis to inspect the current implementation and existing project solutions, analyze feasibility, then wait for my direction."
+  short_description: "Analyze decisions with bounded research and follow-up"
+  default_prompt: "Use $solution-analysis to analyze the current decision from repository evidence, delegate bounded investigation when useful, and discuss tradeoffs without writing files or starting implementation."

@@ -1,11 +1,32 @@
 ---
 name: write-plan
-description: Use when a software change has multiple dependent steps, cross-component coordination, or a handoff need that benefits from a persistent implementation plan. Build a minimal executable plan from the task contract and repository facts without generating tests, reviews, approvals, or execution state automatically.
+description: Use when a software change has multiple dependent steps, cross-component coordination, or a handoff need that benefits from a persistent implementation plan. Translate confirmed architecture or task decisions into a development-ready plan with concrete integration work, dependency order, and verification, without silently redesigning upstream contracts or starting execution.
 ---
 
 # Write plan
 
-Create the smallest plan that makes dependencies and verification unambiguous.
+Translate confirmed design into the smallest plan that can guide development. Supplement the design
+with implementation sequencing, integration work, and verification; do not merely restate architecture
+or list task titles. A developer without the analysis history should be able to start from this plan
+and its necessary references without re-deciding business rules or architecture.
+
+## Design-to-implementation boundary
+
+- Consume confirmed architecture, API/data contracts, or task decisions already established in the
+  conversation. A simple change does not require an architecture document merely to write a plan.
+  Reference the authoritative source and affected decision instead of copying the whole design.
+- Complete the implementation arrangements that affect task boundaries or other developers: existing
+  integration points, consumed/produced interfaces, prerequisites, dependency order, shared-file
+  ownership, and applicable migration, compatibility, cutover, or recovery steps. Derive these from
+  actual repository facts and confirmed constraints, not from a generic implementation checklist.
+- Leave local choices such as private helper extraction, naming, and equivalent internal algorithms
+  to the executor when they do not change contracts, task ownership, required behavior, or evidence.
+  Distinguish these choices from frozen decisions; do not prescribe line-by-line code or require new
+  approval for a permitted local choice.
+- If implementation planning exposes a missing business rule, incompatible interface, ambiguous
+  state/data semantics, or a necessary change to confirmed architecture or authorization, return the
+  concrete conflict, affected tasks, and options to Bruce/the user. Do not silently resolve it by
+  redesigning the system or by writing “handle during development” into an executable task.
 
 ## Artifact placement
 
@@ -18,7 +39,8 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
 
 - Objective, scope, acceptance, constraints, execution profile, and risk.
 - Current repository structure, commands, conventions, and dirty-worktree boundaries.
-- Optional architecture, public contracts, or database design that the plan must consume.
+- Confirmed architecture, public contracts, database design, or conversation/task decisions, as applicable;
+  include their authoritative locations and the constraints that implementation must preserve.
 - A requested output path; default to the repository's existing planning convention.
 - The document language rule in [document-language.md](../bruce/references/document-language.md).
 
@@ -32,8 +54,19 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
    boundaries remain missing, do not persist a plan. Return `Missing planning evidence` with the
    unresolved questions and smallest bounded scopes Bruce must inspect before invoking `write-plan`
    again. Do not plan against invented paths or APIs.
+   Classify a gap by its effect: an unresolved upstream decision returns to design discussion; a
+   material implementation fact needs bounded evidence collection; a permitted local coding choice
+   is not a planning blocker. Identify the affected task and dependency boundary rather than treating
+   every unknown as a whole-design failure. Preserve existing plan files and confirmed task decisions
+   while a material gap remains; once resolved, revise only affected tasks and joins, reusing valid
+   evidence instead of repeating the full investigation or regenerating unrelated work.
 2. Split work into feature-bearing tasks with stable ids. For each task record title, dependencies,
    files/scope, consumed/produced interfaces, implementation detail, acceptance, and verification.
+   Make the implementation detail actionable: locate existing files/symbols and their roles, label
+   proposed new paths as new, describe the concrete change and task-local deliverable, and identify
+   which predecessor output or execution precondition must be available first. Include migration,
+   old/new compatibility, cutover, and recovery order only when the change needs them. Do not treat
+   several subtasks touching the same file as independent without an ownership and integration order.
    Reference the parent Given/When/Then scenario ids and required evidence layer for behavior tasks.
    When a task creates, replaces, deletes, transfers, or projects a relationship, record a consistency
    classification, business-invariant and authoritative-state summary, competing writers/viewers,
@@ -62,6 +95,11 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
    relationship or permission-projected state, also ensure the plan identifies the invariant and
    authority that govern the state; otherwise return a planning gap instead of allowing the UI to
    define the business rule implicitly.
+   Check the plan from the receiving developer's perspective: can they identify where to start, what
+   result to produce, what must not change, which local decisions are theirs, and how to verify the
+   result without reopening upstream design? If not, supply the missing implementation arrangement
+   or return the specific planning gap. Record expected verification, commands/checks, prerequisites,
+   and observable results; planning does not prove those tests have run or the feature has passed.
 7. Persist the result using [plan.md](templates/plan.md), removing inapplicable optional sections.
    Only use task-package templates when that package is needed. Keep live status and approval outside
    frozen contracts; checkpoint triggers remain owned by the shared recovery policy.
@@ -85,7 +123,9 @@ Return exactly one outcome:
   required; summarize dependency order, risks, verification anchors, any task-package path, and
   `Document check: clear|issues` result.
 - `Missing planning evidence`: do not create or update `plan.md` or `execution-handoff.md`; return the unresolved questions
-  and smallest bounded inspection scopes to Bruce for evidence collection before retrying this skill.
+  and smallest bounded inspection scopes to Bruce for evidence collection, or the required upstream
+  decision when investigation cannot settle it. Preserve valid prior work and retry only the affected
+  planning scope once the gap is resolved; do not label unresolved material work executable.
 
 ## Does not own
 

@@ -10,6 +10,14 @@
 
 - <path or current interface> — <fact used by this design>
 
+## Current-to-target delta
+
+- Existing capabilities: <repository-backed capabilities reused by this design>
+- Changed behavior: <observable behavior that changes>
+- Preserved behavior: <existing behavior that must remain compatible>
+- New responsibilities: <new component or ownership responsibilities>
+- Unverified assumptions: <facts still requiring bounded evidence; none if none>
+
 ## Components and ownership
 
 | Component | Existing stack/deliverable | Owns | Does not own |
@@ -28,6 +36,14 @@
 - Rationale: <trade-off and repository fit>
 - Rejected: <alternatives and why>
 - Reversibility: <cost and recovery>
+
+## Domain semantics and authority
+
+- Domain objects and relationships: <objects and relationships; not_applicable with reason if irrelevant>
+- State ownership and transitions: <who may change which state and allowed transitions>
+- Authority and invariants: <authoritative state source and invariants; not_applicable with reason if irrelevant>
+- Concurrency/retry/idempotency: <semantics; not_applicable with reason if irrelevant>
+- Conflict/error semantics: <winner, rejection, preservation, and recovery rules>
 
 ## Contracts
 

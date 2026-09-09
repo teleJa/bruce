@@ -26,7 +26,9 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 
 ### 通用触发条件
 
-所有行为变更均触发测试设计。以下任一条件成立时使用扩展模板，仅填写适用模块：
+所有行为变更均触发测试设计；具体包括业务、API、数据、状态、权限或用户可观察行为。保持行为和外部契约不变的
+纯内部重构、注释/格式调整、测试代码自身整理，除非用户明确要求，不自动生成新的测试计划。
+以下任一条件成立时使用扩展模板，仅填写适用模块：
 
 - 验收跨越多个组件、API、服务、数据库或其他合同边界；
 - 需要验证 state、repeat use、retry、concurrency、partial failure、recovery、permission、rollback；
@@ -60,7 +62,9 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 
 如果判断不适用，也必须在 `test-plan.md` 中显式记录 `consistency_check: not_applicable` 和原因，
 不能静默省略。不要把“对象对当前用户不可见”推导为“对象离线”，也不要把“页面未找到关联对象”推导为
-“对象不存在”，除非权威状态已经证明该结论。
+“对象不存在”，除非权威状态已经证明该结论。`write-tests` 可以暴露缺失的不变量、权威状态、
+冲突规则或权限语义，但不拥有这些业务决策；缺失时返回 `Missing acceptance/design decision`
+或 `Test design blocked`，不要用测试场景自行定义规则。
 
 不要为纯 copy、icon、color 或没有状态、数据、交互和验证边界的 layout-only 变更调用本 Skill，除非用户或
 现有测试计划明确要求。多个 UI 触发条件同时成立时，只创建一份紧凑的测试计划。
@@ -68,6 +72,7 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 ## Inputs
 
 - Task contract 和 acceptance criteria。
+- 已确认的 architecture、API contract、database design 和 plan；测试计划引用这些来源，不重新决定业务规则。
 - 任务合同中的 proportional `visual_scope`（如果涉及用户可见 Web 行为）。
 - 适用 Bruce 配置路径及 `verification.browser_provider` 的解析结果；按
   [browser-provider.md](../bruce/references/browser-provider.md) 使用共享解析器，未配置默认 `ego-lite`。
@@ -128,7 +133,10 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
     名称和其他稳定 machine-facing tokens，不要为了中文化而翻译它们。
 11. 检查文档 diff 以及 requirement/acceptance traceability、prerequisites、Given/When/Then 可观察性、evidence layer
     是否匹配、真实依赖语义、回归覆盖、矩阵不变量、权威状态、冲突场景、占位符和链接；
-    同时检查 Provider 是否来自配置（未配置默认 `ego-lite`）、是否残留 Chrome-only 前提、视觉断言及截图判读是否具体。修复问题后返回
+    测试计划只记录视觉 `visual_scope` 及适用理由；只有 `browser-smoke` 或 `browser-layout` 时才展开
+Provider、截图、几何和视觉判读细节，并引用视觉检查清单。非 Web 或 `visual_scope=none` 任务不复制
+Provider 操作规则。
+     同时检查 Provider 是否来自配置（未配置默认 `ego-lite`）、是否残留 Chrome-only 前提、视觉断言及截图判读是否具体。修复问题后返回
     `Document check: clear|issues`。测试设计将约束实现时，返回强制 `design-gate` handoff；Bruce/调用方
     按共享 artifact-policy 的设计批次规则合并待执行 handoff：完成当前已授权批次的必需工件和本地检查后，
     在就绪的同一轮执行一次 Gate，无需用户追加指令；单工件批次在检查完成后立即执行，不逐个 writer 重复门禁。本 Skill 不拥有 Design verdict。
@@ -140,6 +148,9 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 实际要求的证据层级不因模板更短而降低。
 
 ## Does not own
+
+不要把预期证据写成实际执行结果；测试计划生成阶段只定义命令、前提、预期断言和证据位置。
+实际退出码、截图判读、运行结果和状态由后续验证轨道记录。
 
 不要创建 execution state，不负责开发顺序，不批准计划，不调用 plan review，不运行完整 workflow，不委托或声明
 completion。除强制 Design Gate handoff 外，不要自动调用其他 supporting skill。

@@ -18,10 +18,13 @@ collection while keeping synthesis and workflow decisions with the caller.
 
 ## Procedure
 
-1. Confirm that parallel inspection is warranted. Use it only when at least two read-only scopes can be
-   investigated independently and their combined evidence will materially reduce latency or main-agent
-   context. If boundaries are already clear, scopes are tightly coupled, or only one small area needs
-   inspection, return `Inspection mode: direct` with the reason.
+1. Identify the remaining evidence gaps. If current evidence already answers the question, return
+   `Inspection mode: direct` with that reason and do not repeat the investigation. Otherwise, use parallel
+   inspection when at least two read-only scopes can be investigated independently and delegation will
+   materially reduce latency or main-agent context. Known directory, file, or task boundaries do not mean
+   the implementation facts are resolved and are not, by themselves, a reason to choose direct.
+   Choose `Inspection mode: direct` with the reason when the remaining work is small, scopes are too
+   tightly coupled to investigate independently, or delegation offers no material benefit.
 2. Define the smallest useful set of non-overlapping primary scopes. Dispatch no more than five
    read-only scopes. Give every shard a bounded directory, component, layer, or concern; three to five
    concrete questions; relevant repository rules; and the same result schema. Permit narrow overlap

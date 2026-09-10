@@ -7,6 +7,33 @@ failure recovery; they must not create a private router or runtime.
 The [Functional Agent contract](functional-agent-contracts.md) owns the exact packet schema and model
 resolution rules; this reference defines dispatch sequencing, not a second packet schema.
 
+## Delegation language
+
+This rule applies to all Profiles, including clean-context reviewers, and to both initial `spawn_agent`
+messages and `send_input` follow-ups for active or resumed workers; it is not limited to saved documents.
+An explicit user language instruction takes precedence. Otherwise use the current user's request
+language for newly authored natural-language instructions; Chinese requests default to Simplified Chinese.
+Retain that selected language through retries and handoffs unless the user changes it. Do not infer the
+language from an English template, model name, source file, or tool description.
+
+Use that language for the task introduction, `objective`, constraints, acceptance explanations,
+`stop_conditions`, evidence descriptions, follow-up corrections, and requested reply prose. State the
+selected language briefly in the worker message, including clean-context reviewers that cannot inherit
+it. For example: “请使用简体中文执行本任务并说明结果；机器字段和代码保持原样。” Carry this in
+existing prose fields or the message wrapper. No new Packet field, schema version, or locale detector
+is required; do not add a `language` key to the strict v1 schema.
+
+Keep schema keys, enum/status values, Profile/model IDs, code identifiers, paths, commands, API names,
+proper nouns, and quoted source text and tool output unchanged. Code-comment language rules apply to
+code comments, not the delegation prose; an English-comments rule does not require English task packets.
+Do not translate literal fixtures, errors, or requested output content merely to match the instruction
+language; an explicitly requested artifact language still governs that artifact.
+
+Before dispatch or send_input, check the authored prose and correct accidental template-language
+carryover while preserving machine tokens and source evidence. Do not ask again when the language is
+already clear. This check is part of preparing the message, not a new Gate or investigation phase, and
+does not require translating historical messages, saved evidence, or repository rules.
+
 ## Common Task Packet requirements
 
 Every delegated task must declare:

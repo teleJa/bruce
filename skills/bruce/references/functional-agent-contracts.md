@@ -32,6 +32,14 @@ task_packet:
 
 未知字段、绝对路径、空目标、未知 Profile、错误 `schema_version` 或不匹配的 output 类型必须 fail closed。`allowed_paths` 必须是仓库相对路径；路径校验使用规范化后的 path containment，不接受 `..` 越权。
 
+### 委派消息语言
+
+所有 Profile 的初次派发、补充指令和恢复消息都遵循
+[共享委派语言规则](delegation-contract.md)：用户明确指定的语言优先，
+否则自然语言说明沿用用户当前请求语言；中文请求默认简体中文。`objective`、约束、验收说明、
+`stop_conditions` 和结果解释使用该语言，键名、枚举、路径、命令及原始引文保持不变。
+该规则通过现有文本字段或消息正文表达，不增加 `language` 字段，也不翻译机器协议。
+
 ## 2. Profile roles
 
 | Profile ID | 允许职责 | 禁止职责 | 输出 |

@@ -27,6 +27,10 @@ native host state, and subagent lifecycle. Read
 [plugin-boundary.md](references/plugin-boundary.md) before handling a permission denial, external
 side effect, or request to add execution infrastructure.
 
+Apply the shared [delegation language rule](references/delegation-contract.md)
+to every native subagent instruction and follow-up: use the user's language for prose, while preserving
+machine tokens and source evidence. This also applies when the worker does not inherit the conversation.
+
 Before creating any native Subagent, select exactly one Functional Agent Profile from
 [model-profiles.yaml](references/model-profiles.yaml) and construct the v1 Task Packet defined in
 [functional-agent-contracts.md](references/functional-agent-contracts.md). Resolve task override >

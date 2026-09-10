@@ -67,6 +67,18 @@ Complex acceptance remain readable; the validator cannot infer semantic complexi
 For the UI prototype candidate, `generated` means the artifact is materialized in the current change
 directory, including an imported user-supplied prototype. An external URL alone is not delivery.
 
+## Goal-alignment contract
+
+Before evaluating solution completeness, Design Gate must require a stable goal-alignment section in the governing requirements or architecture artifact. It must identify a `goal_id`, the user/job to be completed, the observable outcome, user-visible required and forbidden steps, internal concepts that must remain hidden from the user, explicit non-goals, goal-preserving invariants, and both positive and negative acceptance assertions.
+
+The goal must be traceable through the package as:
+
+```text
+Goal -> Requirement -> Design decision -> Contract -> Implementation anchor -> Evidence
+```
+
+A solution detail, implementation preference, or inferred internal model must not be promoted to a user goal without explicit authority. If the package lacks a goal, cannot distinguish goal from proposed solution, or has no traceability from goal to acceptance, return `Design: issues`; if the authoritative goal or user-visible outcome is unresolved, return `Design: blocked`. Every downstream artifact must preserve the goal and may not silently replace it with a narrower technical outcome.
+
 ## Reuse-claim contract
 
 方案中出现“复用已有能力”“沿用现有流程”“与现有页面一致”“使用已有接口/组件”等表述时，不能停留在概念性描述。Design Gate 必须要求每一项复用声明展开为可执行、可审查的约束，并绑定仓库证据：

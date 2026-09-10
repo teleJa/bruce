@@ -1,5 +1,19 @@
 # Architecture: <change name>
 
+## Goal alignment
+
+- `goal_id`: <stable goal identifier>
+- User/job to be completed: <who needs to accomplish what>
+- Observable outcome: <what the user can see or verify when the goal is achieved>
+- User-visible constraints: <required and forbidden user-facing steps, fields, concepts, and states>
+- Internal concepts hidden from the user: <implementation concepts the user must not be required to understand or provide>
+- Non-goals: <explicitly excluded outcomes and solution assumptions>
+- Goal-preserving invariants: <rules that must remain true while exploring solutions>
+- Positive acceptance assertions: <goal-directed observable assertions>
+- Negative acceptance assertions: <observable assertions for prohibited drift>
+
+Every goal must trace through requirements, design decisions, contracts, implementation anchors, and evidence. A solution detail is not a goal unless the user explicitly confirmed it as one.
+
 ## Objective and scope
 
 - Objective: <observable outcome>

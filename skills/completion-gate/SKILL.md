@@ -264,6 +264,18 @@ findings inside the single Completion verdict and never create a second UI verdi
 For `browser-smoke`, prove one real interaction and its visible result. For `browser-layout`, prove the
 interaction, screenshot, viewport, geometry/overflow, and region evidence for each affected Surface ID.
 
+### Goal alignment
+
+When a Goal Alignment section governs the task, the independent reviewer must compare the final integrated behavior with the original user/job, observable outcome, user-visible constraints, hidden internal concepts, non-goals, invariants, and positive/negative assertions. The review must answer explicitly whether the implementation still solves the original goal or has substituted a technical solution, internal model, or narrower outcome. Any new user-visible step, field, concept, parameter, role, or state without a traced goal and authorized design decision is a goal-drift finding; unresolved goal drift prevents `Completion: pass`.
+
+Verify the complete traceability chain:
+
+```text
+Goal -> Requirement -> Design decision -> Contract -> Implementation anchor -> Evidence
+```
+
+A missing link, stale link, or evidence that only proves the substituted implementation rather than the original goal is a completion issue. If the authoritative goal or observable outcome cannot be reviewed, return `Completion: blocked`.
+
 ### Design alignment
 
 When Design Gate was required, compare the final diff and scope with `design-review.md`. Return

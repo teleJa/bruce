@@ -67,6 +67,20 @@ Complex acceptance remain readable; the validator cannot infer semantic complexi
 For the UI prototype candidate, `generated` means the artifact is materialized in the current change
 directory, including an imported user-supplied prototype. An external URL alone is not delivery.
 
+## Reuse-claim contract
+
+方案中出现“复用已有能力”“沿用现有流程”“与现有页面一致”“使用已有接口/组件”等表述时，不能停留在概念性描述。Design Gate 必须要求每一项复用声明展开为可执行、可审查的约束，并绑定仓库证据：
+
+- `reuse_id` 与复用对象：业务能力、API/数据源、组件/函数、流程或运行时机制；
+- 权威实现锚点：仓库路径、符号/路由/配置名，必要时附调用链；
+- 输入契约：调用方、必需参数、默认行为，以及禁止新增或暴露的参数；
+- 输出契约：返回结构、状态/错误语义和用户可观察结果；
+- 允许变化：本次需求可以改变的选择状态、保存目标、文案或适配层；
+- 禁止变化：不得自行复制、替换、降级或新增的实现与交互；
+- 验证方式：静态引用检查、契约测试、运行时/API/UI 证据中的适用层级。
+
+缺少权威实现锚点、输入/输出契约、允许/禁止变化或验证方式的复用声明，必须作为 `Design: issues`；无法可靠确认权威实现时作为 `Design: blocked`，不得让执行者自行发明替代接口或交互。每个复用声明至少生成一个正向验收项和一个负向验收项，并传递到 `test-plan.md`、实施计划和最终 Completion review matrix。
+
 ## Readiness checks
 
 For every generated document:

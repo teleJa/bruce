@@ -72,6 +72,10 @@ placeholders, and links.
 
 ### Review completeness
 
+Implementation completion requires a separately attributable independent review of the final integrated snapshot, not merely author checks, deterministic validators, targeted tests, or a reviewer used during an earlier design/plan stage. The Completion Gate must record the reviewer task/thread identifier, clean-context/no-inherited-history basis, reviewed snapshot or diff hash, review packet, findings, and any post-repair re-review evidence. If any of these artifacts is absent, stale, or cannot be tied to the final snapshot, the required review is not proven and the Gate must return `Completion: blocked`.
+
+The independent reviewer must explicitly inspect every propagated reuse contract, including its authoritative implementation anchor, API/data-source and parameter parity, allowed delta, forbidden divergence, and positive/negative acceptance assertions. A review packet that only reports tests or local static findings without this scope does not satisfy Completion review.
+
 Before reporting findings, build one review matrix for the final state. It covers every acceptance
 id, direct changed entry point and direct call site needed by that acceptance, material
 early-return/error/empty/null/partial/duplicate/state paths identified by the acceptance or changed

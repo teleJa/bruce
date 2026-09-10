@@ -10,6 +10,16 @@
 
 - <path or current interface> — <fact used by this design>
 
+## Reuse contracts
+
+对每一项“复用已有能力/沿用现有流程/与现有页面一致”的声明，必须填写一条可执行的复用契约，不能只写概念描述。
+
+| reuse_id | 复用对象 | 权威实现锚点 | 输入契约与禁止新增参数 | 输出/用户可观察契约 | 允许变化 | 禁止变化 | 验证方式 |
+|---|---|---|---|---|---|---|---|
+| <id> | <能力/API/组件/流程> | <path + symbol/route> | <caller, params, defaults> | <response and visible behavior> | <allowed delta> | <forbidden divergence> | <static/test/API/UI evidence> |
+
+每条复用契约必须同时产生至少一个正向验收项和一个负向验收项，并被 `test-plan.md` 与实施计划引用。无法确认权威实现锚点时不得自行创建替代实现，应将其列为 Open decision 或阻塞项。
+
 ## Current-to-target delta
 
 - Existing capabilities: <repository-backed capabilities reused by this design>

@@ -41,6 +41,25 @@ Retain the actual native dispatch receipt and the immutable reviewed snapshot al
 resolution. At consumption, use `validate_review_for_basis` with caller-held current values; do not
 accept a packet solely because its fields look valid. Repairs invalidate affected snapshot evidence.
 
+## Implementation evidence reuse
+
+Every `task_kind=implement` dispatch, including same-model delegation, consumes the compact handoff
+in [implementation-preparation.md](implementation-preparation.md). Put it in existing v1 fields;
+do not add schema fields, create a separate ledger, or require a new document. A list of source paths
+without the already verified findings is insufficient. Before every implementation dispatch, carry
+verified facts, source basis, executor-only gaps, first edit/test target, and consumed/remaining focused
+evidence rounds (including parent usage and extension-used state). When additional investigation is
+needed, reconcile missing budget data from parent evidence before dispatch; unknown usage is not zero,
+and call/read caps do not replenish rounds. If no investigation gaps remain and safety prerequisites
+are confirmed, keep missing consumption unknown and proceed directly to editing or verification with
+no additional investigation or extension allowance. Budget bookkeeping must not block a ready safe
+slice or skip current-source safety checks.
+Require delta checks of current instructions, dirty worktree, and exact editing source; for stale or
+inaccessible evidence, reopen only affected facts and their direct dependencies, not the whole survey.
+This reuse rule does not apply to independent reviewer conclusions: reviewers still receive clean
+context and raw evidence, not author rationale or inherited approval. Verification still needs actual
+current test/runtime evidence; design or inspection facts are not a passing result.
+
 ## Common evidence and recovery
 
 The main Agent owns dependency order, scope, conflict resolution, integration, and the final workflow

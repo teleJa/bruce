@@ -44,11 +44,38 @@ returns control to Bruce/design review.
 
 ## Investigation budget
 
-- Maximum discovery calls before the first edit: `12`
-- Maximum full-file or multi-range reads before the first edit: `3`
-- Maximum source output before the first edit: `120000` characters
+Use the shared `implementation-preparation.md` rule. Carry forward the existing budget for the same
+slice/gaps; it must not reset on delegation, executor changes, or another durable handoff.
+
+- Focused evidence rounds: at most `2` (a narrower existing budget wins)
+- Consumed rounds (parent + executors): `<observed total>`
+- Remaining rounds: `<limit minus consumed; zero when exhausted>`
+- Extension already used: `<yes/no; named blocker, concrete queries, stop condition if used>`
+
+| Gap ID | Blocking fact / acceptance | Rounds already used / evidence | Remaining check / round ceiling |
+|---|---|---|---|
+| G-001 | `<fact / acceptance id>` | `<round ids and findings>` | `<smallest check within remaining budget>` |
+
+All gap rows draw from the same shared round budget, not separate per-gap allowances. Record a round
+covering multiple gaps once in the consumed total. No gaps means no additional discovery allowance.
+Missing consumption data is unknown, not zero. When additional investigation is needed, recover it
+from existing parent evidence before dispatch; if unavailable, report the affected boundary rather
+than grant a fresh budget. If no investigation gaps remain and safety prerequisites are confirmed,
+keep missing consumption unknown and proceed directly to editing or verification with no additional
+investigation or extension allowance. Budget bookkeeping must not block a ready safe slice or skip
+current-source safety checks.
+
+Calls, reads, and output caps are additional ceilings, not new allowances; there is no conversion from
+calls to rounds. Record their consumed/remaining amounts across parent and executors as well. Stop at
+whichever ceiling is reached first; unused calls cannot buy another evidence round.
+
+- Maximum discovery calls before the first edit: `12` total; consumed `<n>`, remaining `<n>`
+- Maximum full-file or multi-range reads before the first edit: `3` total; consumed `<n>`, remaining `<n>`
+- Maximum source output before the first edit: `120000` characters total; consumed `<n>`, remaining `<n>`
 - Preferred search mode: `compact` with a narrow limit
-- After the budget is reached: stop broad discovery, record unknowns, and use the smallest safe implementation
+- After a ceiling is reached: stop discovery. Start only a ready safe slice; otherwise report the affected
+  boundary and continue independent ready work. The shared rule permits at most one named extra round;
+  carry forward its used state, and it does not replenish any exhausted call/read/output ceiling.
 
 ## Stop conditions
 

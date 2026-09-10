@@ -18,7 +18,10 @@ collection while keeping synthesis and workflow decisions with the caller.
 
 ## Procedure
 
-1. Identify the remaining evidence gaps. If current evidence already answers the question, return
+1. For implementation-entry inspection, first apply the caller's
+   [preparation stop rule](../bruce/references/implementation-preparation.md). Return reusable facts
+   with source basis and remaining gaps, not a new broad survey or instructions to repeat the survey.
+   Identify the remaining evidence gaps. If current evidence already answers the question, return
    `Inspection mode: direct` with that reason and do not repeat the investigation. Otherwise, use parallel
    inspection when at least two read-only scopes can be investigated independently and delegation will
    materially reduce latency or main-agent context. Known directory, file, or task boundaries do not mean
@@ -52,6 +55,9 @@ Return:
 - public or cross-component contracts and their consumers;
 - relevant repository conventions, commands, tests, and dirty-worktree boundaries;
 - conflicts, inferences, confidence limits, and unresolved questions;
+- for implementation handoff: verified facts tied to paths/symbols and a revision or content basis,
+  the smallest executor-only checks, and the ready first edit/test target; missing evidence stays
+  explicitly unknown rather than being promoted to verified;
 - profile-relevant structural evidence for the caller to evaluate.
 
 ## Functional Agent routing

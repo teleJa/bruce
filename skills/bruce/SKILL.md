@@ -109,6 +109,15 @@ agent owns synthesis, resolves conflicting findings against the current workspac
 profile and task-contract decisions. If native subagents are unavailable or one shard fails, inspect
 only the missing scope directly; unavailable parallelism alone does not block contract formation.
 
+## Implementation preparation stop rule
+
+For an authorized implementation request, apply
+[implementation-preparation.md](references/implementation-preparation.md) before opening more
+inspection. This applies to direct work and every implementer, not only cross-model handoffs.
+Resolve only the facts needed for the first safe implementation slice; dispatch it as soon as ready.
+Do not finish a repository-wide survey before delegating boundary-clear work. Existing Design Gate,
+authorization, profile, and task-contract requirements still apply; a preparation limit never waives them.
+
 ## 2. Form the task contract
 
 Keep the contract in the current task unless the user requests a persistent plan or handoff. Include:

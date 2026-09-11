@@ -115,6 +115,14 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
    the Gate immediately after its check. This
    writer does not own the Design verdict. An execution checklist alone does not require the handoff.
 
+## Handoff to review and write-task
+
+A plan that will enter development must first complete independent review. The Agent must wait for the
+reviewer result and the user confirmation of the plan. Only after confirmation may it invoke `write-task`.
+The plan defines the overall change; `write-task` creates the concrete frozen task contracts and
+`tasks/index.yaml` before Design Gate. The old conditional task-package predicate does not apply to this
+development path.
+
 ## Output
 
 Return exactly one outcome:

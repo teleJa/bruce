@@ -1,391 +1,70 @@
 ---
 name: bruce
-description: Use when the user asks Bruce to implement, fix, refactor, or deliver a software change with proportional planning, one design-readiness decision before implementation when needed, one evidence-backed completion decision, Goal-independent execution and recovery, and bounded L0-L4 failure handling.
+description: "Guide an Agent through Bruce's three stages: analysis, design, and development."
 ---
 
 # Bruce workflow
 
-Bruce is a user-directed design and implementation capability, not an automatic end-to-end pipeline.
-The user decides when to move from analysis to design and from design to implementation. Bruce executes
-the explicitly selected mode and stops at that mode's boundary.
+Bruce is the top-level workflow guide for software work. It explains which stage the Agent is in,
+what that stage must produce, and when it must stop. Detailed work belongs to specialized Skills.
 
 ```text
-design-only: confirmed analysis -> task contract -> necessary design artifacts -> Design Gate -> stop
-implementation: confirmed design -> scoped inspect -> implement -> targeted verification -> Completion Gate
+分析 → 设计 → 开发
 ```
 
-Bruce has two decisions; ordinary execution does not require Goal. It also has one authoritative task-level lifecycle state machine. Read [workflow-state.md](references/workflow-state.md) before recording a structured checkpoint, entering verification, repairing, resuming, or deciding completion. Persist the current task snapshot under `checkpoint.workflow_state`; local Checkpoint, Verification Run, repair, Design Gate, and Completion Gate states map into it and do not create parallel task lifecycles.
+## 1. 分析
 
-- `design-gate` is the only implementation-entry decision for persisted downstream design.
-- `completion-gate` is the only completion decision for an implementation task.
-- A batch checkpoint is progress feedback, not a third decision or an overall completion result.
-- Native Goal is not part of Bruce's user-facing workflow or ordinary execution, recovery,
-  delegation, or evidence recording. Codex may manage native Goals independently of Bruce.
+Use `solution-analysis` when the requirement, scope, feasibility, or business decision is unclear.
+Inspect relevant evidence and project knowledge; distinguish user decisions, existing rules, assumptions,
+and unknowns; then return a recommendation and unresolved decisions.
 
-Keep Bruce as workflow guidance. Let Codex own commands, files, tools, permissions, task context,
-native host state, and subagent lifecycle. Read
-[plugin-boundary.md](references/plugin-boundary.md) before handling a permission denial, external
-side effect, or request to add execution infrastructure.
+Analysis is read-only. It does not create design artifacts, tasks, checkpoints, or implementation.
+Wait for the user to confirm the direction before entering design.
 
-Apply the shared [delegation language rule](references/delegation-contract.md)
-to every native subagent instruction and follow-up: use the user's language for prose, while preserving
-machine tokens and source evidence. This also applies when the worker does not inherit the conversation.
+## 2. 设计
 
-Before creating any native Subagent, select exactly one Functional Agent Profile from
-[model-profiles.yaml](references/model-profiles.yaml) and construct the v1 Task Packet defined in
-[functional-agent-contracts.md](references/functional-agent-contracts.md). Resolve task override >
-project override > user override > built-in Profile > current-model fallback through the shared
-resolver; do not let an individual Skill create a model selector or Runtime. Pass `model` to the
-Codex host only when the host has confirmed the configured model. A Profile with `fallback=current`
-may otherwise omit `model` to inherit the current model and record `resolution_result=fallback`,
-`fallback_used=true`, `capability_status=degraded`, and the effective model. A fallback is not model
-heterogeneity. The `prototype-generator` Profile instead has `fallback=blocked`: `write-prototype`
-must spawn only with its resolved Profile model and pass that same model to Open Design `start_run`.
-Every delegated result must include `model_resolution` and the role-specific Packet; the main Agent
-and the existing Design/Completion Gates retain all terminal authority.
+Enter design only after the user confirms the analysis. Invoke only the necessary specialist Skills:
 
-## User-directed handoffs
+- `write-architecture` for architecture or public and cross-component contracts;
+- `write-db-design` for schema and persistence decisions;
+- `write-plan` for the overall implementation plan;
+- `write-task` after plan review and user confirmation to freeze concrete execution task contracts;
+- `write-tests` for behavior-change test design;
+- `design-gate` when persisted design governs downstream implementation.
 
-`solution-analysis` is the normal pre-design entry for a requirement that needs investigation or
-feasibility analysis. It returns the evidence, recommendation, assumptions, risks, and unresolved
-decisions, then waits for the user. Bruce does not invoke it automatically and does not assume that a
-previous analysis authorizes design or implementation.
+The design result must define scope, exclusions, acceptance, verification, dependencies, and file ownership.
+After `write-plan`, wait for the independent reviewer and the user to confirm the plan. Only then invoke
+`write-task` to create the concrete frozen execution task package before Design Gate. `write-plan` is
+the overall plan; `write-task` owns the per-task contracts.
 
-After the user discusses and confirms the direction, invoke Bruce explicitly with one of these scopes:
+After the necessary artifacts pass their checks and `design-gate` returns `Design: pass`, stop in
+design-only mode. This means the design is ready; it does not authorize implementation.
 
-- `design-only`: persist the confirmed design artifacts and run `design-gate`, then stop without
-  implementation or `completion-gate`;
-- `implementation`: consume the confirmed design and implement only the declared scope, then verify
-  and run `completion-gate`.
+## 3. 开发
 
-A new conversation may start an `implementation` scope from the confirmed design artifacts. Bruce must
-not silently turn a design-only request into implementation, or an implementation request into a new
-broad analysis phase. When the design author and executor use different model/profile assignments,
-Bruce must require an execution-level handoff before implementation: the handoff freezes scope, maps
-files/symbols to acceptance and verification, labels what is already design-verified versus
-executor-only verification, and sets an investigation budget and stop conditions. Model differences do
-not authorize the executor to reopen the full design package.
+Enter development only when the user authorizes implementation and the confirmed design is ready.
+Consume the existing scope and task boundaries. Do not restart broad analysis or silently redesign them.
+Implement and verify the smallest ready slice first. Use `spawn-execute` only for boundary-clear,
+low-coupling work; keep shared-file or unresolved-contract work with the main Agent.
 
-Once the selected scope successfully persists artifacts that will govern downstream implementation, their
-return creates a pending mandatory `design-gate` handoff. Apply the design-batch rule in
-[artifact-policy.md](references/artifact-policy.md): finish the already authorized batch's required
-artifacts and local checks, then invoke one Gate in the same turn the batch becomes ready, without
-another user instruction. Do not run a whole-batch Gate after each writer. Bruce must not stop after the document writer returns
-merely to ask the user to trigger the Gate. This automatic handoff does not authorize behavior implementation: a
-`design-only` scope still stops after the Gate result, while an already authorized `implementation`
-scope may continue only after the current Gate passes. A `Design: blocked` result stops affected
-implementation and does not create a new authorization prompt.
+Use the configured verification Skills for acceptance evidence. The main Agent owns scope, ordering,
+integration, and re-verification. A delegated Agent's completion message is not completion evidence.
+After implementation and targeted verification, use `completion-gate`; only `Completion: pass` is a
+completion decision.
 
-## 1. Inspect
+## Stage boundaries
 
-Read the user request, applicable `AGENTS.md`, relevant code, and repository facts. Preserve
-unrelated working-tree changes. Ask at most one blocking question only when evidence cannot resolve
-an ambiguity that changes scope, acceptance, or business consequences.
+- Analysis does not imply design.
+- Design does not imply implementation.
+- A plan does not prove implementation or verification.
+- A delegated task does not decide design or completion.
+- Do not use Goal, a scheduler, or a second lifecycle to move between stages.
 
-When the resolved artifact parent contains `.bruce/config.yaml`, read its `verification` and
-`workflow` settings before implementation. `verification.browser_provider` selects the browser
-provider for user-visible Web evidence and defaults to `ego-lite`; supported values are `ego-lite`
-and `chrome`. `workflow.repair_loop.max_rounds` defaults to 10 and applies only to Completion Gate
-repair rounds after the initial review scan. `workflow.repair_loop.max_rounds_per_failure` defaults to
-5 and limits each failure's complete repair-and-reverify rounds across batches, Completion, and resume.
-Read both from the applicable `.bruce/config.yaml`, preserve explicit values, and use defaults only
-for missing keys. Do not use a fixed two-round L1 limit or reset consumed counts on handoff.
-`workflow.review.max_wait_seconds` defaults to 60 and
-`workflow.review.max_no_progress_polls` defaults to 2. Invalid values are configuration issues, not
-permission to silently use a different provider or larger budget. Read
-[browser-provider.md](references/browser-provider.md) for provider capabilities and evidence rules.
-
-Start with `profile: unresolved` when component or contract-boundary facts are incomplete. Continue
-bounded read-only inspection until the profile is resolved. Inspection alone does not create a
-Goal, design review, test design, or change directory. Do not begin behavior implementation while
-the profile is `unresolved`.
-
-Use direct inspection when the entry point, component boundary, and relevant conventions are already
-clear. Use `inspect-parallel` when unresolved facts can be divided into at least two independent
-read-only scopes and the task spans multiple components/directories, a cross-cutting concern, or
-repository-wide patterns whose separate evidence must be synthesized. Repository size, expected
-`full` profile, or a desire to use subagents is not sufficient by itself.
-
-For parallel inspection, give each native subagent a bounded scope, concrete questions, and a common
-evidence format. Keep every shard read-only, preserve the working tree, and require repository paths,
-symbols, commands, and observed cross-boundary relationships rather than broad summaries. The main
-agent owns synthesis, resolves conflicting findings against the current workspace, and makes the
-profile and task-contract decisions. If native subagents are unavailable or one shard fails, inspect
-only the missing scope directly; unavailable parallelism alone does not block contract formation.
-
-## Implementation preparation stop rule
-
-For an authorized implementation request, apply
-[implementation-preparation.md](references/implementation-preparation.md) before opening more
-inspection. This applies to direct work and every implementer, not only cross-model handoffs.
-Resolve only the facts needed for the first safe implementation slice; dispatch it as soon as ready.
-Do not finish a repository-wide survey before delegating boundary-clear work. Existing Design Gate,
-authorization, profile, and task-contract requirements still apply; a preparation limit never waives them.
-
-## 2. Form the task contract
-
-Keep the contract in the current task unless the user requests a persistent plan or handoff. Include:
-
-- `objective`: the result to achieve.
-- `scope`: allowed and excluded changes.
-- `acceptance`: observable completion conditions. For behavior changes, give each scenario a stable
-  id with concrete `Given`, `When`, `Then`, and `Evidence`.
-- `constraints`: repository rules, user constraints, and known risks.
-- `profile`: `unresolved` during inspection, then `standard` or `full` before implementation.
-- `risk`: `low`, `guarded`, or `critical`, with its trigger.
-- `visual_scope`: `none`, `browser-smoke`, or `browser-layout`, selected from the material visible
-  outcome and layout/interaction risk. For `browser-smoke` or `browser-layout`, use the configured
-  `verification.browser_provider` and record the actual Provider in the evidence. A frontend path
-  alone does not force a browser, but a visible Web outcome always requires one real interaction
-  and visual-evidence pass before completion. Provider capability requirements and fail-closed rules
-  are defined in [browser-provider.md](references/browser-provider.md).
-- `tasks`: select a change-level frozen task package only when its independent predicate in
-  [artifact-policy.md](references/artifact-policy.md) applies; otherwise keep steps in the current
-  contract or plan. Read [task-contract.md](references/task-contract.md) for package contents.
-- `batches`: required before implementation for a `full` or `critical` task that spans two or more
-  independently delivered components or a propagated cross-component contract. Each batch is a closed,
-  verifiable delivery boundary, not a remaining-work bucket. Record its stable `batch_id`, included
-  task/acceptance ids, owned components and allowed paths, excluded work, direct call sites, dependency
-  preconditions, evidence boundary, checkpoint trigger, repair budget, and stop condition. The stop
-  condition states when the batch must stop opening new inspection and return its checkpoint; it must
-  exclude every path and concern not mapped to a current acceptance id, known failing matrix row, or
-  declared direct call site.
-
-For user-visible Web acceptance, resolve `visual_scope` before implementation. A missing scope is
-an unresolved contract field, not permission to assume `none`; record the material visible outcome
-and the reason for the selected level. For a `full` or `critical` cross-component task, missing,
-open-ended, or overlapping batches also leave the task contract unresolved; do not implement until
-those batch boundaries are closed and assigned.
-
-Resolve `standard` after inspection proves one delivery component without cross-component API,
-event, data, or file-contract propagation. Resolve `full` only when inspection proves multiple
-independently delivered components or cross-component contract propagation. For `full`, record
-`named components`, the `propagated contract` or independent delivery boundary, and concrete
-repository `evidence` in the task contract. Size, duration, risk, and uncertainty are insufficient
-to make a task `full`.
-
-Treat execution profile and risk as independent dimensions: a local schema change can be
-`standard + guarded`, while multi-component documentation can be `full + low`. Read
-[risk-policy.md](references/risk-policy.md) before guarded or critical actions. When later facts
-disprove a route, re-evaluate only the affected capability predicates before continuing affected
-behavior implementation. Do not ask for approval unless scope, acceptance, authority, or business
-consequences also change.
-
-Never infer `guarded` or `critical` from `full`, multiple components, duration, uncertainty, or
-subagent use. Record the concrete risk-policy trigger; when no trigger remains, use `low` even when
-the delivery profile is `full`.
-
-Read [verification-loop.md](references/verification-loop.md) before changing behavior. Do not begin
-an implementation while a material `Then` has no feasible evidence path unless the user explicitly
-accepts an exploratory or unverified boundary.
-
-When a task uses a persisted Environment Profile or Requirement Verification Profile, require the
-exact Profile revision and content hash. Newly generated or materially changed Profiles start with
-`confirmation.state=pending`; do not consume them for controlled implementation or verification until
-the user confirms the exact Profile. Profile confirmation is an input condition, not a third Bruce
-Gate, and it does not replace runtime capability preflight. See [profile-lifecycle.md](references/profile-lifecycle.md).
-
-For any persisted design, plan, test, handoff, or review document, read
-[document-language.md](references/document-language.md) and apply its language rule. The user's
-language controls natural-language prose; stable machine-facing contract tokens remain unchanged.
-
-### Task package and checkpoint
-
-When the independent task-package predicate applies, derive one change-level `tasks/` directory
-before its frozen tasks execute. `tasks/index.yaml` records stable ids, dependency order, acceptance ids, and
-path ownership; each `T-<id>-<slug>.md` freezes one task contract. Do not create one plan or task
-package per repository, and do not silently widen a frozen task. A contract change creates a new
-revision or superseding task.
-
-The current task state belongs in the change-level `checkpoint.yaml` or the current checkpoint
-message, not in the frozen task file. The checkpoint aggregates every task's status, the active task,
-contract revisions, basis revision, environment, evidence references, blockers, findings, and next
-action. Distinguish task progress from completion progress: `implemented` means code exists but
-task-local verification is incomplete; `verified` means task-local acceptance passed;
-`completion.state` may be `not_started`, `reviewing`, `repairing`, `ready`, or `decided`;
-`completion.result` remains empty until the single Completion Gate returns `pass`, `issues`, or
-`blocked`. It is progress feedback only: it is not a third decision, a Goal ledger, or a second
-evidence store. The checkpoint is authoritative only for change/task progress and never overrides
-either Gate. Recovery uses current workspace and evidence, not an audit ledger. Native Goal state is outside
-Bruce's workflow and never determines task progress or completion. Tasks execute sequentially by default;
-`depends_on` prepares future scheduling but does not activate parallel execution.
-
-A long-running task may span multiple checkpoints without being split or restarted. Use
-[failure-recovery.md](references/failure-recovery.md) as the single authority for checkpoint and resume
-triggers, and [verification-loop.md](references/verification-loop.md) for their evidence content.
-Do not expand a routine progress message into a full checkpoint.
-
-## 3. Select only necessary capabilities
-
-Continue directly when Codex can implement and verify the task without another artifact. Invoke a
-supporting skill only for a present need:
-
-- pre-design read-only inspection and feasibility analysis that must stop for user direction:
-  `solution-analysis`;
-- parallel read-only discovery of unresolved component, contract, or repository-pattern facts:
-  `inspect-parallel`;
-- architecture or public/cross-component contract design: `write-architecture`;
-- schema or persistence design: `write-db-design`;
-- persistent implementation planning: `write-plan`;
-- user-confirmed development/test environment topology and controlled operations: `environment-profile`;
-- explicit generation of an executable project-local Skill and bounded runner from a confirmed Environment Profile: `environment-operations`;
-- requirement-scoped verification and repair strategy from an explicit `requirements.md`: `verification-profile`;
-- a question-driven throwaway logic or UI-variant exploration: `explore-prototype`;
-- an explicitly requested or implementation-governing grounded UI prototype: `write-prototype`;
-- every behavior change: `write-tests` with an independent `test-plan.md`; choose minimal or expanded
-  content from the decision table in `artifact-policy.md`, not from the execution profile;
-- an explicitly requested standalone plan review: `plan-review`;
-- readiness of persisted downstream design: `design-gate`;
-- boundary-clear implementation delegation, with sequential fallback and no Goal prerequisite:
-  `spawn-execute`;
-- final completion decision for every implementation task: `completion-gate`.
-
-A resolved profile does not itself invoke Goal, Design Gate, test design, prototype generation, or `environment-operations`. Executable environment Skill generation remains an explicit user-selected capability and never auto-executes operations.
-Use [artifact-policy.md](references/artifact-policy.md) as the single authority for artifact and
-Design Gate applicability. A persisted plan alone does not invoke `write-tests`, create `tasks/`, or
-require a Design Gate. When independently required, `design-gate` owns artifact completeness and
-document readiness and returns one implementation-entry result: `Design: pass|blocked`.
-
-Every public or cross-component API, event, or file-contract change uses `write-architecture` and
-must generate or update `api-contracts.md` before behavior implementation.
-
-Do not chain supporting skills merely because one was selected. The only mandatory continuation is
-the `design-gate` handoff created after downstream-governing design artifacts are successfully
-persisted and locally checked; Bruce coalesces pending handoffs under the shared design-batch rule
-and runs one Gate when that batch is ready, in the same turn without another user instruction.
-In particular, Bruce does not automatically invoke `solution-analysis`; it consumes a
-user-confirmed analysis only when the user explicitly selects a design or implementation scope.
-
-## 4. Implement with Codex
-
-A `design-only` scope is the normal Bruce handoff after the user has confirmed the analysis result
-but has not authorized behavior implementation. In this mode, Bruce may form the task contract and
-invoke only the necessary `write-architecture`, `write-db-design`, `write-plan`, and `write-tests`
-skills. When the resulting artifacts govern downstream implementation, their successful persistence
-and local document check create pending mandatory `design-gate` handoffs; Bruce must finish the
-already authorized design batch and run one `design-gate` immediately when it is ready, in the same
-turn instead of waiting for another user instruction. It must stop after the
-design artifacts and Design Gate result; it must not implement behavior, invoke `completion-gate`, or
-perform delivery actions. `Design: pass` in this mode means the artifacts are ready to govern a later
-implementation; it is not permission to implement without a separate user instruction.
-
-An `implementation` scope consumes the confirmed design and its acceptance/verification boundary. Do
-not restart broad solution discovery unless a current acceptance id, known conflict, or declared direct
-call site requires it. Re-evaluate only the affected design or implementation predicate when later
-facts change.
-
-Use the current Codex task and available tools. Use native subagents directly for incidental
-delegation and only for boundary-clear, low-coupling tasks. Keep the main agent responsible for
-scope, file ownership, dependency order, integration, and conflict resolution.
-
-When a task package exists, execute one frozen task contract at a time by default. Before changing a
-file, confirm it is allowed by the active task's `include`/`exclude` scope and acceptance ids. At a
-task boundary, update the requirement-level checkpoint with the task status and current evidence;
-do not rewrite the task contract merely to record progress. If scope, acceptance, dependency,
-authorization, or verification changes, stop and create a contract revision or a superseding task
-before continuing.
-
-For `explore-prototype`, a native subagent may generate the bounded prototype only after the main
-agent freezes the question, mode, exclusive allowed paths, repository facts, scenarios or variants,
-run instructions, observable checks, and prohibited side effects. The main agent retains product
-decisions, user feedback, actual-diff inspection, production promotion, and every Gate decision. If
-native subagents are unavailable or ownership overlaps, generate sequentially; unavailable
-delegation alone does not block exploration.
-
-When Design Gate is required, do not implement affected behavior until the current same-directory
-`design-review.md` reports `Design: pass` and the Design Gate validator passes against that current
-change directory. Record the normalized `design_passed` event with `actor=design-gate` and enter `workflow_state.state=design_ready` before implementation authorization; `Design: blocked` records `design_blocked` with `actor=design-gate` and prevents the implementation transition. A prose verdict, plan status, or file presence without validator evidence is not
-implementation entry. If scope changes a design decision, rerun Design Gate before continuing
-affected implementation.
-
-Continue ordinary implementation within the authorized scope until acceptance is met or a user pause,
-host limit, authorization or scope change, exhausted repair budget, or real blocker requires stopping.
-A milestone or progress checkpoint alone is not a reason to return control. Continue with the next
-in-scope action after recording required progress; do not require Goal or a separate continuation
-phrase. This is an execution discipline and does not promise background or automatic cross-turn execution.
-Honor design-only stops, explicit user handoffs, permissions, and the existing L0-L4 boundaries.
-
-Profile, duration, cross-turn recovery, audit needs, and phrases such as `continue nonstop`, `继续开发`,
-or `持续推进直到完成` do not imply that request. Without it, do not call Goal tools or create a
-Goal-specific audit record. `spawn-execute` is an optional helper for ordinary bounded delegation,
-not a scheduler or completion authority.
-
-For behavior changes, start with the smallest failing test or reproducible scenario when feasible.
-Reproduce bugs before fixing them and establish a characterization baseline before refactoring.
-Documentation-only, generated, and mechanical changes do not require ceremonial TDD.
-
-When a confirmed prototype governs UI implementation, use it for visible scope, state, and
-interaction intent while implementing with the target repository's real components and theme tokens.
-Do not copy prototype source into production merely because the generated artifact renders.
-
-## 5. Classify failures and recover
-
-Read [failure-recovery.md](references/failure-recovery.md) whenever a command, tool, validation, or
-subagent fails. Apply L0-L4 to the smallest affected boundary. Retry only within the documented
-budget, repair only after a real change, and never replay an unknown external side effect.
-
-Resume using [failure-recovery.md](references/failure-recovery.md), the single authority for recovery
-checks and `Resume checkpoint` triggers. Reuse current context and evidence; a new user turn or a
-`full` profile alone does not require a structured resume ceremony. Recovery does not require Goal.
-Use [handoff.md](templates/handoff.md) only when the user explicitly requests durable transfer.
-
-## 6. Decide completion and report
-
-For a `design-only` handoff, report the generated design artifacts, Design Gate result, unresolved
-risks, and the explicit implementation boundary, then stop. Do not invoke `completion-gate`, because
-no behavior implementation or completion evidence is being claimed.
-
-After implementation and targeted verification, invoke `completion-gate`. It performs all required
-author checks, evidence checks, scope checks, design-to-diff checks, and mandatory independent
-review internally. No caller repeats those checks or combines their internal labels.
-
-When the contract declares multiple delivery batches, when execution spans a long-running or
-cross-component task, or before crossing an external verification or side-effect boundary, run a
-batch checkpoint after the current batch. The checkpoint reviews only that batch's bounded matrix and
-returns `Checkpoint: clear|issues|blocked`; it never returns `Completion`, starts a per-finding review
-chain, or makes the overall delivery decision. Once a batch has changed behavior and starts its planned
-verification, map every new inspection to a current acceptance id, known failing matrix row, or declared
-direct call site. Do not open an adjacent concern merely because it might be risky; classify an unmapped
-concern as deferred. Complete the batch matrix and return one batch findings packet before repairing
-non-blocking failures or starting further inspection after the second non-blocking finding; classify
-findings as blocking, compatible, or deferred, and repair compatible findings together in one bounded
-repair set. An `update_plan` progress update never substitutes for this checkpoint. Repair the resulting
-batch repair set before starting dependent work. Use the final `completion-gate` once all batches are
-complete.
-
-When a batch has `visual_scope=browser-smoke|browser-layout`, include bounded evidence from the
-configured browser Provider in that batch checkpoint. The evidence must include a real action against
-the target, the resulting visible state, and a screenshot or equivalent artifact; `browser-layout`
-additionally requires viewport and geometry/overflow checks. The evidence must name the configured
-Provider and must not be silently replaced by another Provider. Do not trigger a visual checkpoint
-for `visual_scope=none`; re-evaluate the scope only when the acceptance or changed surface reveals a
-material visible outcome. Playwright-only output is never valid Bruce evidence; it is not a supported
-Provider and must not be used as an undocumented fallback.
-
-The gate must return one complete findings packet for the current final state. When findings are
-repairable, batch compatible repairs before rerunning verification. A later change invalidates only
-the affected checks; rerun stale rows, the unchanged original failure, and related regressions. Reuse
-a checkpoint row only when its evidence revision matches the current review basis and its affected
-scope is unchanged.
-Do not start a fresh review for each finding or repeat unaffected checks unless the review basis or
-risk trigger materially changes.
-
-Completion is allowed only when it returns `Completion: pass`. Record `completion_passed` with `actor=completion-gate` and enter `workflow_state.state=completed` only from that Gate result. Repairable findings return `issues` and enter `completion_issues`; missing authority, unsafe external state, or unresolved L2-L4 conditions return `blocked` via `completion_blocked` with `actor=completion-gate`. The state machine records these normalized results but never manufactures a Gate verdict.
-Do not use `implemented`, `verified`, `reviewing`, or `repairing` as completion verdicts: those are
-progress states recorded in the checkpoint and never replace the single terminal Completion field.
-
-Bruce does not synchronize completion with native Goal state. Ordinary completion never requires Goal
-tools, a Goal status transition, or an extra audit log.
-
-Report changed files, acceptance evidence, the Design Gate result when applicable, the Completion
-Gate result, residual risks, and authorized delivery actions that were intentionally not performed.
-
-When a Profile is pending, stale, or missing required user facts, report that state and stop the
-affected verification boundary; do not silently downgrade the required evidence or continue with an
-unconfirmed environment assumption.
+Specialized Skills and Bruce references own detailed contracts, templates, evidence rules, recovery,
+browser verification, delegation, and Gate procedures. This entry Skill routes the stage; it does not
+duplicate those procedures.
 
 ## Does not own
 
-Do not implement a sandbox, permission layer, host adapter, scheduler, lease, heartbeat, worktree
-manager, second evidence store, or transcript mirror. Do not wrap Codex execution behind a Bruce
-CLI, MCP server, or app.
+Do not implement product behavior, create a scheduler or runtime, select models, manage permissions,
+maintain a second evidence store, or decide Design or Completion on behalf of the owning Gate.

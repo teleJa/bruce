@@ -1,0 +1,4 @@
+interface:
+  display_name: Write Task
+  short_description: Split a plan into frozen execution tasks
+  default_prompt: "Use $write-task 将已确认的 plan.md 拆分为具体、可执行、可验证的冻结任务合同。"

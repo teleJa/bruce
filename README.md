@@ -8,6 +8,68 @@ design readiness and test design are selected independently. A low-noise plugin 
 when changed planning or design documents may require Design Gate before implementation and
 deterministically validates any written `design-review.md`.
 
+## Start with the outcome, not just the implementation
+
+Bruce helps keep the user goal, design, implementation, and acceptance evidence aligned.
+A working implementation is not enough if it solves a different problem.
+
+- **Goal alignment:** governing requirements or architecture identify the user/job, observable
+  outcome, non-goals, preserved invariants, and positive and negative acceptance assertions.
+- **Concrete reuse contracts:** “reuse the existing capability” must identify the actual API,
+  component, or flow; its repository anchor; input/output behavior; allowed changes; forbidden
+  divergence; and verification method. Reusing a visual component does not prove data-source parity.
+- **Independent completion review:** every implementation task requires a clean-context reviewer
+  of the final integrated snapshot. Author checks and passing tests cannot substitute for that review.
+- **Evidence boundaries:** design readiness, static validation, runtime verification, and deployment
+  are distinct results. Missing required evidence must remain visible.
+
+### Example: reuse an existing resource picker
+
+Instead of only asking “add a resource picker to projects,” specify the observable outcome:
+
+> Project administrators can select resources from the same catalog used by the existing agent
+> creation flow, without entering an internal team identifier. Only the selection owner and save
+> destination change.
+
+The design should identify the existing catalog API and picker, preserve their relevant behavior,
+state which changes are allowed, and add a negative assertion against extra identifier-entry steps.
+These are illustrative constraints, not built-in product APIs or universal bans on new interfaces.
+
+### Trace the goal through delivery
+
+```text
+Goal -> Requirement -> Design decision -> Contract -> Implementation anchor -> Evidence
+```
+
+The [architecture template](skills/write-architecture/templates/architecture.md) carries Goal
+Alignment and Reuse Contracts. [Design Gate](skills/design-gate/SKILL.md) checks their grounding and
+consistency before implementation. [Completion Gate](skills/completion-gate/SKILL.md) compares the
+final behavior with the governing goal and checks for unauthorized extra steps, fields, or concepts.
+At design time, implementation and evidence links describe the intended verification path; they do
+not claim code has been implemented or runtime evidence collected.
+
+Here, **goal alignment is a requirements concept**, not the Codex native Goal feature. It does not
+create a new scheduler, mandatory Goal object, or third gate. These semantic checks are Skill
+instructions for the agents; the deterministic validators do not prove user intent or guarantee
+that an agent followed every instruction.
+
+## Usage examples
+
+Start with the scope you actually authorize:
+
+```text
+Use $solution-analysis to inspect how the existing resource picker works. Stay read-only.
+
+Use $bruce in design-only scope. Define the user outcome, explicit reuse constraints,
+and acceptance scenarios; do not implement yet.
+
+Use $bruce to implement the confirmed design and verify its acceptance criteria.
+Preserve unrelated changes. Do not push or deploy without authorization.
+```
+
+Analysis and design do not implicitly authorize implementation, remote writes, or deployment.
+For setup, see [Install for a local smoke test](#install-for-a-local-smoke-test).
+
 ## Functional Agent contracts
 
 Bruce routes native Subagents through five internal Profiles: `inspector`, `implementer`, `prototype-generator`, `verifier`, and `reviewer`. The shared v1 Task/Verification/Review Packet contract lives in `skills/bruce/references/functional-agent-contracts.md`, and the built-in registry lives in `skills/bruce/references/model-profiles.yaml`.
@@ -16,7 +78,13 @@ Profile resolution is `task override > project override > user override > built-
 
 The `reviewer` Profile also uses `fallback=blocked`. When its model is unavailable or unconfirmed, pause the affected review and ask the user to explicitly select an available replacement; never substitute the current model, main-Agent self-review, or a verifier. Completion review and any invoked plan review require an independent reviewer; Design Gate owns the independent design-quality review predicate. See `skills/bruce/references/risk-policy.md` and the owning Gate for review depth and evidence requirements.
 
-Validate the contract with `python3 scripts/validate_functional_agents.py`.
+A completed review must be attributable to its reviewer task/dispatch and clean context, match the
+current snapshot and evidence basis, and include a review packet and findings. Repairs require
+independent re-review of affected rows. Missing or stale required review evidence blocks completion;
+a previous design review or a local test report is not a final implementation review.
+
+Validate the packet contract with `python3 scripts/validate_functional_agents.py`; this checks
+contract consistency, not whether a real independent review occurred.
 
 ## Pre-design solution analysis
 
@@ -30,6 +98,16 @@ design artifacts are persisted and locally checked, Bruce runs Design Gate in th
 asking for another user instruction. A separate user instruction is still required before implementation
 begins; the automatic Gate handoff does not infer implementation authorization from a prior analysis or
 design document.
+
+## Focused preparation and handoff
+
+Reuse current repository findings instead of restarting discovery at every delegation. An executor
+receives bounded facts, source/revision evidence, remaining questions, and a first edit/test target;
+it checks current instructions, worktree state, and affected sources before proceeding. Stale facts
+reopen only their affected scope. Independent reviewers still receive clean context and raw evidence,
+not author approval. See [implementation preparation](skills/bruce/references/implementation-preparation.md).
+User-facing and delegated natural-language instructions follow the user's language; stable code and
+protocol identifiers remain unchanged.
 
 ## Workflow
 
@@ -87,7 +165,7 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
   them. Track `overall_status` is evidence for Verification Run/Checkpoint and never a second
   `Completion` verdict.
 - An L1 failed scenario enters a bounded repair loop: fix, inspect the change, rerun the unchanged scenario,
-  then run related regressions. Two unsuccessful complete rounds escalate to L2 replanning; L0,
+  then run related regressions. Exhausting `workflow.repair_loop.max_rounds_per_failure` (default: 5) escalates to L2 replanning; L0,
   L2, L3, and L4 retain their retry, replan, decision, and incident-freeze semantics.
 - Every task that persists downstream-governing design creates a mandatory `design-gate` handoff.
   Bruce consumes it in the same turn without another user instruction; the document writer does not
@@ -102,7 +180,7 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
   while different parents require asking the user for the document path. Bruce never searches higher
   ancestors or splits one design package across repositories.
 - Every implementation task ends with `completion-gate`. It performs final author-quality, scope,
-  evidence, design-alignment, and risk-triggered independent checks internally and returns only
+  evidence, goal/design-alignment, and mandatory independent review internally and returns only
   `Completion: pass|issues|blocked`.
 - Completion review first completes one acceptance/branch/evidence matrix and batches all current
   findings. Repairs rerun only affected checks, the unchanged original failure, and related

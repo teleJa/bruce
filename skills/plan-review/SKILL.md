@@ -56,6 +56,12 @@ risk reasons when applicable; `none` is not allowed. It does not approve the pla
    Main-agent confirmation of a repair cannot replace reviewer re-review. If the original reviewer
    cannot continue, use a fresh clean-context reviewer under the same routing requirements.
 
+## Repair and re-review limit
+
+A repair changing objective, scope, acceptance, task boundaries, dependencies, file ownership, interfaces, risk, or verification evidence is a material plan revision. Recompute the snapshot and `basis_revision`, then send it to the independent reviewer. Cosmetic wording, formatting, or link repairs need only the document check.
+
+The initial review is round 0. Allow at most two material repair-and-re-review rounds for one plan review. If the second re-review still has blocking findings, stop with the plan unresolved; do not continue an unbounded author-review loop. A new user-approved direction starts a new plan review.
+
 ## Review evidence binding
 
 Before consuming a completed reviewer result, use `validate_review_for_basis` from

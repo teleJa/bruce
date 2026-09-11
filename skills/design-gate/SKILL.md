@@ -172,6 +172,10 @@ review matrix tied to the current snapshot. Evidence reproduction uses the `veri
 `verification_packet`, but cannot replace required independent quality review. Neither Packet may
 contain a terminal verdict. Design Gate remains the only owner of `Design: pass|blocked`.
 
+## Repair and re-review limit
+
+A design or plan repair changing objective, scope, acceptance, task boundaries, dependencies, file ownership, interfaces, risk, or verification evidence requires a new snapshot, `basis_revision`, and independent re-review. Cosmetic wording, formatting, or link repairs need only the document check. The initial review is round 0; allow at most two material repair-and-re-review rounds for the current design batch. If the second re-review still has blocking findings, return `Design: blocked` with the remaining findings.
+
 ## Procedure
 
 1. Resolve or reuse the change directory with [artifact-placement.md](../bruce/references/artifact-placement.md).

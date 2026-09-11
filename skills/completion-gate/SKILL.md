@@ -95,9 +95,12 @@ revision differs from the current review basis, a changed path intersects its af
 impact cannot be determined. Rerun stale rows, the unchanged original failed scenario, and related
 regressions; this does not invalidate unaffected matrix rows, which may be reused. Batch compatible
 repairs and return changed rows plus current raw evidence to the independent reviewer. The same reviewer
-may continue from its clean review context; a new subagent is not required per finding. Changed or stale
-review rows must be independently rechecked before pass; the author's claim of repair never closes a
-reviewer finding. If the reviewer is no longer available, resolve and dispatch an independent replacement
+may continue from its clean review context; a new subagent is not required per finding. A material finding
+must first enter `repairing`; do not ask the reviewer to restate the same packet. Apply the bounded fix,
+run focused verification, and persist a new snapshot and `basis_revision` before re-review. Re-review
+against the same basis is prohibited except for a transport retry that produced no packet. Changed or
+stale review rows must be independently rechecked before pass; the author's claim of repair never closes
+a reviewer finding. If the reviewer is no longer available, resolve and dispatch an independent replacement
 under the same Profile/no-fallback rule. This does not create a per-finding review chain.
 
 Use [failure-recovery.md](../bruce/references/failure-recovery.md) as the budget authority. Import each
@@ -114,7 +117,12 @@ The initial matrix scan is repair round 0. Read `workflow.repair_loop.max_rounds
 scans the current affected matrix as broadly as practical, reports all currently observable findings,
 then repairs the resulting bounded repair set one by one or in compatible groups. A repair may expose
 a new finding; carry it into the next round rather than pretending the initial scan was exhaustive.
-After the configured limit, stop and return `Completion: issues` for repairable residuals or
+Reviewer dispatches are separately bounded per task and phase. Read
+`workflow.reviewer_loop.completion_max_rounds` (falling back to `workflow.reviewer_loop.max_rounds`,
+default: 3). The initial review consumes round 1; each material repair-and-re-review consumes one
+additional round. If the reviewer returns no packet, allow at most
+`workflow.reviewer_loop.max_transport_retries` (default: 1) without consuming a substantive round.
+After either configured limit, stop and return `Completion: issues` for repairable residuals or
 `Completion: blocked` when the remaining evidence or authority prevents a valid decision.
 
 The progress state is separate from the terminal verdict: task states are `implemented`, `verifying`,

@@ -60,7 +60,7 @@ risk reasons when applicable; `none` is not allowed. It does not approve the pla
 
 A repair changing objective, scope, acceptance, task boundaries, dependencies, file ownership, interfaces, risk, or verification evidence is a material plan revision. Recompute the snapshot and `basis_revision`, then send it to the independent reviewer. Cosmetic wording, formatting, or link repairs need only the document check.
 
-The initial review is round 0. Allow at most two material repair-and-re-review rounds for one plan review. If the second re-review still has blocking findings, stop with the plan unresolved; do not continue an unbounded author-review loop. A new user-approved direction starts a new plan review.
+The initial review consumes reviewer round 1. Read `workflow.reviewer_loop.design_max_rounds` (falling back to `workflow.reviewer_loop.max_rounds`, default: 3); each material repair-and-re-review consumes one additional round. Findings must first enter repair, produce a new snapshot and `basis_revision`, and only then be sent for re-review. Never re-request the same packet against the same basis. If the configured limit is exhausted, stop with the plan unresolved; a new user-approved direction starts a new plan review.
 
 ## Review evidence binding
 

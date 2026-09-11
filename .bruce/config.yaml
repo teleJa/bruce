@@ -19,3 +19,11 @@ workflow:
   review:
     max_wait_seconds: 60
     max_no_progress_polls: 2
+  # Reviewer dispatch and repair lifecycle. Counts are per phase and task.
+  reviewer_loop:
+    # Total substantive reviewer rounds, including the initial review (1-3).
+    max_rounds: 3
+    design_max_rounds: 3
+    completion_max_rounds: 3
+    # Transport retries that produced no review_packet do not consume a round.
+    max_transport_retries: 1

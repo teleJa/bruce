@@ -29,6 +29,11 @@ Each task contract is frozen before execution. Each task file is frozen before i
 
 - stable `task_id` and title;
 - objective and observable task-local result;
+- source-grounded per-change instructions: location, current and target behavior, required integration,
+  preserved behavior, and acceptance mapping, using the [task template](../../write-plan/templates/task.md);
+- minimal required context, source snapshot basis, first edit/check, settled decisions and permitted
+  local implementation choices; apply the [execution-detail checks](../../write-task/SKILL.md#execution-detail-checks)
+  before treating the task as executable;
 - included and excluded paths/components (`include`/`exclude`);
 - dependencies and consumed/produced interfaces;
 - parent acceptance/scenario ids;

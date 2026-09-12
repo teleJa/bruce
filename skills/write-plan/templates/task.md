@@ -5,6 +5,15 @@
 - 状态来源：`../checkpoint.yaml`
 - 父计划：`../plan.md`
 
+## 执行交接与独立评审
+
+- 设计来源：`Astra / design`
+- 方案评审：独立 `reviewer` subagent；clean context；证据：<review packet 与 basis_revision>
+- 执行 Profile：`implementer`
+- 预期执行线程：新线程中的 Luna Max；实际模型以 resolver 返回的 `model_resolution` 为准
+- 完成后评审：必须由独立 `reviewer` subagent 基于最终快照重新审查
+- 评审约束：Luna 自测、主 Agent 自检、verifier 证据均不能替代独立代码 Review
+
 ## 目标
 
 <可观察的任务局部结果>
@@ -81,6 +90,9 @@
 - 命令/检查：<具体检查>
 - 环境：<所需运行时、数据库、浏览器环境或无>
 - 预期可观察结果：<本任务对应的验证断言；计划中的检查不代表已执行或通过>
+- 执行者自证：<Luna/implementer 必须执行的局部检查；不等于最终完成>
+- 独立复核：<reviewer 必须重现的验收场景、证据层级与最终快照要求>
+- 复核阻断：<缺少独立 reviewer、review packet 过期或 basis_revision 不匹配时不得标记 verified>
 
 ## 授权与风险
 

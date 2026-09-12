@@ -12,6 +12,8 @@ Convert the confirmed `plan.md` into concrete execution tasks. This Skill is man
 
 1. Confirm that the current plan has a completed independent reviewer packet for its current snapshot and
 that the user has confirmed the plan. A reviewer result alone does not authorize task generation.
+   The plan review must be performed by an independent `reviewer` subagent with clean context;
+   author or main-agent self-review is invalid.
 2. Read the current plan and its referenced requirements, architecture, contracts, database design,
    and test plan. Do not redesign confirmed decisions.
 3. Split the plan into feature-bearing tasks with stable IDs. Each task must define objective,
@@ -24,7 +26,9 @@ that the user has confirmed the plan. A reviewer result alone does not authorize
 5. Apply the execution-detail checks below. Check that every plan acceptance item maps to a task and
    every concrete change maps to an acceptance scenario and verification path. Keep index and task
    ownership, dependencies, and `parallel_safe` consistent.
-   Return `Task decomposition: clear|issues` and the task package path.
+   Every generated task must state the implementer handoff and require a separate independent
+   `reviewer` subagent after implementation. Executor self-checks and verifier packets are evidence,
+   not substitutes for the completion review. Return `Task decomposition: clear|issues` and the task package path.
 
 ## Execution-detail checks
 

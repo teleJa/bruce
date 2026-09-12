@@ -12,6 +12,18 @@
 - Execution profile/model: `<profile/model if known>`
 - Handoff revision: `1`
 
+## Workflow roles and review gates
+
+- Design thread/profile: `Astra / design`
+- Plan review: required independent `reviewer` subagent, clean context, no author history
+- Execution thread/profile: `Luna Max / implementer` (actual model is resolver-owned)
+- Completion review: required fresh independent `reviewer` subagent, clean context, no executor history
+- Final decision: `Bruce Completion Gate`
+
+Plan review and completion review are separate review events. Executor self-checks, author review,
+and verifier evidence cannot replace either reviewer. A repair or acceptance change requires a new
+snapshot and `basis_revision` before re-review.
+
 ## Frozen scope
 
 ### Allowed paths

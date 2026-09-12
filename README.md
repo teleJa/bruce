@@ -72,7 +72,7 @@ For setup, see [Install for a local smoke test](#install-for-a-local-smoke-test)
 
 ## Functional Agent contracts
 
-Bruce routes native Subagents through five internal Profiles: `inspector`, `implementer`, `prototype-generator`, `verifier`, and `reviewer`. The shared v1 Task/Verification/Review Packet contract lives in `skills/bruce/references/functional-agent-contracts.md`, and the built-in registry lives in `skills/bruce/references/model-profiles.yaml`.
+Bruce routes native Subagents through six internal Profiles: `inspector`, `implementer`, `exploration-prototype-generator`, `prototype-generator`, `verifier`, and `reviewer`. The shared v1 Task/Verification/Review Packet contract lives in `skills/bruce/references/functional-agent-contracts.md`, and the built-in registry lives in `skills/bruce/references/model-profiles.yaml`.
 
 Profile resolution is `task override > project override > user override > built-in Profile > current model fallback`. The resolver passes `model` to the Codex host only when the target model is confirmed available; Profiles with `fallback=current` may otherwise inherit the current model and record `fallback_used`, `effective_model`, `capability_status=degraded`, and `resolution_result=fallback`. `prototype-generator` instead defaults to `gemini-3.8-flash` + `high` with `fallback=blocked`: formal `write-prototype` work must spawn with its resolved Profile model and pass the same model to Open Design, never inherit a default/current model. Inspector remains read-only (the built-in inspection route is `gpt-5.6-luna` + `max`), Implementer is path-bounded, Verifier emits only `verification_packet`, and Reviewer emits only `review_packet`; Design/Completion remain the only terminal decisions.
 
@@ -146,6 +146,10 @@ inspect -> task contract -> design when needed -> Design Gate when needed -> imp
   native subagent may generate the code after the main agent freezes the question, paths, scenarios,
   and checks; the main agent keeps product decisions, user feedback, integration, and Gate ownership.
   Exploration becomes implementation-governing only after promotion through `write-prototype`.
+
+## UI prototype attribution
+
+Bruce's lightweight exploration-prototype guidance was informed by [JimLiu/baoyu-design](https://github.com/JimLiu/baoyu-design), an MIT-licensed open-source Agent Skill. Bruce selectively adopts the upstream project's ideas around self-contained HTML artifacts, interactive prototypes, wireframe/hi-fi method routing, local preview, and existing-HTML/design-system inspection. Bruce does not vendor or reproduce the upstream project wholesale: model selection and Functional Agent Profiles, repository/UI Surface Contracts, path boundaries, browser evidence, provenance, user confirmation, and Design/Completion Gates remain Bruce-specific rules. Formal product prototypes may still use Bruce's separately governed `write-prototype` flow.
 - Behavior acceptance uses stable `Given/When/Then/Evidence` scenarios. Development starts from a
   failing test or reproducible scenario when feasible.
 - User-visible Web work declares proportional `visual_scope=none|browser-smoke|browser-layout` and

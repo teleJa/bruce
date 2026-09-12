@@ -108,6 +108,8 @@ class WorkflowProfileContractTest(unittest.TestCase):
         self.assertIn("不要为纯 copy、icon、color 或没有状态、数据、交互和验证边界的 layout-only 变更调用本 Skill", self.test_design)
         self.assertIn("first entry、close and reopen", normalized)
         self.assertIn("fresh observable result", normalized)
+        for trigger in ("用户操作 → 可观察界面状态变化", "控件名称未列出不能作为跳过理由", "expanded → collapsed → expanded", "真实交互场景", "unresolved acceptance"):
+            self.assertIn(trigger, normalized)
 
     def test_resource_and_permission_state_consistency_is_mandatory_when_applicable(self) -> None:
         normalized = " ".join(self.test_design.split())

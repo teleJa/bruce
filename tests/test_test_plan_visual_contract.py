@@ -85,6 +85,10 @@ class TestPlanVisualContractTest(unittest.TestCase):
                     "before/after",
                     "截图已保存",
                     "incomplete",
+                    "expanded → collapsed → expanded",
+                    "真实交互",
+                    "触发器、初始状态、目标状态",
+                    "侧边导航处于展开状态",
                 ):
                     self.assertIn(token, content)
 
@@ -93,7 +97,7 @@ class TestPlanVisualContractTest(unittest.TestCase):
         for token in (
             "`none`", "`browser-smoke`", "`browser-layout`",
             "不要求无关区域扫描", "not_applicable", "显示不全",
-            "非预期横向溢出", "布局混乱", "真实点击", "有意省略",
+            "非预期横向溢出", "布局混乱", "真实点击", "有意省略", "可操作性", "视觉状态矩阵",
             "Given", "When", "Then", "Evidence", "visible_result",
             "不新增必填机器字段", "未查看/未给出判断", "failed", "incomplete",
         ):

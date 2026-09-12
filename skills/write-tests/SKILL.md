@@ -38,6 +38,8 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 
 ### UI 触发条件
 
+只要 UI 存在“用户操作 → 可观察界面状态变化”的状态转换，就视为 stateful UI，必须生成真实交互场景，不能仅按 layout-only 变更处理。菜单、侧边栏、折叠面板、accordion、树节点等只是常见示例，不是完整枚举；控件名称未列出不能作为跳过理由。
+
 对于 UI 变更，以下任一条件成立时扩展生命周期/视觉证据模块：
 
 - modal、drawer、picker、tab、editor 或 paginated/list surface 可以关闭后再次进入；
@@ -46,6 +48,10 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 - cancel、confirm、save、retry、异步加载、分页、过滤或 dependent controls 产生重要状态转换；
 - 缺陷涉及 stale state、duplicate interaction、reopening 或 recovery；
 - 验收需要真实浏览器，或跨越组件、API、服务边界。
+
+所有状态转换至少记录触发器、初始状态、目标状态、可观察变化和重复/恢复/失败路径。展开/折叠控件至少覆盖一次 `expanded → collapsed → expanded`。例如：Given 侧边导航处于展开状态，When 真实点击折叠按钮，Then 导航内容隐藏、主内容区域扩大且折叠按钮仍可操作；When 再次点击，Then 导航恢复可见。`Then` 不得只写元素存在、DOM 属性或截图已保存；必须记录交互前后可见状态及其证据。
+
+如果无法从需求、设计、Surface Contract 或实现确认是否存在状态转换，必须记录为 `unresolved acceptance`/`Test design blocked`，不能默认为无 UI 测试。
 
 ### 跨对象一致性触发条件
 
@@ -97,7 +103,7 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 执行前复核配置；若与计划不同，更新受影响的前提和证据要求，旧 Provider 的证据不能沿用。
 
 所有 Web 场景均须按 [visual-checks.md](references/visual-checks.md) 写明实际视觉判读，不以 DOM 结构/文本检查
-替代视觉检查，也不以“截图已保存”作为通过结论。`browser-smoke` 做受影响区域的基础视觉检查；布局、裁切、
+替代视觉检查，也不以“截图已保存”作为通过结论。涉及可操作区域时，必须建立视觉状态矩阵，覆盖适用的默认、聚焦/填写、错误、加载/禁用、成功/结果和窄视口/长内容状态。`browser-smoke` 做受影响区域的基础视觉检查；布局、裁切、
 溢出、遮挡或响应式风险必须选择 `browser-layout` 并补齐适用的布局断言和几何证据。两种模板都遵循此要求，
 不因最小模板而降低证据强度。`visual_scope: none` 保留无可见变化的依据，不生成空视觉清单。
 
@@ -116,6 +122,8 @@ skip 证据；行为变更不得将 Test design 标记为 skipped。
 4. 对 stateful UI 建立紧凑的 lifecycle matrix，按适用性覆盖 first entry、close and reopen、data changes while
    closed、cancel and reopen、confirm and reopen、failure and retry。说明 fresh observable result 和 state-retention
    语义，不要规定具体实现机制，例如必须发起某个网络请求或绕过某个 cache。
+   对展开/折叠控件追加 `expanded → collapsed → expanded`，并为每次点击记录可观察状态、可用性和恢复结果。
+   对其他交互按“触发器、初始状态、目标状态、可观察变化、重复/恢复/失败路径”填写，不依赖预先列举的控件名称。
 5. 对其他 stateful behavior，按适用性覆盖 first use、repeat use、retries、concurrent actions、partial failure、
    history/current pointers 和 recovery。
 6. 只在能增加真实覆盖时定义 happy、edge、error、integration、permission 和 regression scenarios；场景必须来自

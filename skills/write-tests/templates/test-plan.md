@@ -23,6 +23,7 @@
 - `browser-smoke`：<受影响区域的显示完整性、明显遮挡和布局异常检查；真实交互后的截图判读，不强制完整几何扫描>
 - 对于 `browser-layout`：<目标、viewport、截图/hash、geometry、overflow、before/after；显示完整性、溢出与滚动、遮挡与层级、布局稳定性、视口与状态变化各类别的适用性/理由及 scenario id>
 - 视觉结论：<预期如何实际查看截图并记录区域/状态、所见和结论；DOM 结构/文本或“截图已保存”不等于通过；未判读为 incomplete>
+- 视觉状态矩阵：<默认、聚焦/填写、错误、加载/禁用、成功/结果、窄视口/长内容；逐项记录显示完整性、可操作性、拥挤/重叠、遮挡和溢出>
 
 ## 一致性分类
 
@@ -64,11 +65,27 @@ reason: <若为 not_applicable，说明不涉及跨对象状态、权限投影�
 - Given: <具体用户/系统状态、数据、权限和真实依赖>
 - When: <用户或系统动作>
 - Then: <可观察行为以及数据/状态后果>
+- 交互状态转换（适用菜单、侧边栏、折叠面板、accordion、树节点等）：<按 `expanded → collapsed → expanded` 写明真实点击、前后可见状态、折叠后可用性和恢复结果；不适用时说明原因>
+- 通用状态转换（所有可操作 UI）：<触发器、初始状态、目标状态、可观察变化、重复/恢复/失败路径；控件名称只是示例，不是完整枚举>
 - 预期 UI 状态： <适用时填写页面、控件、文案、可用性或 loading/error 状态；不适用写 not_applicable 及原因>
 - 预期 API/结果： <适用时填写响应、错误码或服务端裁决；不适用写 not_applicable 及原因>
 - 持久化不变量： <适用时填写关系、数据完整性或不变性；无持久化时写 not_applicable 及原因>
 - Evidence: <每个重要 Then 对应的确切命令、API/database 检查或 配置 Provider 的可见观察>
 - 必需验证层级： <unit/component/integration/API/database/browser>
+
+### UI 状态转换示例（按适用性改写）
+
+- Given：侧边导航处于展开状态，目标视口和真实数据已准备好。
+- When：通过配置的 Browser Provider 真实点击折叠按钮。
+- Then：导航项隐藏，主内容区域扩大，折叠按钮仍可操作；再次点击后导航项恢复可见。
+- Evidence：记录点击前后截图；涉及布局时记录 viewport、相关区域 geometry 和 overflow，并写明实际视觉判读。此示例不是控件枚举，其他可操作 UI 也必须按同一结构描述。
+
+### 表单布局示例（按适用性改写）
+
+- Given：390x844 视口，表单显示校验错误，输入包含长文本。
+- When：真实聚焦输入框、输入文本并失焦，然后点击提交按钮。
+- Then：输入框和错误提示完整可见，错误提示不覆盖按钮，按钮文字不拥挤且可点击，页面无非预期横向溢出。
+- Evidence：记录截图、输入框/错误提示/按钮 geometry、容器 `clientWidth`/`scrollWidth`、真实点击结果和视觉判读。
 
 ## 回归来源
 
@@ -85,6 +102,7 @@ reason: <若为 not_applicable，说明不涉及跨对象状态、权限投影�
 - 若 `consistency_check: required`，已定义业务不变量、权威状态、竞争 actor/viewer、冲突规则和重新同步方式。
 - 若 `consistency_check: required`，已按 `behavior_kinds` 标记场景适用性和不适用原因，仅对适用场景验证 UI、API/result 或持久化后果。
 - Stateful behavior 已按适用性覆盖 repeat use、failure 和 recovery。
+- 所有可操作 UI 均已识别触发器、状态转换、可观察结果和重复/恢复/失败路径；无法判断时已记录 `unresolved acceptance` 或 `Test design blocked`。
 - 命令和环境在目标仓库中真实存在。
 - 用户可见 Web 验收必须使用 `verification.browser_provider` 选定的 Provider；Acceptance row 必须记录实际 Provider、真实交互、结果可见状态以及截图或等价 visual artifact。Provider 不可用时保持 incomplete/blocked，不得静默切换。
 - 中文请求的自然语言字段全部使用简体中文；稳定的 `Given`、`When`、`Then`、`Evidence`、scenario id、命令、路径和 API 名称保持原样。

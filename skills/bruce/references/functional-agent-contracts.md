@@ -6,7 +6,7 @@
 
 ```yaml
 schema_version: 1
-profile_id: inspector|implementer|prototype-generator|verifier|reviewer
+profile_id: inspector|implementer|exploration-prototype-generator|prototype-generator|verifier|reviewer
 task_packet:
   task_id: string
   task_kind: inspect|implement|prototype_generate|verify|review|throwaway_prototype
@@ -46,11 +46,12 @@ task_packet:
 |---|---|---|---|
 | `inspector` | 只读收集仓库事实、边界、调用关系、风险证据 | 写入、删除、部署、业务决策、Gate | `task_evidence_packet` |
 | `implementer` | 在 Packet 允许路径内实现并运行声明的检查 | 越权路径、权限代理、部署、push、最终 Gate | `task_evidence_packet` |
+| `exploration-prototype-generator` | 使用已冻结的问题和场景生成独立、可交互 HTML 探索原型 | OpenDesign、模型回退、产品决策、Gate | `task_evidence_packet` |
 | `prototype-generator` | 使用已冻结的原型上下文驱动一个 Open Design 生成运行 | 本地实现、模型回退、产品决策、Gate | `task_evidence_packet` |
 | `verifier` | 重现验收、确认证据是否真实、标记证据缺口 | 修改工作区、独立最终审查、Gate verdict | `verification_packet` |
 | `reviewer` | clean context 下检查实现/计划问题并返回 findings | 修改工作区、替代 Verifier、Gate verdict | `review_packet` |
 
-`explore-prototype` 的一次性 generation worker 复用 `implementer`，`task_kind=throwaway_prototype`。正式 `write-prototype` 的 Open Design generation worker 使用 `prototype-generator`，`task_kind=prototype_generate`；该 Profile 的 `fallback=blocked`，所以必须以已解析的配置模型运行，不能继承当前模型。两条路径都使用现有 `task_evidence_packet`，不新增第五种输出类型。
+`explore-prototype` 使用 `exploration-prototype-generator`，`task_kind=throwaway_prototype`；其默认模型来自 Profile，当前为 Gemini 3.8 Flash，不能在 Skill 中写死或静默回退。正式 `write-prototype` 的 Open Design generation worker 使用 `prototype-generator`，`task_kind=prototype_generate`。两条路径都使用现有 `task_evidence_packet`，不新增第五种输出类型。
 
 ## 3. 输出 Packet
 

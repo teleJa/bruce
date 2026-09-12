@@ -14,7 +14,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 BUILTIN_PROFILE_PATH = ROOT / "skills/bruce/references/model-profiles.yaml"
 SCHEMA_VERSION = 1
-PROFILE_IDS = ("inspector", "implementer", "prototype-generator", "verifier", "reviewer")
+PROFILE_IDS = ("inspector", "implementer", "exploration-prototype-generator", "prototype-generator", "verifier", "reviewer")
 PACKET_OUTPUTS = {"task_evidence_packet", "verification_packet", "review_packet"}
 TERMINAL_FIELDS = {"Design", "Completion", "verdict", "approval"}
 
@@ -119,7 +119,7 @@ def _load_override(path: Path | None) -> dict[str, dict[str, Any]]:
         ):
             raise ContractError(f"override reasoning_effort is invalid for {profile_id}")
         if "fallback" in values:
-            expected_fallback = "blocked" if profile_id in {"prototype-generator", "reviewer"} else "current"
+            expected_fallback = "blocked" if profile_id in {"prototype-generator", "exploration-prototype-generator", "reviewer"} else "current"
             if values["fallback"] != expected_fallback:
                 raise ContractError(
                     f"override fallback must be {expected_fallback} for {profile_id}"
@@ -281,6 +281,7 @@ def validate_task_packet(packet: Mapping[str, Any], profile_id: str | None = Non
     task_kinds = {
         "inspector": {"inspect"},
         "implementer": {"implement", "throwaway_prototype"},
+        "exploration-prototype-generator": {"throwaway_prototype"},
         "prototype-generator": {"prototype_generate"},
         "verifier": {"verify"},
         "reviewer": {"review"},
@@ -424,8 +425,8 @@ def validate_output_packet(packet: Mapping[str, Any], output_type: str) -> None:
         raise ContractError("agent packet gate_verdict must be absent")
     expected_profile = {"verification_packet": "verifier", "review_packet": "reviewer"}.get(output_type)
     _validate_model_resolution(packet.get("model_resolution"), expected_profile=expected_profile)
-    if output_type == "task_evidence_packet" and packet["model_resolution"]["requested_profile"] not in {"inspector", "implementer", "prototype-generator"}:
-        raise ContractError("task_evidence_packet must come from inspector, implementer, or prototype-generator")
+    if output_type == "task_evidence_packet" and packet["model_resolution"]["requested_profile"] not in {"inspector", "implementer", "exploration-prototype-generator", "prototype-generator"}:
+        raise ContractError("task_evidence_packet must come from inspector, implementer, exploration-prototype-generator, or prototype-generator")
 
     packet_fields = {
         "task_evidence_packet": common | {"changed_files", "commands", "evidence", "assumptions", "evidence_gaps"},

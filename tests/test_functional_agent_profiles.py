@@ -21,7 +21,7 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
     def test_profile_registry_and_routing_matrix(self) -> None:
         validator = (ROOT / "scripts/validate_functional_agents.py").read_text(encoding="utf-8")
         self.assertEqual(
-            {"inspector", "implementer", "prototype-generator", "verifier", "reviewer"},
+            {"inspector", "implementer", "exploration-prototype-generator", "prototype-generator", "verifier", "reviewer"},
             set(PROFILE_IDS),
         )
         profiles = load_builtin_profiles()

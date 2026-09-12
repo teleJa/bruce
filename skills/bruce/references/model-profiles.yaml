@@ -40,6 +40,26 @@ profiles:
     max_calls: 1
     output: task_evidence_packet
     authority: implementation-evidence
+  exploration-prototype-generator:
+    role: exploration-prototype-generator
+    capability: "生成用于方案讨论的可交互、独立 HTML 探索原型"
+    default_model: gemini-3.8-flash
+    reasoning_effort: high
+    context:
+      inherit: task
+      clean: false
+    tools:
+      allow: [read, write, edit, test, browser]
+      deny: [open-design, deploy, push, force, credential, unrestricted-path]
+    write_scope: task_packet.allowed_paths
+    model_capabilities:
+      required: [prototype-generation, interactive-html]
+      preferred: [visual-layout, browser-verification]
+      independence: none
+    fallback: blocked
+    max_calls: 1
+    output: task_evidence_packet
+    authority: exploration-prototype-evidence
   prototype-generator:
     role: prototype-generator
     capability: "以已冻结的原型上下文驱动 Open Design 生成，并返回实际运行证据"

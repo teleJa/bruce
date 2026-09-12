@@ -10,7 +10,11 @@ description: >
 
 # Explore prototype
 
-Answer one question with disposable code. Do not use this skill merely because a task changes UI, or
+Answer one question with disposable code. This is Bruce's lightweight exploration mode: produce a
+self-contained interactive HTML artifact without OpenDesign. Resolve the
+`exploration-prototype-generator` Functional Agent Profile before delegation; its default model is
+Gemini 3.8 Flash, but the resolver is authoritative and may select a confirmed override. Never
+hardcode or silently substitute a model. Do not use this skill merely because a task changes UI, or
 when a confirmed implementation-governing prototype is already required; use `write-prototype` for
 the latter.
 
@@ -73,8 +77,11 @@ agent; unavailable delegation alone never blocks the prototype.
    using an unmistakable `prototype` name. Preserve unrelated files.
 3. Keep state in memory and external effects stubbed unless persistence itself is the question. Never
    use production credentials, services, mutations, or data.
-4. Make the prototype trivial to run: one self-contained HTML file for `logic`, or one existing
-   project command and shareable variant URL for `ui-variants`.
+4. Make the prototype trivial to run: one self-contained interactive HTML file for `logic`, or one
+   self-contained HTML file with a visible variant switcher for `ui-variants`. Every primary button
+   and required transition must be clickable and visibly change state. Read only the relevant
+   wireframe/interactive-prototype guidance from baoyu-design when available; do not invoke its
+   OpenDesign, deck, document, or unrelated workflows.
 5. Run the declared checks. For a visible Web result, use the browser Provider selected by
    `verification.browser_provider`; do not silently substitute another Provider or use undocumented
    fallback evidence.

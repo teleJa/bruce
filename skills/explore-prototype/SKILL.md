@@ -44,9 +44,10 @@ question cannot be resolved from the request or repository facts, ask at most on
 
 ## Generation delegation
 
-Use one native subagent as a generation worker only when all of these facts are frozen. The worker uses the shared `implementer` Functional Agent Profile with `task_kind=throwaway_prototype`; its input is a v1 Task Packet and its Functional Agent result is a `task_evidence_packet`. The outer exploration Skill may wrap that evidence as its separate `prototype_evidence_packet`; this wrapper is not a fifth Functional Agent output. Do not reintroduce the legacy `generation_packet` as a separate Functional Agent output. It must not choose a model, create a Runtime, or return a Gate verdict.
+Use one native subagent as a generation worker only when all of these facts are frozen. The worker uses the `exploration-prototype-generator` Functional Agent Profile with `task_kind=throwaway_prototype`; its input is a v1 Task Packet and its Functional Agent result is a `task_evidence_packet`. The outer exploration Skill may wrap that evidence as its separate `prototype_evidence_packet`; this wrapper is not a fifth Functional Agent output. Do not reintroduce the legacy `generation_packet` as a separate Functional Agent output. It must not choose a model, create a Runtime, or return a Gate verdict.
 
 - the exact question and selected mode;
+- the primary user flow, required states, and recovery path;
 - exclusive allowed paths and explicit excluded paths;
 - repository facts the worker may treat as authoritative;
 - complete scenarios or variant requirements;
@@ -82,6 +83,10 @@ agent; unavailable delegation alone never blocks the prototype.
    and required transition must be clickable and visibly change state. Read only the relevant
    wireframe/interactive-prototype guidance from baoyu-design when available; do not invoke its
    OpenDesign, deck, document, or unrelated workflows.
+   Before accepting the worker result, run three checks: static load/script integrity, interactive
+   state transitions, and visual usability at the declared viewport(s). Cover default, missing or
+   invalid input, loading, success, failure, and recovery when applicable. A required action that
+   succeeds without its required input is a failed exploration result.
 5. Run the declared checks. For a visible Web result, use the browser Provider selected by
    `verification.browser_provider`; do not silently substitute another Provider or use undocumented
    fallback evidence.
@@ -118,6 +123,8 @@ observations: <what the prototype demonstrated>
 decision: <validated answer or none>
 production_promotion: not-promoted | requires-write-prototype
 known_gaps: <remaining uncertainty>
+states_covered: <states actually exercised>
+interaction_actions: <real actions and visible results>
 ```
 
 ## Does not own

@@ -374,7 +374,7 @@ class TestDispatchContractTest(unittest.TestCase):
 
         invalid = dispatch()
         invalid["routing"]["functional_packet"]["model_resolution"]["effective_model"] = "gpt-5.6-luna"
-        invalid["routing"]["model_resolution"]["effective_model"] = "gpt-5.6-terra"
+        invalid["routing"]["model_resolution"]["effective_model"] = "deepseek-flash"
         errors = self.contracts.validate_dispatch(invalid)
         self.assertTrue(any("must equal routing.model_resolution" in error for error in errors))
 

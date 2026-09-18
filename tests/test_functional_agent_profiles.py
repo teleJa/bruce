@@ -34,7 +34,7 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
         self.assertEqual("blocked", profiles["prototype-generator"]["fallback"])
         self.assertEqual("gpt-5.6-luna", profiles["verifier"]["default_model"])
         self.assertEqual("max", profiles["verifier"]["reasoning_effort"])
-        self.assertEqual("gpt-5.6-terra", profiles["reviewer"]["default_model"])
+        self.assertEqual("deepseek-flash", profiles["reviewer"]["default_model"])
         self.assertEqual("high", profiles["reviewer"]["reasoning_effort"])
         for profile_id in PROFILE_IDS:
             self.assertIn(profile_id, validator)
@@ -142,13 +142,13 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
 
     def test_reviewer_resolution_never_falls_back(self) -> None:
         profile, resolution, args = resolve_profile(
-            "reviewer", current_model="current-model", available_models={"gpt-5.6-terra"}
+            "reviewer", current_model="current-model", available_models={"deepseek-flash"}
         )
         self.assertTrue(profile["context"]["clean"])
         self.assertEqual("none", profile["context"]["inherit"])
         self.assertEqual("blocked", profile["fallback"])
         self.assertEqual("resolved", resolution.resolution_result)
-        self.assertEqual("gpt-5.6-terra", args["model"])
+        self.assertEqual("deepseek-flash", args["model"])
         for available in (None, set(), {"current-model"}, {"other-model"}):
             with self.subTest(available=available):
                 _, blocked, blocked_args = resolve_profile(
@@ -208,7 +208,7 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
                 self.assertNotIn("model", args)
 
     def test_review_packet_rejects_self_review_and_unexecuted_claims(self) -> None:
-        _, resolution, _ = resolve_profile("reviewer", current_model="current", available_models={"gpt-5.6-terra"})
+        _, resolution, _ = resolve_profile("reviewer", current_model="current", available_models={"deepseek-flash"})
         packet = {
             "schema_version": 1, "status": "completed", "output_type": "review_packet",
             "review_basis": {"task_id": "T-1", "dispatch_id": "reviewer-run-1", "basis_revision": "sha256:" + "a" * 64},
@@ -235,7 +235,7 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
                                 "model_resolution": blocked.as_dict()}, "review_packet")
 
     def test_review_consumption_binds_current_basis_and_native_dispatch(self) -> None:
-        _, resolution, _ = resolve_profile("reviewer", current_model=None, available_models={"gpt-5.6-terra"})
+        _, resolution, _ = resolve_profile("reviewer", current_model=None, available_models={"deepseek-flash"})
         context = {"task_id": "T-1", "dispatch_id": "reviewer-run-1", "basis_revision": "sha256:" + "a" * 64,
                    "model_resolution": resolution.as_dict(), "review_subject": "implementation"}
         packet = {"schema_version": 1, "status": "completed", "output_type": "review_packet",
@@ -351,7 +351,7 @@ class FunctionalAgentProfileContractTest(unittest.TestCase):
         )
         self.assertEqual("blocked", blocked_model.resolution_result)
         _, blocked_context, _ = resolve_profile(
-            "reviewer", current_model="current", available_models={"gpt-5.6-terra"}, clean_context_available=False
+            "reviewer", current_model="current", available_models={"deepseek-flash"}, clean_context_available=False
         )
         self.assertEqual("blocked", blocked_context.resolution_result)
         _, blocked_tools, _ = resolve_profile(

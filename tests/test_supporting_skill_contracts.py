@@ -248,7 +248,7 @@ class SupportingSkillContractTest(unittest.TestCase):
         self.assertIn("`inspector` Profile", body)
         self.assertIn("`reviewer` Profile", body)
         self.assertNotIn("gpt-5.6-luna", body)
-        self.assertNotIn("gpt-5.6-terra", body)
+        self.assertNotIn("deepseek-flash", body)
         self.assertNotIn("`task_kind=inspect`", body)
         self.assertNotIn("`output=task_evidence_packet`", body)
         self.assertNotIn("`allowed_paths=[]`", body)

@@ -103,7 +103,7 @@ profiles:
   reviewer:
     role: reviewer
     capability: "使用 clean context 独立检查实现或计划中的问题"
-    default_model: gpt-5.6-terra
+    default_model: deepseek-flash
     reasoning_effort: high
     context:
       inherit: none

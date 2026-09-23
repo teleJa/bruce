@@ -1,5 +1,24 @@
 # Implementation plan: <change name>
 
+## Behavior delta
+
+| Scenario | Before | After |
+|---|---|---|
+| <user/system scenario> | <current behavior> | <new or changed behavior> |
+
+List every observable behavior added, removed, or changed by this plan. If no behavior changes, state
+"No behavior change" and remove the table.
+
+## Inferred assumptions
+
+1. <assumption inherited from existing code or existing flow that the AI resolved without explicit
+   user instruction; even if it seems reasonable, list it here so the user can confirm or reject it>
+   - Confirmation: <user message/date or "Pending user confirmation">
+
+If there are no inferred assumptions, state "None" and remove this section. Every assumption must
+have a user-confirmation reference. Any `Pending user confirmation` or otherwise unconfirmed
+assumption blocks document review and is not an effective plan constraint.
+
 ## Task contract
 
 - Objective: <observable result>

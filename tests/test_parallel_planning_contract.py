@@ -52,6 +52,8 @@ class ParallelPlanningContractTest(unittest.TestCase):
         normalized = " ".join(self.plan.split())
         self.assertIn("`Plan: ready`: persist one minimal executable plan", normalized)
         self.assertIn("`Document check: clear|issues`", normalized)
+        self.assertIn("user-confirmation reference", normalized)
+        self.assertIn("blocks the document review", normalized)
         missing_outcome = self.plan.split("- `Missing planning evidence`:", 1)[1].split(
             "## Does not own", 1
         )[0]

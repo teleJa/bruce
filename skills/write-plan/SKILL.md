@@ -23,6 +23,17 @@ and its necessary references without re-deciding business rules or architecture.
   to the executor when they do not change contracts, task ownership, required behavior, or evidence.
   Distinguish these choices from frozen decisions; do not prescribe line-by-line code or require new
   approval for a permitted local choice.
+- Within the first 15 lines of the persisted plan (immediately after the title), include two mandatory
+  sections before any technical detail:
+  - `## Behavior delta`: a table listing every scenario where behavior changes (before vs after), so
+    the reviewer can scan behavioral impact without reading the full technical plan.
+  - `## Inferred assumptions`: a numbered list of every behavior the AI inherited from existing code
+    or existing flows and assumed applies to the new implementation. Even if the AI considers the
+    assumption reasonable, it must be listed here explicitly; it must not appear only inside the
+    solution description. Every listed assumption must include a user-confirmation reference or an
+    explicit `Pending user confirmation` status. A pending or unconfirmed assumption blocks the
+    document review and cannot be treated as an effective plan constraint.
+  A plan that violates this structure is incomplete; do not persist it.
 - If implementation planning exposes a missing business rule, incompatible interface, ambiguous
   state/data semantics, or a necessary change to confirmed architecture or authorization, return the
   concrete conflict, affected tasks, and options to Bruce/the user. Do not silently resolve it by
@@ -107,7 +118,9 @@ or task package per repository. Read [task-contract.md](../bruce/references/task
    request; keep stable machine-facing tokens unchanged as specified by the language rule.
 9. Inspect the plan and task-package diff and check requirement/acceptance coverage, task boundaries,
    dependencies, file/interface joins, Given/When/Then evidence anchors, omissions, placeholders,
-   links, and path ownership. Repair issues and return `Document check: clear|issues`. When the plan
+   links, path ownership, and confirmation references for every inferred assumption. If any inferred
+   assumption lacks user confirmation, return `Document check: issues`; do not pass the document
+   review. Repair issues and return `Document check: clear|issues`. When the plan
    contains a governing design decision or downstream contract, return a mandatory `design-gate`
    handoff under the shared artifact policy. Bruce/the caller coalesces pending handoffs, finishes the
    already authorized design batch's required artifacts and local checks, then runs one Gate in the
